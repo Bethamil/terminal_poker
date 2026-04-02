@@ -76,6 +76,7 @@ export const RoomPage = () => {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [roomLinkStatus, setRoomLinkStatus] = useState<"idle" | "copied" | "error">("idle");
   const [ticketDraft, setTicketDraft] = useState("");
   const [jiraBaseUrlDraft, setJiraBaseUrlDraft] = useState("");
   const [votingDeckIdDraft, setVotingDeckIdDraft] = useState<UpdateRoomSettingsPayload["votingDeckId"]>("modified-fibonacci");
@@ -149,6 +150,15 @@ export const RoomPage = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isShortcutsOpen]);
 
+  useEffect(() => {
+    if (roomLinkStatus === "idle") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => setRoomLinkStatus("idle"), 2200);
+    return () => window.clearTimeout(timeoutId);
+  }, [roomLinkStatus]);
+
   const votedCount = useMemo(
     () => snapshot?.participants.filter((participant) => participant.hasVoted).length ?? 0,
     [snapshot]
@@ -190,7 +200,12 @@ export const RoomPage = () => {
   };
 
   const copyRoomLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setRoomLinkStatus("copied");
+    } catch {
+      setRoomLinkStatus("error");
+    }
   };
 
   const saveRoomSettings = (
@@ -285,25 +300,55 @@ export const RoomPage = () => {
 
   return (
     <div className="shell shell--room">
-      <AppHeader>
-        <StatusChip tone="accent">ROOM {snapshot.room.code}</StatusChip>
-        <span className="mono-muted">{isRealtimeReady ? "LIVE" : "SYNCING"}</span>
-        {isModerator ? (
-          <Button onClick={() => setIsSettingsOpen((current) => !current)} variant="ghost">
-            {isSettingsOpen ? "CLOSE SETTINGS" : "SETTINGS"}
-          </Button>
-        ) : null}
-        <Button onClick={copyRoomLink} variant="ghost">
-          COPY LINK
-        </Button>
-        <Button
-          aria-controls="room-shortcuts"
-          aria-expanded={isShortcutsOpen}
-          onClick={() => setIsShortcutsOpen((current) => !current)}
-          variant="ghost"
-        >
-          {isShortcutsOpen ? "KEYS ON" : "KEYS"}
-        </Button>
+      <AppHeader
+        actions={
+          <>
+            {isModerator ? (
+              <Button
+                className="room-topbar__action"
+                onClick={() => setIsSettingsOpen((current) => !current)}
+                variant="ghost"
+              >
+                {isSettingsOpen ? "CLOSE" : "SETTINGS"}
+              </Button>
+            ) : null}
+            <Button
+              aria-controls="room-shortcuts"
+              aria-expanded={isShortcutsOpen}
+              className="room-topbar__action"
+              onClick={() => setIsShortcutsOpen((current) => !current)}
+              variant="ghost"
+            >
+              {isShortcutsOpen ? "CLOSE KEYS" : "KEYS"}
+            </Button>
+          </>
+        }
+      >
+        <div className="room-topbar">
+          <div className="room-topbar__identity">
+            <div className="room-topbar__meta">
+              <span className="room-topbar__label">ROOM</span>
+              <span className={`room-topbar__status ${isRealtimeReady ? "room-topbar__status--live" : ""}`.trim()}>
+                {isRealtimeReady ? "LIVE" : "SYNC"}
+              </span>
+            </div>
+            <div className="room-topbar__code-row">
+              <div className="room-topbar__code">{snapshot.room.code}</div>
+              <button
+                aria-live="polite"
+                className="room-topbar__copy"
+                onClick={copyRoomLink}
+                type="button"
+              >
+                {roomLinkStatus === "copied"
+                  ? "COPIED"
+                  : roomLinkStatus === "error"
+                    ? "ERROR"
+                    : "COPY"}
+              </button>
+            </div>
+          </div>
+        </div>
       </AppHeader>
 
       <main className="room-layout">

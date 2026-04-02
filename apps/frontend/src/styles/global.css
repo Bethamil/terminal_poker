@@ -155,9 +155,9 @@ select {
 }
 
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.25rem;
   background: var(--topbar-bg);
@@ -171,6 +171,7 @@ select {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  justify-self: start;
 }
 
 .brand__mark {
@@ -192,12 +193,122 @@ select {
   letter-spacing: 0.18em;
 }
 
-.topbar__meta {
+.topbar__center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  justify-self: center;
+}
+
+.topbar__actions {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  min-width: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
+  justify-self: end;
+}
+
+.room-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.room-topbar__identity {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: 0.1rem 0;
+  justify-items: center;
+}
+
+.room-topbar__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.room-topbar__label,
+.room-topbar__status,
+.room-topbar__copy {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.room-topbar__label,
+.room-topbar__status {
+  color: var(--muted);
+}
+
+.room-topbar__status {
+  position: relative;
+  padding-left: 0.75rem;
+}
+
+.room-topbar__status::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 999px;
+  background: currentColor;
+  transform: translateY(-50%);
+  opacity: 0.6;
+}
+
+.room-topbar__status--live {
+  color: var(--primary);
+}
+
+.room-topbar__code-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.room-topbar__code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: clamp(1.85rem, 4vw, 2.6rem);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.08em;
+}
+
+.room-topbar__copy {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.room-topbar__copy:hover {
+  text-decoration: underline;
+}
+
+.room-topbar__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+.room-topbar__action {
+  min-height: 2.7rem;
+  padding: 0.78rem 0.95rem;
 }
 
 .mono-muted,
@@ -1074,7 +1185,46 @@ select {
   }
 
   .topbar {
+    grid-template-columns: 1fr;
+    align-items: start;
     padding: 0.85rem 1rem;
+  }
+
+  .topbar__center,
+  .topbar__actions,
+  .room-topbar {
+    width: 100%;
+  }
+
+  .topbar__center {
+    justify-content: flex-start;
+    justify-self: stretch;
+  }
+
+  .topbar__actions {
+    justify-self: stretch;
+  }
+
+  .room-topbar {
+    justify-content: flex-start;
+  }
+
+  .room-topbar__identity {
+    justify-items: start;
+  }
+
+  .room-topbar__code-row {
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .room-topbar__actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  }
+
+  .room-topbar__action {
+    width: 100%;
   }
 
   .theme-toggle {
