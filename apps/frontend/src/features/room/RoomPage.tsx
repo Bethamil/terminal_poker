@@ -660,7 +660,7 @@ export const RoomPage = () => {
                     style={{ minHeight: "3rem", padding: "0.7rem 0.9rem" }}
                     variant="ghost"
                   >
-                    RESET
+                    NEXT
                   </Button>
                 </div>
               </div>
