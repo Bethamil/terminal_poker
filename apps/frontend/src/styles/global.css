@@ -505,7 +505,6 @@ select {
 .shortcut-strip,
 .field__label,
 .field__hint,
-.status-chip,
 .rail-kicker {
   font-family: "JetBrains Mono", monospace;
 }
@@ -881,36 +880,6 @@ select {
   font-size: 1rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.status-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  width: fit-content;
-  min-width: 4.75rem;
-  min-height: 1.4rem;
-  padding: 0.24rem 0.58rem;
-  background: var(--chip-bg);
-  color: var(--text);
-  border: 1px solid var(--outline);
-  border-radius: 999px;
-  font-size: 0.68rem;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.status-chip--accent {
-  background: var(--chip-accent-bg);
-  color: var(--primary);
-}
-
-.status-chip--success {
-  background: var(--success-bg);
-  color: var(--success);
 }
 
 .field {
