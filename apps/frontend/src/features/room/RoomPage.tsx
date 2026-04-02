@@ -754,7 +754,7 @@ export const RoomPage = () => {
           titleId="room-settings-title"
           wide
         >
-          <div className="settings-grid">
+          <div className="settings-grid settings-grid--modal">
             <section className="settings-section">
               <div className="section-header">
                 <StatusChip>DEFAULTS</StatusChip>
@@ -808,18 +808,25 @@ export const RoomPage = () => {
               </div>
             </section>
 
-            <section className="settings-section">
+            <section className="settings-section settings-section--access">
               <div className="section-header">
                 <StatusChip tone="success">ACCESS</StatusChip>
                 <h3>Participants</h3>
               </div>
-              <div className="settings-list">
+              <div className="settings-access-summary">ACTIVE ({snapshot.participants.length})</div>
+              <div className="settings-list settings-list--access">
                 {snapshot.participants.map((participant) => {
                   const isViewer = participant.id === snapshot.viewer.participantId;
                   const canKick = !isViewer && participant.role !== "moderator";
 
                   return (
-                    <div className="settings-user-row" key={participant.id}>
+                    <div
+                      className={`settings-user-row settings-user-row--access ${
+                        isViewer ? "settings-user-row--active" : ""
+                      }`}
+                      key={participant.id}
+                    >
+                      <div className={`presence-dot presence-dot--${participant.presence}`} />
                       <div className="settings-user-row__identity">
                         <strong>{participant.name}</strong>
                         <span>
