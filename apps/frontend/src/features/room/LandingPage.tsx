@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { AppHeader } from "../../components/AppHeader";
 import { Button } from "../../components/Button";
 import { Field } from "../../components/Field";
 import { StatusChip } from "../../components/StatusChip";
@@ -68,16 +69,10 @@ export const LandingPage = () => {
 
   return (
     <div className="shell shell--landing">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand__mark">▣</span>
-          <span className="brand__text">TERMINAL_POKER</span>
-        </div>
-        <div className="topbar__meta">
-          <StatusChip tone="accent">SCRUM_POKER_ROOT</StatusChip>
-          <span className="mono-muted">NO ACCOUNTS // SELF HOSTED // REALTIME</span>
-        </div>
-      </header>
+      <AppHeader>
+        <StatusChip tone="accent">SCRUM_POKER_ROOT</StatusChip>
+        <span className="mono-muted">NO ACCOUNTS // SELF HOSTED // REALTIME</span>
+      </AppHeader>
 
       <main className="landing-grid">
         <section className="landing-hero card card--ghost">
@@ -182,4 +177,3 @@ export const LandingPage = () => {
     </div>
   );
 };
-

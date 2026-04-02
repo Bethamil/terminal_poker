@@ -7,6 +7,7 @@ import {
   type UpdateRoomSettingsPayload
 } from "@terminal-poker/shared-types";
 
+import { AppHeader } from "../../components/AppHeader";
 import { Button } from "../../components/Button";
 import { Field } from "../../components/Field";
 import { StatusChip } from "../../components/StatusChip";
@@ -177,13 +178,9 @@ export const RoomPage = () => {
   if (!participantToken) {
     return (
       <div className="shell shell--room">
-        <header className="topbar">
-          <div className="brand">
-            <span className="brand__mark">▣</span>
-            <span className="brand__text">TERMINAL_POKER</span>
-          </div>
+        <AppHeader>
           <StatusChip tone="accent">ROOM {roomCode}</StatusChip>
-        </header>
+        </AppHeader>
         <main className="join-gate">
           <form className="card join-gate__card" onSubmit={handleInlineJoin}>
             <div className="section-header">
@@ -230,24 +227,18 @@ export const RoomPage = () => {
 
   return (
     <div className="shell shell--room">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand__mark">▣</span>
-          <span className="brand__text">TERMINAL_POKER</span>
-        </div>
-        <div className="topbar__meta">
-          <StatusChip tone="accent">ROOM {snapshot.room.code}</StatusChip>
-          <span className="mono-muted">{isRealtimeReady ? "SOCKET ONLINE" : "CONNECTING SOCKET"}</span>
-          {isModerator ? (
-            <Button onClick={() => setIsSettingsOpen((current) => !current)} variant="ghost">
-              {isSettingsOpen ? "CLOSE SETTINGS" : "ROOM SETTINGS"}
-            </Button>
-          ) : null}
-          <Button onClick={copyRoomLink} variant="ghost">
-            COPY LINK
+      <AppHeader>
+        <StatusChip tone="accent">ROOM {snapshot.room.code}</StatusChip>
+        <span className="mono-muted">{isRealtimeReady ? "SOCKET ONLINE" : "CONNECTING SOCKET"}</span>
+        {isModerator ? (
+          <Button onClick={() => setIsSettingsOpen((current) => !current)} variant="ghost">
+            {isSettingsOpen ? "CLOSE SETTINGS" : "ROOM SETTINGS"}
           </Button>
-        </div>
-      </header>
+        ) : null}
+        <Button onClick={copyRoomLink} variant="ghost">
+          COPY LINK
+        </Button>
+      </AppHeader>
 
       <main className="room-layout">
         <ParticipantRail
