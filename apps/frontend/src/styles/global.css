@@ -782,82 +782,15 @@ select {
   text-transform: uppercase;
 }
 
-.hero-card__main {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 1.25rem;
-}
-
-.hero-card__ticket,
-.hero-card__average,
-.hero-card__consensus,
-.hero-card__results {
+.hero-card__ticket {
   display: grid;
   align-content: start;
-  gap: 0.35rem;
-  min-width: 0;
-}
-
-.hero-card__ticket {
   gap: 0.25rem;
-}
-
-.hero-card__results {
-  justify-items: end;
-  gap: 0.7rem;
-  min-width: clamp(10rem, 16vw, 12rem);
-  min-height: 8.1rem;
-}
-
-.hero-card__results--hidden {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.hero-card__average {
-  justify-items: end;
-  text-align: right;
-}
-
-.hero-card__average-value {
-  font-family: "JetBrains Mono", monospace;
-  font-size: clamp(3.6rem, 8vw, 5.8rem);
-  font-weight: 700;
-  line-height: 0.84;
-  letter-spacing: -0.08em;
-  color: var(--primary);
-  text-shadow: 0 0 22px rgba(135, 245, 197, 0.14);
+  min-width: 0;
 }
 
 .hero-card__footer {
   display: none;
-}
-
-.hero-card__terminal-line {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 2.2rem;
-  padding: 0.55rem 0.8rem;
-  border: 1px solid var(--outline);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.02);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.76rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.hero-card__terminal-line strong {
-  font-size: 1rem;
-  letter-spacing: 0.08em;
-  color: var(--text);
-}
-
-.hero-card__terminal-line--match {
-  border-color: rgba(135, 245, 197, 0.34);
-  color: var(--primary);
 }
 
 .ticket-link {
@@ -1811,32 +1744,8 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .hero-card__results {
-    justify-items: start;
-    min-height: 0;
-    min-width: 0;
-  }
-
-  .hero-card__results--hidden {
-    display: none;
-  }
-
-  .hero-card__average {
-    justify-items: start;
-    text-align: left;
-  }
-
-  .hero-card__average-value {
-    font-size: clamp(3rem, 15vw, 4.6rem);
-  }
-
   .hero-card__footer {
     display: grid;
-  }
-
-  .hero-card__terminal-line {
-    width: 100%;
-    justify-content: space-between;
   }
 
   .ticket-link {

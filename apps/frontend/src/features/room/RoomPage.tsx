@@ -488,18 +488,58 @@ export const RoomPage = () => {
               </div>
             </div>
 
-            {roundSummary ? (
-              <div className="mx-auto flex min-h-[2.25rem] flex-wrap items-center justify-center gap-3">
-                <span className="hero-card__terminal-line">
-                  <strong>{`AVG ${formattedAverage}`}</strong>
-                </span>
-                <span
-                  className={`hero-card__terminal-line ${hasConsensus ? "hero-card__terminal-line--match" : ""}`.trim()}
+            <div className="mx-auto w-full max-w-[44rem]">
+              <div
+                className="grid min-h-[6.4rem] items-center gap-4 rounded-[24px] border px-5 py-4 text-left shadow-[0_24px_70px_rgba(0,0,0,0.12)] md:grid-cols-[minmax(0,1fr)_auto_auto]"
+                style={{
+                  background:
+                    "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 90%, var(--surface-high) 10%), color-mix(in srgb, var(--card-bg) 96%, transparent))",
+                  borderColor: "var(--outline)"
+                }}
+              >
+                <div className="grid gap-1">
+                  <span className="hero-card__label">STATISTICAL OUTPUT</span>
+                  <strong
+                    className="font-['JetBrains_Mono'] text-[clamp(1.35rem,2.9vw,2.2rem)] uppercase tracking-[0.06em]"
+                    style={{ color: "var(--text)" }}
+                  >
+                    {roundSummary ? "SUMMARY_REPORT" : "SUMMARY_LOCKED"}
+                  </strong>
+                  <span
+                    className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.14em]"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    {roundSummary ? "Reveal complete" : "Reveal to compute results"}
+                  </span>
+                </div>
+
+                <div
+                  className="grid min-w-[7rem] gap-1 border-t pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0"
+                  style={{ borderColor: "var(--outline)" }}
                 >
-                  <strong>{consensusLabel}</strong>
-                </span>
+                  <span className="hero-card__label">AVERAGE</span>
+                  <strong
+                    className="font-['Space_Grotesk'] text-[clamp(2rem,4vw,3rem)] leading-none tracking-[-0.06em]"
+                    style={{ color: "var(--primary)" }}
+                  >
+                    {roundSummary ? formattedAverage : "—"}
+                  </strong>
+                </div>
+
+                <div
+                  className="grid min-w-[7rem] gap-1 border-t pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0"
+                  style={{ borderColor: "var(--outline)" }}
+                >
+                  <span className="hero-card__label">CONSENSUS</span>
+                  <strong
+                    className="font-['Space_Grotesk'] text-[clamp(2rem,4vw,3rem)] leading-none tracking-[-0.06em] uppercase"
+                    style={{ color: roundSummary && hasConsensus ? "var(--vote-tile-selected-text)" : "var(--muted)" }}
+                  >
+                    {roundSummary ? consensusLabel : "—"}
+                  </strong>
+                </div>
               </div>
-            ) : null}
+            </div>
           </div>
 
           <section
