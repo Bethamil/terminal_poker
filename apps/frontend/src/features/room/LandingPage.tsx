@@ -308,8 +308,8 @@ export const LandingPage = () => {
                 stretch
                 disabled={busyForm === "create"}
                 style={{
-                  background: "linear-gradient(135deg, #19b676, #11955e)",
-                  color: "#f4fff8"
+                  background: "var(--action-create-bg)",
+                  color: "var(--action-create-text)"
                 }}
                 type="submit"
               >
@@ -384,8 +384,8 @@ export const LandingPage = () => {
               <Button
                 stretch
                 style={{
-                  background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-                  color: "#f8fbff"
+                  background: "var(--action-join-bg)",
+                  color: "var(--action-join-text)"
                 }}
                 type="submit"
                 variant="secondary"
@@ -408,7 +408,14 @@ export const LandingPage = () => {
         </section>
       </main>
 
-      <footer className="fixed inset-x-0 bottom-0 z-20 flex h-10 items-center justify-between border-t border-white/5 bg-[#09090b]/92 px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#6f6987] backdrop-blur-xl">
+      <footer
+        className="fixed inset-x-0 bottom-0 z-20 flex h-10 items-center justify-between px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] backdrop-blur-xl"
+        style={{
+          background: "var(--shell-footer-bg)",
+          borderTop: "1px solid var(--shell-footer-border)",
+          color: "var(--shell-footer-text)"
+        }}
+      >
         <div className="flex items-center gap-4">
           <span>V2.4.0-STABLE</span>
           <span>SYSTEM_ONLINE</span>
@@ -418,7 +425,7 @@ export const LandingPage = () => {
           <span>ESC CLEAR SHELL</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#2edd8a]" aria-hidden="true" />
+          <span className="h-1.5 w-1.5 rounded-full" aria-hidden="true" style={{ background: "var(--shell-footer-dot)" }} />
           <span>LATENCY: 14MS</span>
         </div>
       </footer>

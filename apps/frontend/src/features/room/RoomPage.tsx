@@ -35,18 +35,33 @@ const ParticipantRail = ({
   roomLinkStatus: "idle" | "copied" | "error";
   participants: ParticipantSnapshot[];
 }) => (
-  <aside className="card card--rail grid h-full min-h-[420px] grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-5 border-white/5 bg-[#09090b]/92 p-5 lg:sticky lg:top-5 lg:h-[calc(100vh-7.25rem)]">
+  <aside
+    className="card card--rail grid h-full min-h-[420px] grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-5 border-white/5 p-5 lg:sticky lg:top-5 lg:h-[calc(100vh-7.25rem)]"
+    style={{ background: "var(--rail-panel-bg)" }}
+  >
     <div className="grid gap-1">
-      <h2 className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.18em] text-[#d7c7ff]">
+      <h2
+        className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.18em]"
+        style={{ color: "var(--rail-title)" }}
+      >
         {roomName.replace(/\s+/g, "_")}
       </h2>
-      <span className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#6f6987]">
+      <span
+        className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em]"
+        style={{ color: "var(--rail-meta)" }}
+      >
         ID: {roomCode}
       </span>
     </div>
 
     <div className="grid gap-2">
-      <div className="border-l border-[#8c67ff] bg-white/[0.05] px-4 py-3 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#d5c3ff]">
+      <div
+        className="bg-white/[0.05] px-4 py-3 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em]"
+        style={{
+          borderLeft: "1px solid var(--rail-accent)",
+          color: "var(--rail-accent-text)"
+        }}
+      >
         ACTIVE ({participants.length})
       </div>
     </div>
@@ -80,11 +95,11 @@ const ParticipantRail = ({
     </div>
 
     <Button
-      className="w-full justify-center bg-gradient-to-r from-[#6d28d9] to-[#7c3aed] text-white"
+      className="w-full justify-center"
       onClick={onInvite}
       style={{
-        background: "linear-gradient(135deg, #6d28d9, #7c3aed)",
-        color: "#fbf8ff"
+        background: "var(--action-accent-bg)",
+        color: "var(--action-accent-text)"
       }}
     >
       {roomLinkStatus === "copied"
@@ -463,8 +478,6 @@ export const RoomPage = () => {
   const hasConsensus = roundSummary?.consensus !== null;
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
-  const roomPathLabel = snapshot.room.name.toLowerCase().replace(/\s+/g, "-");
-
   return (
     <div className="shell shell--room relative overflow-hidden pb-20">
       <AppHeader
@@ -511,14 +524,7 @@ export const RoomPage = () => {
             </Button>
           </>
         }
-      >
-        <div className="flex items-center gap-3 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.16em] text-[#8f81bb]">
-          <span>~/rooms/{roomPathLabel}</span>
-          <span className="hidden rounded-full border border-white/8 px-3 py-1 text-[#d7c7ff] sm:inline-flex">
-            {snapshot.room.code}
-          </span>
-        </div>
-      </AppHeader>
+      />
 
       <main className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
         <ParticipantRail
@@ -602,11 +608,11 @@ export const RoomPage = () => {
               <div className="grid gap-4 border-t border-white/6 pt-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
                 <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
                   <Button
-                    className="min-h-[3.25rem] justify-center bg-gradient-to-br from-[#5b21b6] to-[#7c3aed] text-white"
+                    className="min-h-[3.25rem] justify-center"
                     onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
                     style={{
-                      background: "linear-gradient(135deg, #5b21b6, #7c3aed)",
-                      color: "#fbf8ff"
+                      background: "var(--action-accent-bg)",
+                      color: "var(--action-accent-text)"
                     }}
                     stretch
                     variant="primary"
@@ -618,14 +624,20 @@ export const RoomPage = () => {
                   </Button>
                 </div>
                 <div className="grid gap-1 rounded-[14px] border border-white/6 bg-white/[0.02] px-4 py-3 text-right">
-                  <strong className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.14em] text-[#ece5ff]">
+                  <strong
+                    className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.14em]"
+                    style={{ color: "var(--summary-strong)" }}
+                  >
                     {snapshot.round.status === "revealed"
                       ? `Consensus ${consensusLabel}`
                       : waitingVotes === 0
                         ? "All votes are in"
                         : `Awaiting ${waitingVotes} more`}
                   </strong>
-                  <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#6f6987]">
+                  <span
+                    className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em]"
+                    style={{ color: "var(--summary-soft)" }}
+                  >
                     {snapshot.round.status === "revealed"
                       ? `Average ${formattedAverage}`
                       : `${votedCount}/${snapshot.participants.length} voted`}
@@ -672,7 +684,14 @@ export const RoomPage = () => {
         </section>
       </main>
 
-      <footer className="fixed inset-x-0 bottom-0 z-20 flex h-10 items-center justify-between border-t border-white/5 bg-[#09090b]/92 px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#6f6987] backdrop-blur-xl">
+      <footer
+        className="fixed inset-x-0 bottom-0 z-20 flex h-10 items-center justify-between px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] backdrop-blur-xl"
+        style={{
+          background: "var(--shell-footer-bg)",
+          borderTop: "1px solid var(--shell-footer-border)",
+          color: "var(--shell-footer-text)"
+        }}
+      >
         <div className="flex items-center gap-4">
           <span>V2.4.0-STABLE</span>
           <span>[1-8] VOTE</span>
@@ -680,7 +699,10 @@ export const RoomPage = () => {
           <span>[N] NEXT</span>
         </div>
         <div className="hidden items-center gap-2 md:flex">
-          <span className={`h-1.5 w-1.5 rounded-full ${isRealtimeReady ? "bg-[#a98fff]" : "bg-[#6f6987]"}`} />
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: isRealtimeReady ? "var(--shell-footer-dot)" : "var(--shell-footer-text)" }}
+          />
           <span>{isRealtimeReady ? "CONNECTION_STABLE" : "SYNCING"}</span>
         </div>
       </footer>

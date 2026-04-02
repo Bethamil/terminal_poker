@@ -52,6 +52,23 @@
   --presence-away: #7a8199;
   --input-bg: rgba(7, 7, 10, 0.82);
   --input-placeholder: rgba(236, 232, 247, 0.3);
+  --shell-footer-bg: rgba(9, 9, 11, 0.92);
+  --shell-footer-border: rgba(255, 255, 255, 0.05);
+  --shell-footer-text: #6f6987;
+  --shell-footer-dot: #a98fff;
+  --rail-panel-bg: rgba(9, 9, 11, 0.92);
+  --rail-title: #d7c7ff;
+  --rail-meta: #6f6987;
+  --rail-accent: #8c67ff;
+  --rail-accent-text: #d5c3ff;
+  --summary-strong: #ece5ff;
+  --summary-soft: #6f6987;
+  --action-accent-bg: linear-gradient(135deg, #5b21b6, #7c3aed);
+  --action-accent-text: #fbf8ff;
+  --action-create-bg: linear-gradient(135deg, #19b676, #11955e);
+  --action-create-text: #f4fff8;
+  --action-join-bg: linear-gradient(135deg, #3b82f6, #2563eb);
+  --action-join-text: #f8fbff;
   --radius: 12px;
 }
 
@@ -106,6 +123,23 @@
   --presence-away: #4d8fd7;
   --input-bg: rgba(255, 255, 255, 0.92);
   --input-placeholder: rgba(83, 97, 90, 0.5);
+  --shell-footer-bg: rgba(252, 251, 247, 0.94);
+  --shell-footer-border: rgba(31, 63, 52, 0.12);
+  --shell-footer-text: #6d7a74;
+  --shell-footer-dot: #1f8f73;
+  --rail-panel-bg: rgba(246, 244, 238, 0.96);
+  --rail-title: #1b6151;
+  --rail-meta: #6d7a74;
+  --rail-accent: #1f8f73;
+  --rail-accent-text: #1f8f73;
+  --summary-strong: #1f8f73;
+  --summary-soft: #6d7a74;
+  --action-accent-bg: linear-gradient(135deg, #1f8f73, #38a78c);
+  --action-accent-text: #f3fff9;
+  --action-create-bg: linear-gradient(135deg, #1f8f73, #2ba182);
+  --action-create-text: #f3fff9;
+  --action-join-bg: linear-gradient(135deg, #2e7dd8, #58a3f0);
+  --action-join-text: #f8fbff;
 }
 
 * {
