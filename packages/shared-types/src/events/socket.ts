@@ -1,5 +1,5 @@
 import type { RoomSnapshot } from "../domain/room";
-import type { VoteValue } from "../domain/votes";
+import type { VoteValue, VotingDeckId } from "../domain/votes";
 
 export interface RoomJoinRealtimePayload {
   roomCode: string;
@@ -29,6 +29,7 @@ export interface UpdateRoomSettingsPayload {
   roomCode: string;
   participantToken: string;
   jiraBaseUrl: string | null;
+  votingDeckId: VotingDeckId;
   joinPasscode: string | null;
   joinPasscodeMode: JoinPasscodeMode;
 }

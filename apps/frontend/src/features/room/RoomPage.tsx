@@ -2,7 +2,9 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  VOTE_CARD_META,
+  VOTING_DECK_OPTIONS,
+  getVoteCardMeta,
+  getVotingDeckName,
   type ParticipantSnapshot,
   type UpdateRoomSettingsPayload
 } from "@terminal-poker/shared-types";
@@ -10,6 +12,7 @@ import {
 import { AppHeader } from "../../components/AppHeader";
 import { Button } from "../../components/Button";
 import { Field } from "../../components/Field";
+import { SelectField } from "../../components/SelectField";
 import { StatusChip } from "../../components/StatusChip";
 import { apiClient, ApiError } from "../../lib/api/client";
 import { sessionStorageStore } from "../../lib/storage";
@@ -64,6 +67,7 @@ export const RoomPage = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [ticketDraft, setTicketDraft] = useState("");
   const [jiraBaseUrlDraft, setJiraBaseUrlDraft] = useState("");
+  const [votingDeckIdDraft, setVotingDeckIdDraft] = useState<UpdateRoomSettingsPayload["votingDeckId"]>("modified-fibonacci");
   const [newPasscodeDraft, setNewPasscodeDraft] = useState("");
   const [pendingKickId, setPendingKickId] = useState<string | null>(null);
   const {
@@ -92,8 +96,9 @@ export const RoomPage = () => {
     }
 
     setJiraBaseUrlDraft(snapshot.room.jiraBaseUrl ?? "");
+    setVotingDeckIdDraft(snapshot.room.votingDeckId);
     setNewPasscodeDraft("");
-  }, [snapshot?.room.id, snapshot?.room.jiraBaseUrl, snapshot?.room.hasJoinPasscode]);
+  }, [snapshot?.room.id, snapshot?.room.jiraBaseUrl, snapshot?.room.votingDeckId, snapshot?.room.hasJoinPasscode]);
 
   useEffect(() => {
     if (!sessionEndedError) {
@@ -119,6 +124,10 @@ export const RoomPage = () => {
 
   const votedCount = useMemo(
     () => snapshot?.participants.filter((participant) => participant.hasVoted).length ?? 0,
+    [snapshot]
+  );
+  const voteCardMeta = useMemo<ReturnType<typeof getVoteCardMeta>>(
+    () => (snapshot ? getVoteCardMeta(snapshot.room.votingDeckId) : []),
     [snapshot]
   );
 
@@ -151,6 +160,7 @@ export const RoomPage = () => {
 
     updateRoomSettings({
       jiraBaseUrl: jiraBaseUrlDraft.trim() || null,
+      votingDeckId: votingDeckIdDraft,
       joinPasscode: joinPasscodeMode === "set" ? trimmedPasscode : null,
       joinPasscodeMode
     });
@@ -266,6 +276,20 @@ export const RoomPage = () => {
                     onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
                     placeholder="https://jira.example.com"
                   />
+                  <SelectField
+                    label="Voting Deck"
+                    value={votingDeckIdDraft}
+                    onChange={(event) =>
+                      setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
+                    }
+                    hint="Changing the deck starts a fresh round so old votes do not carry over to a new scale."
+                  >
+                    {VOTING_DECK_OPTIONS.map((deck) => (
+                      <option key={deck.id} value={deck.id}>
+                        {deck.name}
+                      </option>
+                    ))}
+                  </SelectField>
                   <Field
                     hint={
                       snapshot.room.hasJoinPasscode
@@ -409,10 +433,10 @@ export const RoomPage = () => {
             <section className="card deck-card">
               <div className="section-header">
                 <StatusChip tone="success">VOTING_DECK</StatusChip>
-                <h2>Fibonacci estimation</h2>
+                <h2>{getVotingDeckName(snapshot.room.votingDeckId)} estimation</h2>
               </div>
               <div className="vote-grid">
-                {VOTE_CARD_META.map((card) => {
+                {voteCardMeta.map((card) => {
                   const isSelected = snapshot.viewer.selectedVote === card.value;
                   return (
                     <button
@@ -433,7 +457,7 @@ export const RoomPage = () => {
 
           <section className="card footer-card">
             <div className="shortcut-strip">
-              <span>[1-0, /] VOTE</span>
+              <span>[1-0, -, /] VOTE</span>
               {isModerator ? <span>[R] REVEAL</span> : null}
               {isModerator ? <span>[N] RESET</span> : null}
               <span>POSTGRESQL IS SOURCE OF TRUTH</span>

@@ -11,6 +11,7 @@ model Room {
   id               String        @id @default(cuid())
   code             String        @unique @db.VarChar(8)
   jiraBaseUrl      String?
+  votingDeckId     String        @default("modified-fibonacci") @db.VarChar(32)
   joinPasscodeHash String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
@@ -70,4 +71,3 @@ enum RoundStatus {
   ACTIVE
   REVEALED
 }
-

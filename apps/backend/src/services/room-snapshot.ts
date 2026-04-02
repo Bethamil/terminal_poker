@@ -1,5 +1,10 @@
 import { ParticipantRole, Prisma, RoundStatus } from "@prisma/client";
-import { RoomSnapshot, VOTING_DECK, VoteValue } from "@terminal-poker/shared-types";
+import {
+  RoomSnapshot,
+  VoteValue,
+  getVotingDeck,
+  resolveVotingDeckId
+} from "@terminal-poker/shared-types";
 
 import type { IssueLinkProvider } from "./jira-provider";
 
@@ -28,7 +33,7 @@ const toNumericVote = (value: VoteValue): number | null => {
   return Number(value);
 };
 
-const buildSummary = (votes: VoteValue[]) => {
+const buildSummary = (votes: VoteValue[], votingDeck: VoteValue[]) => {
   if (votes.length === 0) {
     return null;
   }
@@ -51,7 +56,7 @@ const buildSummary = (votes: VoteValue[]) => {
   let highestCount = 0;
   let tie = false;
 
-  for (const value of VOTING_DECK) {
+  for (const value of votingDeck) {
     const currentCount = counts[value] ?? 0;
 
     if (currentCount > highestCount) {
@@ -87,12 +92,15 @@ export const buildRoomSnapshot = (
 
   const roundVotes = activeRound.votes.map((vote) => vote.value as VoteValue);
   const isRevealed = activeRound.status === RoundStatus.REVEALED;
+  const votingDeckId = resolveVotingDeckId(room.votingDeckId);
+  const votingDeck = getVotingDeck(votingDeckId);
 
   return {
     room: {
       id: room.id,
       code: room.code,
       jiraBaseUrl: room.jiraBaseUrl,
+      votingDeckId,
       hasJoinPasscode: Boolean(room.joinPasscodeHash),
       createdAt: room.createdAt.toISOString()
     },
@@ -102,7 +110,7 @@ export const buildRoomSnapshot = (
       jiraTicketKey: activeRound.jiraTicketKey,
       jiraTicketUrl: issueLinkProvider.buildIssueUrl(room.jiraBaseUrl, activeRound.jiraTicketKey),
       revealedAt: activeRound.revealedAt?.toISOString() ?? null,
-      summary: isRevealed ? buildSummary(roundVotes) : null
+      summary: isRevealed ? buildSummary(roundVotes, votingDeck) : null
     },
     participants: room.participants.map((participant) => ({
       id: participant.id,
@@ -119,7 +127,6 @@ export const buildRoomSnapshot = (
       role: mapParticipantRole(viewer.role),
       selectedVote: (votesByParticipantId.get(viewer.id) ?? null) as VoteValue | null
     },
-    votingDeck: [...VOTING_DECK]
+    votingDeck
   };
 };
-

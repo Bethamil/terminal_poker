@@ -14,7 +14,12 @@ export class RoomRepository {
     return Boolean(room);
   }
 
-  async createRoom(data: { code: string; jiraBaseUrl: string | null; joinPasscodeHash: string | null }) {
+  async createRoom(data: {
+    code: string;
+    jiraBaseUrl: string | null;
+    votingDeckId: string;
+    joinPasscodeHash: string | null;
+  }) {
     return this.db.room.create({
       data
     });
@@ -75,12 +80,14 @@ export class RoomRepository {
   async updateRoomSettings(data: {
     roomId: string;
     jiraBaseUrl: string | null;
+    votingDeckId: string;
     joinPasscodeHash: string | null;
   }) {
     return this.db.room.update({
       where: { id: data.roomId },
       data: {
         jiraBaseUrl: data.jiraBaseUrl,
+        votingDeckId: data.votingDeckId,
         joinPasscodeHash: data.joinPasscodeHash
       }
     });

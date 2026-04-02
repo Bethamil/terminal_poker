@@ -11,6 +11,7 @@ const createRoomAggregate = (): RoomAggregate =>
     id: "room_1",
     code: "AB123",
     jiraBaseUrl: "https://jira.old.example.com",
+    votingDeckId: "modified-fibonacci",
     joinPasscodeHash: hashSecret("secret"),
     createdAt: new Date("2026-01-01T10:00:00.000Z"),
     updatedAt: new Date("2026-01-01T10:00:00.000Z"),
@@ -57,10 +58,14 @@ const createFakePrisma = (room: RoomAggregate): PrismaClient => {
       update: async ({
         data
       }: {
-        data: { jiraBaseUrl?: string | null; joinPasscodeHash?: string | null };
+        data: { jiraBaseUrl?: string | null; votingDeckId?: string; joinPasscodeHash?: string | null };
       }) => {
         if ("jiraBaseUrl" in data) {
           room.jiraBaseUrl = data.jiraBaseUrl ?? null;
+        }
+
+        if ("votingDeckId" in data && data.votingDeckId) {
+          room.votingDeckId = data.votingDeckId;
         }
 
         if ("joinPasscodeHash" in data) {
@@ -93,6 +98,23 @@ const createFakePrisma = (room: RoomAggregate): PrismaClient => {
         return participant;
       }
     },
+    round: {
+      create: async ({ data }: { data: { roomId: string; jiraTicketKey?: string | null } }) => {
+        const round = {
+          id: `round_${room.rounds.length + 1}`,
+          roomId: data.roomId,
+          status: RoundStatus.ACTIVE,
+          jiraTicketKey: data.jiraTicketKey ?? null,
+          revealedAt: null,
+          createdAt: new Date("2026-01-01T10:06:00.000Z"),
+          updatedAt: new Date("2026-01-01T10:06:00.000Z"),
+          votes: []
+        };
+
+        room.rounds.unshift(round as RoomAggregate["rounds"][number]);
+        return round;
+      }
+    },
     $transaction: async (callback: (transactionClient: PrismaClient) => Promise<unknown>) =>
       callback(client as unknown as PrismaClient),
     $queryRaw: async () => [{ "?column?": 1 }]
@@ -111,12 +133,16 @@ describe("RoomService moderator actions", () => {
 
     await service.updateRoomSettings("AB123", "moderator-token", {
       jiraBaseUrl: "https://jira.next.example.com/browse",
+      votingDeckId: "powers-of-two",
       joinPasscode: null,
       joinPasscodeMode: "keep"
     });
 
     expect(room.jiraBaseUrl).toBe("https://jira.next.example.com");
+    expect(room.votingDeckId).toBe("powers-of-two");
     expect(room.joinPasscodeHash).toBe(hashSecret("secret"));
+    expect(room.rounds).toHaveLength(2);
+    expect(room.rounds[0].votes).toEqual([]);
   });
 
   it("kicks a participant and blocks moderators from kicking themselves", async () => {
@@ -133,6 +159,16 @@ describe("RoomService moderator actions", () => {
 
     await expect(service.kickParticipant("AB123", "moderator-token", "mod_1")).rejects.toMatchObject({
       code: "CANNOT_KICK_SELF"
+    } satisfies Partial<AppError>);
+  });
+
+  it("rejects votes that are not part of the room deck", async () => {
+    const room = createRoomAggregate();
+    room.votingDeckId = "tshirt";
+    const service = createService(room);
+
+    await expect(service.castVote("AB123", "participant-token", "5")).rejects.toMatchObject({
+      code: "INVALID_VOTE"
     } satisfies Partial<AppError>);
   });
 });

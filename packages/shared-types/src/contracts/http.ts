@@ -1,9 +1,11 @@
 import type { RoomSnapshot } from "../domain/room";
+import type { VotingDeckId } from "../domain/votes";
 
 export interface CreateRoomRequest {
   name: string;
   jiraBaseUrl?: string | null;
   joinPasscode?: string | null;
+  votingDeckId?: VotingDeckId;
 }
 
 export interface JoinRoomRequest {
@@ -20,4 +22,3 @@ export interface RoomSessionResponse {
 export interface RoomStateResponse {
   snapshot: RoomSnapshot;
 }
-

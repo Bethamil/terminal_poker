@@ -1,9 +1,15 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  DEFAULT_VOTING_DECK_ID,
+  VOTING_DECK_OPTIONS,
+  type VotingDeckId
+} from "@terminal-poker/shared-types";
 
 import { AppHeader } from "../../components/AppHeader";
 import { Button } from "../../components/Button";
 import { Field } from "../../components/Field";
+import { SelectField } from "../../components/SelectField";
 import { StatusChip } from "../../components/StatusChip";
 import { apiClient, ApiError } from "../../lib/api/client";
 import { sessionStorageStore } from "../../lib/storage";
@@ -11,7 +17,8 @@ import { sessionStorageStore } from "../../lib/storage";
 const initialCreateForm = {
   name: "",
   jiraBaseUrl: "",
-  joinPasscode: ""
+  joinPasscode: "",
+  votingDeckId: DEFAULT_VOTING_DECK_ID
 };
 
 const initialJoinForm = {
@@ -36,7 +43,8 @@ export const LandingPage = () => {
       const response = await apiClient.createRoom({
         name: createForm.name,
         jiraBaseUrl: createForm.jiraBaseUrl || null,
-        joinPasscode: createForm.joinPasscode || null
+        joinPasscode: createForm.joinPasscode || null,
+        votingDeckId: createForm.votingDeckId
       });
       sessionStorageStore.setParticipantToken(response.roomCode, response.participantToken);
       navigate(`/room/${response.roomCode}`);
@@ -135,6 +143,20 @@ export const LandingPage = () => {
               type="password"
               hint="If set, everyone joining this room must enter it."
             />
+            <SelectField
+              label="Voting Deck"
+              value={createForm.votingDeckId}
+              onChange={(event) =>
+                setCreateForm((current) => ({ ...current, votingDeckId: event.target.value as VotingDeckId }))
+              }
+              hint="Modified Fibonacci is the default. You can change this later in room settings."
+            >
+              {VOTING_DECK_OPTIONS.map((deck) => (
+                <option key={deck.id} value={deck.id}>
+                  {deck.name}
+                </option>
+              ))}
+            </SelectField>
             <Button stretch disabled={busyForm === "create"} type="submit">
               {busyForm === "create" ? "CREATING..." : "[CREATE_SESSION]"}
             </Button>

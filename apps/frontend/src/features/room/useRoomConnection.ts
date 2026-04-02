@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  VOTE_CARD_META,
+  getVoteCardMeta,
   type RoomErrorPayload,
   type RoomSnapshot,
   type UpdateRoomSettingsPayload,
@@ -22,7 +22,7 @@ interface UseRoomConnectionResult {
   resetRound: () => void;
   updateTicket: (jiraTicketKey: string | null) => void;
   updateRoomSettings: (
-    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "joinPasscode" | "joinPasscodeMode">
+    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
   ) => void;
   kickParticipant: (participantId: string) => void;
 }
@@ -190,7 +190,7 @@ export const useRoomConnection = (
   };
 
   const emitRoomSettingsUpdate = (
-    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "joinPasscode" | "joinPasscodeMode">
+    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
   ) => {
     const socket = socketRef.current;
 
@@ -219,7 +219,13 @@ export const useRoomConnection = (
     });
   };
 
-  const availableShortcuts = useMemo(() => new Map(VOTE_CARD_META.map((card) => [card.shortcut, card.value])), []);
+  const availableShortcuts = useMemo<Map<string, VoteValue>>(
+    () =>
+      new Map<string, VoteValue>(
+        (snapshot ? getVoteCardMeta(snapshot.room.votingDeckId) : []).map((card) => [card.shortcut, card.value])
+      ),
+    [snapshot]
+  );
 
   useEffect(() => {
     if (!snapshot || !participantToken) {

@@ -1,12 +1,14 @@
 import { Router, type Router as ExpressRouter } from "express";
 import { z } from "zod";
+import { VOTING_DECK_IDS } from "@terminal-poker/shared-types";
 
 import type { RoomService } from "../services/room-service";
 
 const createRoomSchema = z.object({
   name: z.string(),
   jiraBaseUrl: z.string().optional().nullable(),
-  joinPasscode: z.string().optional().nullable()
+  joinPasscode: z.string().optional().nullable(),
+  votingDeckId: z.enum(VOTING_DECK_IDS).optional()
 });
 
 const joinRoomSchema = z.object({

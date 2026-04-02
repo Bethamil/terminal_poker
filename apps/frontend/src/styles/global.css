@@ -127,7 +127,8 @@ a {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -402,6 +403,10 @@ input {
 
 .field__input:disabled {
   opacity: 0.6;
+}
+
+.field__select {
+  appearance: none;
 }
 
 .button {

@@ -1,14 +1,16 @@
 import { ParticipantRole, Prisma, PrismaClient } from "@prisma/client";
 import {
   CreateRoomRequest,
+  DEFAULT_VOTING_DECK_ID,
   JoinRoomRequest,
   RoomSessionResponse,
   RoomStateResponse,
   VoteValue,
-  isVoteValue,
+  getVotingDeck,
   normalizeJiraBaseUrl
 } from "@terminal-poker/shared-types";
 import type { JoinPasscodeMode, UpdateRoomSettingsPayload } from "@terminal-poker/shared-types";
+import { resolveVotingDeckId } from "@terminal-poker/shared-types";
 
 import { AppError } from "../http/errors";
 import { RoomRepository } from "../repositories/room-repository";
@@ -82,6 +84,7 @@ export class RoomService {
   async createRoom(input: CreateRoomRequest): Promise<RoomSessionResponse> {
     const name = this.validateName(input.name);
     const jiraBaseUrl = normalizeJiraBaseUrl(input.jiraBaseUrl);
+    const votingDeckId = input.votingDeckId ?? DEFAULT_VOTING_DECK_ID;
     const joinPasscodeHash = input.joinPasscode?.trim() ? hashSecret(input.joinPasscode.trim()) : null;
     const roomCode = await this.generateUniqueCode();
     const participantToken = createParticipantToken();
@@ -92,6 +95,7 @@ export class RoomService {
       const room = await repo.createRoom({
         code: roomCode,
         jiraBaseUrl,
+        votingDeckId,
         joinPasscodeHash
       });
 
@@ -206,12 +210,13 @@ export class RoomService {
   }
 
   async castVote(roomCode: string, participantToken: string, value: VoteValue): Promise<void> {
-    if (!isVoteValue(value)) {
-      throw new AppError(400, "INVALID_VOTE", "Vote value is invalid.");
-    }
-
     const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
     const round = authorized.room.rounds[0];
+    const votingDeck = getVotingDeck(resolveVotingDeckId(authorized.room.votingDeckId));
+
+    if (!votingDeck.includes(value)) {
+      throw new AppError(400, "INVALID_VOTE", "Vote value is invalid for this room's deck.");
+    }
 
     if (!round) {
       throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
@@ -250,7 +255,7 @@ export class RoomService {
   async updateRoomSettings(
     roomCode: string,
     participantToken: string,
-    input: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "joinPasscode" | "joinPasscodeMode">
+    input: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
   ): Promise<void> {
     const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
 
@@ -265,6 +270,8 @@ export class RoomService {
       input.joinPasscodeMode,
       joinPasscode
     );
+    const nextVotingDeckId = input.votingDeckId;
+    const votingDeckChanged = authorized.room.votingDeckId !== nextVotingDeckId;
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
@@ -272,8 +279,15 @@ export class RoomService {
       await repo.updateRoomSettings({
         roomId: authorized.room.id,
         jiraBaseUrl,
+        votingDeckId: nextVotingDeckId,
         joinPasscodeHash
       });
+
+      if (votingDeckChanged) {
+        await repo.createRound({
+          roomId: authorized.room.id
+        });
+      }
     });
   }
 

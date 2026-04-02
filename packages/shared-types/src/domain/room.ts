@@ -1,4 +1,4 @@
-import type { VoteValue } from "./votes";
+import type { VoteValue, VotingDeckId } from "./votes";
 
 export type ParticipantRole = "moderator" | "participant";
 export type PresenceState = "online" | "away";
@@ -41,6 +41,7 @@ export interface RoomSnapshot {
     id: string;
     code: string;
     jiraBaseUrl: string | null;
+    votingDeckId: VotingDeckId;
     hasJoinPasscode: boolean;
     createdAt: string;
   };
