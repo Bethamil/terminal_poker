@@ -226,6 +226,8 @@ export const RoomPage = () => {
     );
   }
 
+  const isModerator = snapshot.viewer.role === "moderator";
+
   return (
     <div className="shell shell--room">
       <header className="topbar">
@@ -236,7 +238,7 @@ export const RoomPage = () => {
         <div className="topbar__meta">
           <StatusChip tone="accent">ROOM {snapshot.room.code}</StatusChip>
           <span className="mono-muted">{isRealtimeReady ? "SOCKET ONLINE" : "CONNECTING SOCKET"}</span>
-          {snapshot.viewer.role === "moderator" ? (
+          {isModerator ? (
             <Button onClick={() => setIsSettingsOpen((current) => !current)} variant="ghost">
               {isSettingsOpen ? "CLOSE SETTINGS" : "ROOM SETTINGS"}
             </Button>
@@ -254,7 +256,7 @@ export const RoomPage = () => {
         />
 
         <section className="room-main">
-          {snapshot.viewer.role === "moderator" && isSettingsOpen ? (
+          {isModerator && isSettingsOpen ? (
             <section className="card settings-card">
               <div className="section-header">
                 <StatusChip tone="accent">MODERATOR_CONSOLE</StatusChip>
@@ -368,56 +370,50 @@ export const RoomPage = () => {
           </div>
 
           <div className="room-content-grid">
-            <section className="card round-card">
-              <div className="section-header">
-                <StatusChip tone="accent">ROUND CONTROL</StatusChip>
-                <h2>Ticket and moderator actions</h2>
-              </div>
-
-              <div className="ticket-editor">
-                <Field
-                  disabled={snapshot.viewer.role !== "moderator"}
-                  label="Jira Ticket Key / ID"
-                  value={ticketDraft}
-                  onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
-                  placeholder="PROJ-123"
-                />
-                <Button
-                  disabled={snapshot.viewer.role !== "moderator"}
-                  onClick={() => updateTicket(ticketDraft || null)}
-                  variant="secondary"
-                >
-                  SAVE TICKET
-                </Button>
-              </div>
-
-              <div className="action-row">
-                <Button
-                  disabled={snapshot.viewer.role !== "moderator" || snapshot.round.status === "revealed"}
-                  onClick={revealRound}
-                >
-                  [R] REVEAL
-                </Button>
-                <Button disabled={snapshot.viewer.role !== "moderator"} onClick={resetRound} variant="secondary">
-                  [N] RESET
-                </Button>
-              </div>
-
-              {snapshot.round.summary ? (
-                <div className="summary-grid">
-                  <div className="summary-card">
-                    <span>Average</span>
-                    <strong>{snapshot.round.summary.average ?? "n/a"}</strong>
-                  </div>
-                  <div className="summary-card">
-                    <span>Consensus</span>
-                    <strong>{snapshot.round.summary.consensus ?? "split"}</strong>
-                  </div>
+            {isModerator ? (
+              <section className="card round-card">
+                <div className="section-header">
+                  <StatusChip tone="accent">ROUND CONTROL</StatusChip>
+                  <h2>Ticket and moderator actions</h2>
                 </div>
-              ) : (
-                <div className="waiting-banner">Votes remain hidden until the moderator reveals the round.</div>
-              )}
-            </section>
+
+                <div className="ticket-editor">
+                  <Field
+                    label="Jira Ticket Key / ID"
+                    value={ticketDraft}
+                    onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
+                    placeholder="PROJ-123"
+                  />
+                  <Button onClick={() => updateTicket(ticketDraft || null)} variant="secondary">
+                    SAVE TICKET
+                  </Button>
+                </div>
+
+                <div className="action-row">
+                  <Button disabled={snapshot.round.status === "revealed"} onClick={revealRound}>
+                    [R] REVEAL
+                  </Button>
+                  <Button onClick={resetRound} variant="secondary">
+                    [N] RESET
+                  </Button>
+                </div>
+
+                {snapshot.round.summary ? (
+                  <div className="summary-grid">
+                    <div className="summary-card">
+                      <span>Average</span>
+                      <strong>{snapshot.round.summary.average ?? "n/a"}</strong>
+                    </div>
+                    <div className="summary-card">
+                      <span>Consensus</span>
+                      <strong>{snapshot.round.summary.consensus ?? "split"}</strong>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="waiting-banner">Votes remain hidden until the moderator reveals the round.</div>
+                )}
+              </section>
+            ) : null}
 
             <section className="card deck-card">
               <div className="section-header">
@@ -447,8 +443,8 @@ export const RoomPage = () => {
           <section className="card footer-card">
             <div className="shortcut-strip">
               <span>[1-0, /] VOTE</span>
-              <span>[R] REVEAL</span>
-              <span>[N] RESET</span>
+              {isModerator ? <span>[R] REVEAL</span> : null}
+              {isModerator ? <span>[N] RESET</span> : null}
               <span>POSTGRESQL IS SOURCE OF TRUTH</span>
             </div>
             {error || joinError ? <div className="notice notice--error">{error ?? joinError}</div> : null}
