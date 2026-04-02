@@ -145,16 +145,7 @@ export const LandingPage = () => {
 
   return (
     <div className="shell shell--landing relative overflow-hidden">
-      <AppHeader>
-        <nav
-          aria-label="Primary"
-          className="flex items-center gap-4 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.18em] text-[#6f6987]"
-        >
-          <span className="border-b border-[#8c67ff] pb-1 text-[#d8c7ff]">ROOT</span>
-          <span>DOCS</span>
-          <span>REPOS</span>
-        </nav>
-      </AppHeader>
+      <AppHeader />
 
       <main className="mx-auto grid w-full max-w-[1380px] gap-7">
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">
@@ -164,7 +155,7 @@ export const LandingPage = () => {
             </h1>
             <div className="mt-4 inline-flex items-center gap-3 font-['JetBrains_Mono'] text-xs uppercase tracking-[0.18em] text-[#9486bb]/85">
               <span className="h-2 w-2 rounded-full bg-[#aa8cff]" aria-hidden="true" />
-              <span>SECURE_SESSION_ESTABLISHED // AES-256</span>
+              <span>REALTIME_SESSION_READY // NO_ACCOUNT_REQUIRED</span>
             </div>
           </div>
 
