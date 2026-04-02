@@ -593,7 +593,6 @@ export const RoomPage = () => {
         }}
       >
         <div className="flex items-center gap-4">
-          <span>V2.4.0-STABLE</span>
           <span>{voteShortcutHint}</span>
           <span>[R] REVEAL</span>
           <span>[N] NEXT</span>

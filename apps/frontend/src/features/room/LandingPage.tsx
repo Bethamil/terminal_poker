@@ -185,9 +185,6 @@ export const LandingPage = () => {
               <span className="landing-window__dot landing-window__dot--muted h-3 w-3 rounded-full" />
             </div>
             <div className="h-px flex-1 bg-white/6" />
-            <span className="landing-window__meta font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.18em]">
-              SESSION_V2.4.0
-            </span>
           </div>
 
           <div className="landing-window__command mb-8 flex items-start gap-4 font-['JetBrains_Mono'] text-base tracking-[0.18em] lg:text-lg">
@@ -271,16 +268,12 @@ export const LandingPage = () => {
         }}
       >
         <div className="flex items-center gap-4">
-          <span>V2.4.0-STABLE</span>
           <span>SYSTEM_ONLINE</span>
         </div>
-        <div className="hidden items-center gap-4 md:flex">
-          <span>ENTER TO START</span>
-          <span>ESC CLEAR SHELL</span>
-        </div>
+        <div />
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full" aria-hidden="true" style={{ background: "var(--shell-footer-dot)" }} />
-          <span>LATENCY: 14MS</span>
+          <span>READY</span>
         </div>
       </footer>
 
