@@ -560,23 +560,18 @@ export const RoomPage = () => {
               </div>
             </div>
 
-            <div className="mx-auto flex min-h-[2.25rem] flex-wrap items-center justify-center gap-3">
-              <span className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</span>
-              <span
-                aria-hidden={!roundSummary}
-                className={`hero-card__terminal-line ${roundSummary ? "" : "invisible pointer-events-none"}`.trim()}
-              >
-                <strong>{roundSummary ? `AVG ${formattedAverage}` : "AVG 00"}</strong>
-              </span>
-              <span
-                aria-hidden={!roundSummary}
-                className={`hero-card__terminal-line ${hasConsensus ? "hero-card__terminal-line--match" : ""} ${
-                  roundSummary ? "" : "invisible pointer-events-none"
-                }`.trim()}
-              >
-                <strong>{roundSummary ? consensusLabel : "split"}</strong>
-              </span>
-            </div>
+            {roundSummary ? (
+              <div className="mx-auto flex min-h-[2.25rem] flex-wrap items-center justify-center gap-3">
+                <span className="hero-card__terminal-line">
+                  <strong>{`AVG ${formattedAverage}`}</strong>
+                </span>
+                <span
+                  className={`hero-card__terminal-line ${hasConsensus ? "hero-card__terminal-line--match" : ""}`.trim()}
+                >
+                  <strong>{consensusLabel}</strong>
+                </span>
+              </div>
+            ) : null}
           </div>
 
           {isModerator ? (
@@ -646,9 +641,12 @@ export const RoomPage = () => {
           <section
             className={`deck-card mx-auto w-full max-w-[82rem] ${isModerator ? "deck-card--moderator" : ""}`.trim()}
           >
-            <div className="section-header">
-              <StatusChip tone="success">DECK</StatusChip>
-              <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="section-header">
+                <StatusChip tone="success">DECK</StatusChip>
+                <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
+              </div>
+              <div className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</div>
             </div>
             <div className="deck-card__body">
               <div className="vote-grid">
