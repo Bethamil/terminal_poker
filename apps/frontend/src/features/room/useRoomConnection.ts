@@ -300,8 +300,9 @@ export const useRoomConnection = (
       const target = event.target as HTMLElement | null;
       const isTypingContext =
         target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
+      const hasModifierKey = event.metaKey || event.ctrlKey || event.altKey;
 
-      if (isTypingContext) {
+      if (isTypingContext || hasModifierKey) {
         return;
       }
 
