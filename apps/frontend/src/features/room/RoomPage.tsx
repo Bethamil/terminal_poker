@@ -590,65 +590,50 @@ export const RoomPage = () => {
               <div className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</div>
             </div>
             {isModerator ? (
-              <div
-                className="flex flex-wrap items-center gap-2 pb-2"
-              >
-                <div className="min-w-[11rem] flex-[1_1_15rem]">
-                  <Field
-                    aria-label="Ticket"
-                    value={ticketDraft}
-                    onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
-                    placeholder="PROJ-123"
-                  />
+              <div className="flex flex-wrap items-stretch gap-3 border-b border-white/6 pb-3">
+                <div className="flex min-w-[18rem] flex-[1_1_30rem] items-stretch gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Field
+                      aria-label="Ticket"
+                      value={ticketDraft}
+                      onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
+                      placeholder="PROJ-123"
+                    />
+                  </div>
+                  <Button
+                    disabled={!hasTicketChanged}
+                    onClick={() => updateTicket(normalizedTicketDraft || null)}
+                    style={{ minHeight: "3rem", padding: "0.7rem 0.9rem" }}
+                    variant="secondary"
+                  >
+                    SYNC
+                  </Button>
                 </div>
-                <Button
-                  disabled={!hasTicketChanged}
-                  onClick={() => updateTicket(normalizedTicketDraft || null)}
-                  style={{ minHeight: "2.6rem", padding: "0.7rem 0.9rem" }}
-                  variant="secondary"
-                >
-                  SYNC
-                </Button>
-                <Button
-                  onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
-                  style={{
-                    background: "var(--action-accent-bg)",
-                    color: "var(--action-accent-text)",
-                    minHeight: "2.6rem",
-                    padding: "0.7rem 0.9rem"
-                  }}
-                  variant="primary"
-                >
-                  {snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL"}
-                </Button>
-                <Button
-                  onClick={resetRound}
-                  style={{ minHeight: "2.6rem", padding: "0.7rem 0.9rem" }}
-                  variant="ghost"
-                >
-                  RESET
-                </Button>
-                <div className="ml-auto grid gap-0.5 text-right">
-                  <strong
-                    className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em]"
-                    style={{ color: "var(--summary-strong)" }}
-                  >
-                    {snapshot.round.status === "revealed"
-                      ? `Consensus ${consensusLabel}`
-                      : waitingVotes === 0
-                        ? "All votes are in"
-                        : `Awaiting ${waitingVotes} more`}
-                  </strong>
+                <div className="flex items-stretch gap-3">
                   <span
-                    className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em]"
-                    style={{ color: "var(--summary-soft)" }}
+                    aria-hidden="true"
+                    className="hidden w-px lg:block"
+                    style={{ background: "var(--shell-footer-border)" }}
+                  />
+                  <Button
+                    onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
+                    style={{
+                      background: "var(--action-accent-bg)",
+                      color: "var(--action-accent-text)",
+                      minHeight: "3rem",
+                      padding: "0.7rem 1rem"
+                    }}
+                    variant="primary"
                   >
-                    {snapshot.round.status === "revealed"
-                      ? `Average ${formattedAverage}`
-                      : waitingVotes === 0
-                        ? "Ready to reveal"
-                        : "Waiting for votes"}
-                  </span>
+                    {snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL"}
+                  </Button>
+                  <Button
+                    onClick={resetRound}
+                    style={{ minHeight: "3rem", padding: "0.7rem 0.9rem" }}
+                    variant="ghost"
+                  >
+                    RESET
+                  </Button>
                 </div>
               </div>
             ) : null}
