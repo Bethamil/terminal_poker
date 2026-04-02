@@ -1,5 +1,5 @@
-import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { FormEvent, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   DEFAULT_VOTING_DECK_ID,
   VOTING_DECK_OPTIONS,
@@ -12,10 +12,11 @@ import { Field } from "../../components/Field";
 import { SelectField } from "../../components/SelectField";
 import { StatusChip } from "../../components/StatusChip";
 import { apiClient, ApiError } from "../../lib/api/client";
-import { sessionStorageStore } from "../../lib/storage";
+import { sessionStorageStore, type StoredRoomRecord } from "../../lib/storage";
 
 const initialCreateForm = {
   name: "",
+  roomName: "",
   jiraBaseUrl: "",
   joinPasscode: "",
   votingDeckId: DEFAULT_VOTING_DECK_ID
@@ -28,25 +29,53 @@ const initialJoinForm = {
 };
 
 export const LandingPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const [createForm, setCreateForm] = useState(initialCreateForm);
   const [joinForm, setJoinForm] = useState(initialJoinForm);
   const [busyForm, setBusyForm] = useState<"create" | "join" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [previousRooms, setPreviousRooms] = useState<StoredRoomRecord[]>(() => sessionStorageStore.getPreviousRooms());
+
+  useEffect(() => {
+    const state = location.state as { notice?: string } | null;
+
+    if (!state?.notice) {
+      return;
+    }
+
+    setNotice(state.notice);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
+
+  const refreshPreviousRooms = () => {
+    setPreviousRooms(sessionStorageStore.getPreviousRooms());
+  };
+
+  const formatLastVisited = (value: string) =>
+    new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short"
+    }).format(new Date(value));
 
   const handleCreate = async (event: FormEvent) => {
     event.preventDefault();
     setBusyForm("create");
     setError(null);
+    setNotice(null);
 
     try {
       const response = await apiClient.createRoom({
         name: createForm.name,
+        roomName: createForm.roomName,
         jiraBaseUrl: createForm.jiraBaseUrl || null,
         joinPasscode: createForm.joinPasscode || null,
         votingDeckId: createForm.votingDeckId
       });
       sessionStorageStore.setParticipantToken(response.roomCode, response.participantToken);
+      sessionStorageStore.rememberRoom(response.roomCode, response.snapshot.room.name);
+      refreshPreviousRooms();
       navigate(`/room/${response.roomCode}`);
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : "Unable to create room.");
@@ -59,6 +88,7 @@ export const LandingPage = () => {
     event.preventDefault();
     setBusyForm("join");
     setError(null);
+    setNotice(null);
 
     try {
       const roomCode = joinForm.roomCode.trim().toUpperCase();
@@ -67,12 +97,20 @@ export const LandingPage = () => {
         joinPasscode: joinForm.joinPasscode || null
       });
       sessionStorageStore.setParticipantToken(response.roomCode, response.participantToken);
+      sessionStorageStore.rememberRoom(response.roomCode, response.snapshot.room.name);
+      refreshPreviousRooms();
       navigate(`/room/${response.roomCode}`);
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : "Unable to join room.");
     } finally {
       setBusyForm(null);
     }
+  };
+
+  const openPreviousRoom = (roomCode: string) => {
+    setError(null);
+    setNotice(null);
+    navigate(`/room/${roomCode}`);
   };
 
   return (
@@ -97,6 +135,13 @@ export const LandingPage = () => {
               value={createForm.name}
               onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))}
               placeholder="root_dev"
+              required
+            />
+            <Field
+              label="ROOM NAME"
+              value={createForm.roomName}
+              onChange={(event) => setCreateForm((current) => ({ ...current, roomName: event.target.value }))}
+              placeholder="Platform sync"
               required
             />
             <Field
@@ -163,8 +208,37 @@ export const LandingPage = () => {
             </Button>
           </form>
         </section>
+
+        {previousRooms.length > 0 ? (
+          <section className="card landing-history">
+            <div className="section-header">
+              <StatusChip tone="accent">RECENT</StatusChip>
+              <h2>Previous rooms</h2>
+            </div>
+            <div className="history-list">
+              {previousRooms.map((room) => {
+                const hasActiveSession = Boolean(sessionStorageStore.getParticipantToken(room.roomCode));
+
+                return (
+                  <div className="history-row" key={room.roomCode}>
+                    <div className="history-row__identity">
+                      <strong>{room.roomName}</strong>
+                      <span>
+                        {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
+                      </span>
+                    </div>
+                    <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
+                      {hasActiveSession ? "RESUME" : "OPEN"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
       </main>
 
+      {notice ? <div className="notice notice--info">{notice}</div> : null}
       {error ? <div className="notice notice--error">{error}</div> : null}
     </div>
   );

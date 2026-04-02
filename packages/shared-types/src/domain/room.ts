@@ -40,6 +40,7 @@ export interface RoomSnapshot {
   room: {
     id: string;
     code: string;
+    name: string;
     jiraBaseUrl: string | null;
     votingDeckId: VotingDeckId;
     hasJoinPasscode: boolean;

@@ -3,6 +3,7 @@ import type { VotingDeckId } from "../domain/votes";
 
 export interface CreateRoomRequest {
   name: string;
+  roomName: string;
   jiraBaseUrl?: string | null;
   joinPasscode?: string | null;
   votingDeckId?: VotingDeckId;

@@ -56,6 +56,16 @@ export class RoomService {
     return sanitized;
   }
 
+  private validateRoomName(name: string): string {
+    const sanitized = sanitizeName(name);
+
+    if (!sanitized || sanitized.length < 2 || sanitized.length > 60) {
+      throw new AppError(400, "INVALID_ROOM_NAME", "Room name must be between 2 and 60 characters.");
+    }
+
+    return sanitized;
+  }
+
   private async getAuthorizedRoom(roomCode: string, participantToken: string): Promise<{
     room: RoomAggregate;
     participantId: string;
@@ -83,6 +93,7 @@ export class RoomService {
 
   async createRoom(input: CreateRoomRequest): Promise<RoomSessionResponse> {
     const name = this.validateName(input.name);
+    const roomName = this.validateRoomName(input.roomName);
     const jiraBaseUrl = normalizeJiraBaseUrl(input.jiraBaseUrl);
     const votingDeckId = input.votingDeckId ?? DEFAULT_VOTING_DECK_ID;
     const joinPasscodeHash = input.joinPasscode?.trim() ? hashSecret(input.joinPasscode.trim()) : null;
@@ -94,6 +105,7 @@ export class RoomService {
       const repo = this.repository(transaction);
       const room = await repo.createRoom({
         code: roomCode,
+        name: roomName,
         jiraBaseUrl,
         votingDeckId,
         joinPasscodeHash
@@ -325,6 +337,35 @@ export class RoomService {
     return {
       participantId: participant.id,
       participantName: participant.name
+    };
+  }
+
+  async leaveRoom(
+    roomCode: string,
+    participantToken: string
+  ): Promise<{ participantId: string; participantName: string; roomDeleted: boolean }> {
+    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
+    const participant = authorized.room.participants.find((entry) => entry.id === authorized.participantId);
+
+    if (!participant) {
+      throw new AppError(404, "PARTICIPANT_NOT_FOUND", "Participant not found.");
+    }
+
+    await this.prisma.$transaction(async (transaction) => {
+      const repo = this.repository(transaction);
+
+      if (authorized.role === ParticipantRole.MODERATOR) {
+        await repo.removeRoom(authorized.room.id);
+        return;
+      }
+
+      await repo.removeParticipant(authorized.participantId);
+    });
+
+    return {
+      participantId: participant.id,
+      participantName: participant.name,
+      roomDeleted: authorized.role === ParticipantRole.MODERATOR
     };
   }
 

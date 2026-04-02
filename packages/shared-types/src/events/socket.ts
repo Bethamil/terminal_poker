@@ -40,6 +40,11 @@ export interface KickParticipantPayload {
   participantId: string;
 }
 
+export interface LeaveRoomPayload {
+  roomCode: string;
+  participantToken: string;
+}
+
 export interface RoundActionPayload {
   roomCode: string;
   participantToken: string;
@@ -72,6 +77,10 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   "room:joinRealtime": (
     payload: RoomJoinRealtimePayload,
+    ack?: (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => void
+  ) => void;
+  "room:leave": (
+    payload: LeaveRoomPayload,
     ack?: (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => void
   ) => void;
   "room:updateSettings": (payload: UpdateRoomSettingsPayload) => void;

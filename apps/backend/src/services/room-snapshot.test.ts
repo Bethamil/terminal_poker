@@ -8,6 +8,7 @@ const baseRoom = (): RoomAggregate =>
   ({
     id: "room_1",
     code: "AB123",
+    name: "Planning Alpha",
     jiraBaseUrl: "https://jira.example.com",
     votingDeckId: "modified-fibonacci",
     joinPasscodeHash: null,
@@ -66,6 +67,7 @@ describe("buildRoomSnapshot", () => {
     expect(snapshot.participants[0].revealedVote).toBeNull();
     expect(snapshot.participants[0].hasVoted).toBe(true);
     expect(snapshot.participants[1].presence).toBe("away");
+    expect(snapshot.room.name).toBe("Planning Alpha");
     expect(snapshot.room.votingDeckId).toBe("modified-fibonacci");
     expect(snapshot.votingDeck).toContain("0.5");
   });

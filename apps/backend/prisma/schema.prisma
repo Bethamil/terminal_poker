@@ -10,6 +10,7 @@ datasource db {
 model Room {
   id               String        @id @default(cuid())
   code             String        @unique @db.VarChar(8)
+  name             String        @db.VarChar(80)
   jiraBaseUrl      String?
   votingDeckId     String        @default("modified-fibonacci") @db.VarChar(32)
   joinPasscodeHash String?

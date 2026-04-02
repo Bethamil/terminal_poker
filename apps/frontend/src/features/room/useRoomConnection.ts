@@ -18,6 +18,7 @@ interface UseRoomConnectionResult {
   isLoading: boolean;
   isRealtimeReady: boolean;
   castVote: (value: VoteValue) => void;
+  leaveRoom: () => Promise<void>;
   revealRound: () => void;
   unrevealRound: () => void;
   resetRound: () => void;
@@ -78,7 +79,12 @@ export const useRoomConnection = (
         socket.on("room:error", (payload: RoomErrorPayload) => {
           setError(payload.message);
 
-          if (payload.code === "INVALID_SESSION" || payload.code === "KICKED") {
+          if (
+            payload.code === "INVALID_SESSION" ||
+            payload.code === "KICKED" ||
+            payload.code === "LEFT_ROOM" ||
+            payload.code === "ROOM_CLOSED"
+          ) {
             setSessionEndedError(payload);
           }
         });
@@ -93,7 +99,12 @@ export const useRoomConnection = (
             if (!result.ok) {
               setError(result.error.message);
 
-              if (result.error.code === "INVALID_SESSION" || result.error.code === "KICKED") {
+              if (
+                result.error.code === "INVALID_SESSION" ||
+                result.error.code === "KICKED" ||
+                result.error.code === "LEFT_ROOM" ||
+                result.error.code === "ROOM_CLOSED"
+              ) {
                 setSessionEndedError(result.error);
               }
 
@@ -111,11 +122,15 @@ export const useRoomConnection = (
 
         if (
           requestError instanceof ApiError &&
-          (requestError.code === "INVALID_SESSION" || requestError.code === "KICKED")
+          (
+            requestError.code === "INVALID_SESSION" ||
+            requestError.code === "KICKED" ||
+            requestError.code === "ROOM_NOT_FOUND"
+          )
         ) {
           setSessionEndedError({
-            code: requestError.code,
-            message
+            code: requestError.code === "ROOM_NOT_FOUND" ? "ROOM_CLOSED" : requestError.code,
+            message: requestError.code === "ROOM_NOT_FOUND" ? "This room no longer exists." : message
           });
         }
 
@@ -220,6 +235,32 @@ export const useRoomConnection = (
     });
   };
 
+  const emitLeaveRoom = () =>
+    new Promise<void>((resolve, reject) => {
+      const socket = socketRef.current;
+
+      if (!socket || !participantToken) {
+        reject(new Error("Room connection is not ready."));
+        return;
+      }
+
+      socket.emit(
+        "room:leave",
+        {
+          roomCode: roomCode.toUpperCase(),
+          participantToken
+        },
+        (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => {
+          if (!result.ok) {
+            reject(new ApiError(400, result.error.code, result.error.message));
+            return;
+          }
+
+          resolve();
+        }
+      );
+    });
+
   const availableShortcuts = useMemo<Map<string, VoteValue>>(
     () =>
       new Map<string, VoteValue>(
@@ -272,6 +313,7 @@ export const useRoomConnection = (
     isLoading,
     isRealtimeReady,
     castVote: emitVote,
+    leaveRoom: emitLeaveRoom,
     revealRound: () => emitRoundAction("round:reveal"),
     unrevealRound: () => emitRoundAction("round:unreveal"),
     resetRound: () => emitRoundAction("round:reset"),

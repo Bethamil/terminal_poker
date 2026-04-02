@@ -45,7 +45,7 @@ const disconnectParticipantSockets = async (
   io: Server<ClientToServerEvents, ServerToClientEvents>,
   roomCode: string,
   participantId: string,
-  message: string
+  payload: { code: string; message: string }
 ) => {
   const sockets = await io.in(roomCode).fetchSockets();
 
@@ -54,10 +54,20 @@ const disconnectParticipantSockets = async (
       return;
     }
 
-    socket.emit("room:error", {
-      code: "KICKED",
-      message
-    });
+    socket.emit("room:error", payload);
+    socket.disconnect(true);
+  });
+};
+
+const disconnectRoomSockets = async (
+  io: Server<ClientToServerEvents, ServerToClientEvents>,
+  roomCode: string,
+  payload: { code: string; message: string }
+) => {
+  const sockets = await io.in(roomCode).fetchSockets();
+
+  sockets.forEach((socket) => {
+    socket.emit("room:error", payload);
     socket.disconnect(true);
   });
 };
@@ -131,10 +141,50 @@ export const registerRoomHandlers = (
         io,
         payload.roomCode.toUpperCase(),
         result.participantId,
-        `${result.participantName} was removed by the moderator.`
+        {
+          code: "KICKED",
+          message: `${result.participantName} was removed by the moderator.`
+        }
       );
       await emitRoomSnapshots(io, roomService, payload.roomCode.toUpperCase());
     } catch (error) {
+      emitSocketError(socket, error);
+    }
+  });
+
+  socket.on("room:leave", async (payload, ack) => {
+    try {
+      const result = await roomService.leaveRoom(payload.roomCode, payload.participantToken);
+
+      ack?.({ ok: true });
+
+      if (result.roomDeleted) {
+        await disconnectRoomSockets(io, payload.roomCode.toUpperCase(), {
+          code: "ROOM_CLOSED",
+          message: "The host left, so the room was closed."
+        });
+        return;
+      }
+
+      await disconnectParticipantSockets(
+        io,
+        payload.roomCode.toUpperCase(),
+        result.participantId,
+        {
+          code: "LEFT_ROOM",
+          message: `${result.participantName} left the room.`
+        }
+      );
+      await emitRoomSnapshots(io, roomService, payload.roomCode.toUpperCase());
+    } catch (error) {
+      const appError = asAppError(error);
+      ack?.({
+        ok: false,
+        error: {
+          code: appError.code,
+          message: appError.message
+        }
+      });
       emitSocketError(socket, error);
     }
   });

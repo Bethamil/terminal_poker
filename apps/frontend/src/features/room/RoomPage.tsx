@@ -129,6 +129,7 @@ export const RoomPage = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [roomLinkStatus, setRoomLinkStatus] = useState<"idle" | "copied" | "error">("idle");
+  const [isLeaving, setIsLeaving] = useState(false);
   const [ticketDraft, setTicketDraft] = useState("");
   const [jiraBaseUrlDraft, setJiraBaseUrlDraft] = useState("");
   const [votingDeckIdDraft, setVotingDeckIdDraft] = useState<UpdateRoomSettingsPayload["votingDeckId"]>("modified-fibonacci");
@@ -138,6 +139,7 @@ export const RoomPage = () => {
     castVote,
     error,
     isLoading,
+    leaveRoom,
     isRealtimeReady,
     kickParticipant,
     resetRound,
@@ -150,10 +152,15 @@ export const RoomPage = () => {
   } = useRoomConnection(roomCode, participantToken);
 
   useEffect(() => {
+    setParticipantToken(roomCode ? sessionStorageStore.getParticipantToken(roomCode) : null);
+  }, [roomCode]);
+
+  useEffect(() => {
     if (snapshot) {
       setTicketDraft(snapshot.round.jiraTicketKey ?? "");
+      sessionStorageStore.rememberRoom(snapshot.room.code, snapshot.room.name);
     }
-  }, [snapshot?.round.id, snapshot?.round.jiraTicketKey]);
+  }, [snapshot?.room.code, snapshot?.room.name, snapshot?.round.id, snapshot?.round.jiraTicketKey]);
 
   useEffect(() => {
     if (!snapshot) {
@@ -172,8 +179,20 @@ export const RoomPage = () => {
 
     sessionStorageStore.clearParticipantToken(roomCode);
     setParticipantToken(null);
+
+    if (sessionEndedError.code === "ROOM_CLOSED") {
+      sessionStorageStore.forgetRoom(roomCode);
+      navigate("/", { state: { notice: sessionEndedError.message } });
+      return;
+    }
+
+    if (sessionEndedError.code === "KICKED" || sessionEndedError.code === "LEFT_ROOM") {
+      navigate("/", { state: { notice: sessionEndedError.message } });
+      return;
+    }
+
     setJoinError(sessionEndedError.message);
-  }, [roomCode, sessionEndedError]);
+  }, [navigate, roomCode, sessionEndedError]);
 
   useEffect(() => {
     if (!pendingKickId || !snapshot?.participants.some((participant) => participant.id === pendingKickId)) {
@@ -250,10 +269,17 @@ export const RoomPage = () => {
         joinPasscode: joinPasscode || null
       });
       sessionStorageStore.setParticipantToken(response.roomCode, response.participantToken);
+      sessionStorageStore.rememberRoom(response.roomCode, response.snapshot.room.name);
       setParticipantToken(response.participantToken);
       setJoinName("");
       setJoinPasscode("");
     } catch (requestError) {
+      if (requestError instanceof ApiError && requestError.code === "ROOM_NOT_FOUND") {
+        sessionStorageStore.forgetRoom(roomCode);
+        navigate("/", { state: { notice: requestError.message } });
+        return;
+      }
+
       setJoinError(requestError instanceof ApiError ? requestError.message : "Unable to join room.");
     }
   };
@@ -292,6 +318,46 @@ export const RoomPage = () => {
 
     setPendingKickId(participant.id);
     kickParticipant(participant.id);
+  };
+
+  const handleLeaveRoom = async () => {
+    if (!snapshot) {
+      return;
+    }
+
+    const confirmationMessage =
+      snapshot.viewer.role === "moderator"
+        ? `Leave ${snapshot.room.name}? This will delete the room for everyone.`
+        : `Leave ${snapshot.room.name}?`;
+
+    if (!window.confirm(confirmationMessage)) {
+      return;
+    }
+
+    setIsLeaving(true);
+    setJoinError(null);
+
+    try {
+      await leaveRoom();
+      sessionStorageStore.clearParticipantToken(roomCode);
+
+      if (snapshot.viewer.role === "moderator") {
+        sessionStorageStore.forgetRoom(roomCode);
+      }
+
+      navigate("/", {
+        state: {
+          notice:
+            snapshot.viewer.role === "moderator"
+              ? `${snapshot.room.name} was deleted.`
+              : `You left ${snapshot.room.name}.`
+        }
+      });
+    } catch (requestError) {
+      setJoinError(requestError instanceof ApiError ? requestError.message : "Unable to leave room.");
+    } finally {
+      setIsLeaving(false);
+    }
   };
 
   if (!roomCode) {
@@ -393,30 +459,38 @@ export const RoomPage = () => {
             >
               {isShortcutsOpen ? "CLOSE KEYS" : "KEYS"}
             </Button>
+            <Button
+              className="room-topbar__action"
+              disabled={isLeaving}
+              onClick={handleLeaveRoom}
+              variant={isModerator ? "danger" : "ghost"}
+            >
+              {isLeaving ? "LEAVING..." : isModerator ? "LEAVE & DELETE" : "LEAVE ROOM"}
+            </Button>
           </>
         }
       >
         <div className="room-topbar">
-          <div className="room-topbar__identity">
-            <div className="room-topbar__meta">
-              <span className="room-topbar__label">ROOM</span>
-            </div>
-            <div className="room-topbar__code-row">
-              <div className="room-topbar__code">{snapshot.room.code}</div>
-              <button
-                aria-live="polite"
-                className="room-topbar__copy"
-                onClick={copyRoomLink}
-                type="button"
-              >
-                {roomLinkStatus === "copied"
-                  ? "COPIED"
-                  : roomLinkStatus === "error"
-                    ? "ERROR"
-                    : "COPY"}
-              </button>
-            </div>
+          <span className="room-topbar__label">ROOM</span>
+          <div className="room-topbar__name" title={snapshot.room.name}>
+            {snapshot.room.name}
           </div>
+          <span aria-hidden="true" className="room-topbar__divider">
+            /
+          </span>
+          <div className="room-topbar__code">{snapshot.room.code}</div>
+          <button
+            aria-live="polite"
+            className="room-topbar__copy"
+            onClick={copyRoomLink}
+            type="button"
+          >
+            {roomLinkStatus === "copied"
+              ? "COPIED"
+              : roomLinkStatus === "error"
+                ? "ERROR"
+                : "COPY LINK"}
+          </button>
         </div>
       </AppHeader>
 

@@ -6,6 +6,7 @@ import type { RoomService } from "../services/room-service";
 
 const createRoomSchema = z.object({
   name: z.string(),
+  roomName: z.string(),
   jiraBaseUrl: z.string().optional().nullable(),
   joinPasscode: z.string().optional().nullable(),
   votingDeckId: z.enum(VOTING_DECK_IDS).optional()

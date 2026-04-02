@@ -16,6 +16,7 @@ export class RoomRepository {
 
   async createRoom(data: {
     code: string;
+    name: string;
     jiraBaseUrl: string | null;
     votingDeckId: string;
     joinPasscodeHash: string | null;
@@ -135,6 +136,12 @@ export class RoomRepository {
   async removeParticipant(participantId: string) {
     return this.db.participant.delete({
       where: { id: participantId }
+    });
+  }
+
+  async removeRoom(roomId: string) {
+    return this.db.room.delete({
+      where: { id: roomId }
     });
   }
 }

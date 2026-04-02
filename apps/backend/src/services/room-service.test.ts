@@ -10,6 +10,7 @@ const createRoomAggregate = (): RoomAggregate =>
   ({
     id: "room_1",
     code: "AB123",
+    name: "Planning Alpha",
     jiraBaseUrl: "https://jira.old.example.com",
     votingDeckId: "modified-fibonacci",
     joinPasscodeHash: hashSecret("secret"),
@@ -55,6 +56,13 @@ const createFakePrisma = (room: RoomAggregate): PrismaClient => {
   const client = {
     room: {
       findUnique: async () => room,
+      delete: async ({ where }: { where: { id: string } }) => {
+        if (where.id !== room.id) {
+          throw new Error("Room not found.");
+        }
+
+        return room;
+      },
       update: async ({
         data
       }: {
@@ -187,6 +195,33 @@ describe("RoomService moderator actions", () => {
     await expect(service.kickParticipant("AB123", "moderator-token", "mod_1")).rejects.toMatchObject({
       code: "CANNOT_KICK_SELF"
     } satisfies Partial<AppError>);
+  });
+
+  it("deletes the room when the moderator leaves", async () => {
+    const room = createRoomAggregate();
+    const service = createService(room);
+
+    const result = await service.leaveRoom("AB123", "moderator-token");
+
+    expect(result).toEqual({
+      participantId: "mod_1",
+      participantName: "Alice",
+      roomDeleted: true
+    });
+  });
+
+  it("removes only the participant when a non-host leaves", async () => {
+    const room = createRoomAggregate();
+    const service = createService(room);
+
+    const result = await service.leaveRoom("AB123", "participant-token");
+
+    expect(result).toEqual({
+      participantId: "part_1",
+      participantName: "Bob",
+      roomDeleted: false
+    });
+    expect(room.participants.map((participant) => participant.id)).toEqual(["mod_1"]);
   });
 
   it("rejects votes that are not part of the room deck", async () => {

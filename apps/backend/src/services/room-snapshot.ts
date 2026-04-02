@@ -99,6 +99,7 @@ export const buildRoomSnapshot = (
     room: {
       id: room.id,
       code: room.code,
+      name: room.name,
       jiraBaseUrl: room.jiraBaseUrl,
       votingDeckId,
       hasJoinPasscode: Boolean(room.joinPasscodeHash),
