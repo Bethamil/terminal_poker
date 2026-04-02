@@ -94,20 +94,22 @@ const ParticipantRail = ({
       ))}
     </div>
 
-    <Button
-      className="w-full justify-center"
-      onClick={onInvite}
-      style={{
-        background: "var(--action-accent-bg)",
-        color: "var(--action-accent-text)"
-      }}
-    >
-      {roomLinkStatus === "copied"
-        ? "LINK COPIED"
-        : roomLinkStatus === "error"
+    <div className="grid gap-3">
+      <Button
+        className="w-full justify-center"
+        onClick={onInvite}
+        style={{
+          background: "var(--action-accent-bg)",
+          color: "var(--action-accent-text)"
+        }}
+      >
+        {roomLinkStatus === "copied"
+          ? "LINK COPIED"
+          : roomLinkStatus === "error"
           ? "COPY FAILED"
           : "INVITE_DEV"}
-    </Button>
+      </Button>
+    </div>
   </aside>
 );
 
@@ -577,13 +579,21 @@ export const RoomPage = () => {
             ) : null}
           </div>
 
-          {isModerator ? (
-            <section className="card grid gap-5 border-white/5 bg-[#0a0a0d]/88 p-5">
-              <div className="flex flex-wrap items-end gap-4">
-                <div className="min-w-[220px] flex-1">
-                  <div className="mb-2 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.16em] text-[#6f6987]">
-                    ROUND_TICKET
-                  </div>
+          <section
+            className={`deck-card mx-auto w-full max-w-[82rem] ${isModerator ? "deck-card--moderator" : ""}`.trim()}
+          >
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="section-header">
+                <StatusChip tone="success">DECK</StatusChip>
+                <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
+              </div>
+              <div className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</div>
+            </div>
+            {isModerator ? (
+              <div
+                className="flex flex-wrap items-center gap-2 pb-2"
+              >
+                <div className="min-w-[11rem] flex-[1_1_15rem]">
                   <Field
                     aria-label="Ticket"
                     value={ticketDraft}
@@ -592,40 +602,35 @@ export const RoomPage = () => {
                   />
                 </div>
                 <Button
-                  className="min-w-[10rem]"
                   disabled={!hasTicketChanged}
                   onClick={() => updateTicket(normalizedTicketDraft || null)}
+                  style={{ minHeight: "2.6rem", padding: "0.7rem 0.9rem" }}
                   variant="secondary"
                 >
-                  SYNC_TICKET
+                  SYNC
                 </Button>
-              </div>
-              <div className="flex flex-wrap gap-3 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#6f6987]">
-                <span>{getVotingDeckName(snapshot.room.votingDeckId)}</span>
-                <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
-                <span>{snapshot.room.jiraBaseUrl ? "JIRA_ON" : "JIRA_OFF"}</span>
-              </div>
-              <div className="grid gap-4 border-t border-white/6 pt-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
-                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
-                  <Button
-                    className="min-h-[3.25rem] justify-center"
-                    onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
-                    style={{
-                      background: "var(--action-accent-bg)",
-                      color: "var(--action-accent-text)"
-                    }}
-                    stretch
-                    variant="primary"
-                  >
-                    {revealActionLabel}
-                  </Button>
-                  <Button className="min-h-[3.25rem] justify-center" onClick={resetRound} variant="ghost">
-                    RESET ROUND
-                  </Button>
-                </div>
-                <div className="grid gap-1 rounded-[14px] border border-white/6 bg-white/[0.02] px-4 py-3 text-right">
+                <Button
+                  onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
+                  style={{
+                    background: "var(--action-accent-bg)",
+                    color: "var(--action-accent-text)",
+                    minHeight: "2.6rem",
+                    padding: "0.7rem 0.9rem"
+                  }}
+                  variant="primary"
+                >
+                  {snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL"}
+                </Button>
+                <Button
+                  onClick={resetRound}
+                  style={{ minHeight: "2.6rem", padding: "0.7rem 0.9rem" }}
+                  variant="ghost"
+                >
+                  RESET
+                </Button>
+                <div className="ml-auto grid gap-0.5 text-right">
                   <strong
-                    className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.14em]"
+                    className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em]"
                     style={{ color: "var(--summary-strong)" }}
                   >
                     {snapshot.round.status === "revealed"
@@ -640,23 +645,13 @@ export const RoomPage = () => {
                   >
                     {snapshot.round.status === "revealed"
                       ? `Average ${formattedAverage}`
-                      : `${votedCount}/${snapshot.participants.length} voted`}
+                      : waitingVotes === 0
+                        ? "Ready to reveal"
+                        : "Waiting for votes"}
                   </span>
                 </div>
               </div>
-            </section>
-          ) : null}
-
-          <section
-            className={`deck-card mx-auto w-full max-w-[82rem] ${isModerator ? "deck-card--moderator" : ""}`.trim()}
-          >
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div className="section-header">
-                <StatusChip tone="success">DECK</StatusChip>
-                <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
-              </div>
-              <div className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</div>
-            </div>
+            ) : null}
             <div className="deck-card__body">
               <div className="vote-grid">
                 {voteCardMeta.map((card) => {
