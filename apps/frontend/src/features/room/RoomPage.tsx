@@ -116,6 +116,14 @@ const RoomModal = ({
   </div>
 );
 
+const formatAverage = (average: number | null) => {
+  if (average === null) {
+    return "n/a";
+  }
+
+  return Number.isInteger(average) ? String(average) : average.toFixed(1).replace(/\.0$/, "");
+};
+
 export const RoomPage = () => {
   const navigate = useNavigate();
   const { roomCode: roomCodeParam } = useParams();
@@ -417,6 +425,10 @@ export const RoomPage = () => {
   const isVotingClosed = snapshot.round.status === "revealed";
   const normalizedTicketDraft = ticketDraft.trim().toUpperCase();
   const hasTicketChanged = normalizedTicketDraft !== (snapshot.round.jiraTicketKey ?? "");
+  const roundSummary = snapshot.round.summary;
+  const formattedAverage = formatAverage(roundSummary?.average ?? null);
+  const consensusLabel = roundSummary?.consensus ?? "split";
+  const hasConsensus = roundSummary?.consensus !== null;
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const revealActionTitle =
     snapshot.round.status === "revealed" ? "Votes are visible to everyone" : "Reveal when the team is ready";
@@ -513,27 +525,28 @@ export const RoomPage = () => {
                 {votedCount}/{snapshot.participants.length} VOTED
               </span>
             </div>
-            <div className="ticket-header">
-              <h1 className="ticket-title">{snapshot.round.jiraTicketKey ?? "ROUND OPEN"}</h1>
-              {snapshot.round.summary ? (
-                <div className="ticket-summary" aria-label="Round summary">
-                  <div className="ticket-summary__item">
-                    <span>AVERAGE</span>
-                    <strong>{snapshot.round.summary.average ?? "n/a"}</strong>
-                  </div>
-                  <div className="ticket-summary__item">
-                    <span>CONSENSUS</span>
-                    <strong>{snapshot.round.summary.consensus ?? "split"}</strong>
-                  </div>
+            <div className="hero-card__main">
+              <div className="hero-card__ticket">
+                <span className="hero-card__label">CURRENT TICKET</span>
+                <h1 className="ticket-title">{snapshot.round.jiraTicketKey ?? "ROUND OPEN"}</h1>
+                {snapshot.round.jiraTicketUrl ? (
+                  <a className="ticket-link" href={snapshot.round.jiraTicketUrl} rel="noreferrer" target="_blank">
+                    OPEN JIRA
+                  </a>
+                ) : null}
+              </div>
+              <div className={`hero-card__results ${roundSummary ? "" : "hero-card__results--hidden"}`.trim()}>
+                <div className="hero-card__average">
+                  <span className="hero-card__label">AVG</span>
+                  <strong className="hero-card__average-value">{formattedAverage}</strong>
                 </div>
-              ) : null}
-            </div>
-            <div className="hero-copy hero-copy--inline">
-              {snapshot.round.jiraTicketUrl ? (
-                <a className="ticket-link" href={snapshot.round.jiraTicketUrl} rel="noreferrer" target="_blank">
-                  OPEN JIRA
-                </a>
-              ) : null}
+                <div className="hero-card__consensus">
+                  <span className="hero-card__label">CONSENSUS</span>
+                  <span className={`hero-card__terminal-line ${hasConsensus ? "hero-card__terminal-line--match" : ""}`.trim()}>
+                    <strong>{consensusLabel}</strong>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
