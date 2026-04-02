@@ -14,6 +14,7 @@ import { createRoomSocket } from "../../lib/socket/room-socket";
 interface UseRoomConnectionResult {
   snapshot: RoomSnapshot | null;
   error: string | null;
+  isVoteBlocked: boolean;
   sessionEndedError: RoomErrorPayload | null;
   isLoading: boolean;
   isRealtimeReady: boolean;
@@ -37,6 +38,7 @@ export const useRoomConnection = (
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRealtimeReady, setIsRealtimeReady] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isVoteBlocked, setIsVoteBlocked] = useState<boolean>(false);
   const [sessionEndedError, setSessionEndedError] = useState<RoomErrorPayload | null>(null);
   const socketRef = useRef<ReturnType<typeof createRoomSocket> | null>(null);
 
@@ -46,6 +48,7 @@ export const useRoomConnection = (
       setIsLoading(false);
       setIsRealtimeReady(false);
       setError(null);
+      setIsVoteBlocked(false);
       setSessionEndedError(null);
       return;
     }
@@ -53,6 +56,7 @@ export const useRoomConnection = (
     let disposed = false;
     setIsLoading(true);
     setError(null);
+    setIsVoteBlocked(false);
     setSessionEndedError(null);
 
     apiClient
@@ -77,6 +81,11 @@ export const useRoomConnection = (
         });
 
         socket.on("room:error", (payload: RoomErrorPayload) => {
+          if (payload.code === "ROUND_REVEALED") {
+            setIsVoteBlocked(true);
+            return;
+          }
+
           setError(payload.message);
 
           if (
@@ -147,6 +156,12 @@ export const useRoomConnection = (
   }, [participantToken, roomCode]);
 
   useEffect(() => {
+    if (snapshot?.round.status !== "revealed") {
+      setIsVoteBlocked(false);
+    }
+  }, [snapshot?.round.status]);
+
+  useEffect(() => {
     if (!participantToken || !isRealtimeReady || !socketRef.current) {
       return;
     }
@@ -170,6 +185,13 @@ export const useRoomConnection = (
     if (!socket || !participantToken) {
       return;
     }
+
+    if (snapshot?.round.status === "revealed") {
+      setIsVoteBlocked(true);
+      return;
+    }
+
+    setIsVoteBlocked(false);
 
     socket.emit("vote:cast", {
       roomCode: roomCode.toUpperCase(),
@@ -309,6 +331,7 @@ export const useRoomConnection = (
   return {
     snapshot,
     error,
+    isVoteBlocked,
     sessionEndedError,
     isLoading,
     isRealtimeReady,

@@ -1284,6 +1284,40 @@ select {
   gap: 0.8rem;
 }
 
+.deck-card__vote-alert {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  background:
+    radial-gradient(circle at top right, rgba(255, 196, 106, 0.18), transparent 38%),
+    linear-gradient(180deg, var(--surface-high), var(--surface));
+  border: 1px solid rgba(255, 196, 106, 0.38);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
+}
+
+.deck-card__vote-alert-label {
+  color: #f0a43a;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.deck-card__vote-alert strong {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.2rem;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.deck-card__vote-alert p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .vote-tile {
   position: relative;
   display: grid;
@@ -1325,6 +1359,14 @@ select {
   background: var(--vote-tile-selected-bg);
   border-color: var(--vote-tile-selected-border);
   box-shadow: var(--vote-tile-selected-shadow);
+}
+
+.vote-tile--locked {
+  opacity: 0.72;
+}
+
+.vote-tile--locked:hover {
+  transform: none;
 }
 
 .notice {

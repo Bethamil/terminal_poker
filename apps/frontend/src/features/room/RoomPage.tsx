@@ -147,6 +147,7 @@ export const RoomPage = () => {
     unrevealRound,
     sessionEndedError,
     snapshot,
+    isVoteBlocked,
     updateRoomSettings,
     updateTicket
   } = useRoomConnection(roomCode, participantToken);
@@ -413,6 +414,7 @@ export const RoomPage = () => {
   }
 
   const isModerator = snapshot.viewer.role === "moderator";
+  const isVotingClosed = snapshot.round.status === "revealed";
   const normalizedTicketDraft = ticketDraft.trim().toUpperCase();
   const hasTicketChanged = normalizedTicketDraft !== (snapshot.round.jiraTicketKey ?? "");
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
@@ -607,12 +609,25 @@ export const RoomPage = () => {
                 <StatusChip tone="success">DECK</StatusChip>
                 <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
               </div>
+              {isVoteBlocked ? (
+                <div
+                  aria-live="polite"
+                  className="deck-card__vote-alert"
+                  role="status"
+                >
+                  <span className="deck-card__vote-alert-label">Voting closed</span>
+                  <strong>{snapshot.viewer.selectedVote ? `Your last vote was ${snapshot.viewer.selectedVote}.` : "This round is already revealed."}</strong>
+                </div>
+              ) : null}
               <div className="vote-grid">
                 {voteCardMeta.map((card) => {
                   const isSelected = snapshot.viewer.selectedVote === card.value;
                   return (
                     <button
-                      className={`vote-tile ${isSelected ? "vote-tile--selected" : ""}`}
+                      aria-disabled={isVotingClosed}
+                      className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
+                        isVotingClosed ? "vote-tile--locked" : ""
+                      }`.trim()}
                       key={card.value}
                       onClick={() => castVote(card.value)}
                       type="button"
