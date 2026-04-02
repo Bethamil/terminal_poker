@@ -19,6 +19,9 @@ import { apiClient, ApiError } from "../../lib/api/client";
 import { sessionStorageStore } from "../../lib/storage";
 import { useRoomConnection } from "./useRoomConnection";
 
+const countOnlineParticipants = (participants: ParticipantSnapshot[]) =>
+  participants.filter((participant) => participant.presence === "online").length;
+
 const ParticipantRail = ({
   currentParticipantId,
   onInvite,
@@ -35,8 +38,11 @@ const ParticipantRail = ({
   roomName: string;
   roomLinkStatus: "idle" | "copied" | "error";
   participants: ParticipantSnapshot[];
-}) => (
-  <aside
+}) => {
+  const onlineParticipantCount = countOnlineParticipants(participants);
+
+  return (
+    <aside
     className="room-sidebar card card--rail order-2 grid min-h-0 gap-4 border-white/5 px-4 py-4 lg:order-1 lg:h-full lg:min-h-[420px] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:gap-5 lg:px-5 lg:py-5"
     style={{ background: "var(--rail-panel-bg)" }}
   >
@@ -63,7 +69,7 @@ const ParticipantRail = ({
           color: "var(--rail-accent-text)"
         }}
       >
-        ACTIVE ({participants.length})
+        ACTIVE ({onlineParticipantCount}/{participants.length})
       </div>
     </div>
 
@@ -112,7 +118,8 @@ const ParticipantRail = ({
       </Button>
     </div>
   </aside>
-);
+  );
+};
 
 const formatAverage = (average: number | null) => {
   if (average === null) {
@@ -416,6 +423,7 @@ export const RoomPage = () => {
   const hasConsensus = roundSummary?.consensus !== null;
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
+  const activeParticipantCount = countOnlineParticipants(snapshot.participants);
   const viewerVoteLabel = snapshot.viewer.selectedVote
     ? `YOU VOTED ${snapshot.viewer.selectedVote}`
     : "NO VOTE SUBMITTED";
@@ -457,7 +465,7 @@ export const RoomPage = () => {
             <>
               <div className="mobile-menu__meta shortcut-strip">
                 <span>ID {snapshot.room.code}</span>
-                <span>{snapshot.participants.length} ACTIVE</span>
+                <span>{activeParticipantCount}/{snapshot.participants.length} ACTIVE</span>
                 <span>{isRealtimeReady ? "LIVE" : "SYNC"}</span>
               </div>
               <div className="mobile-menu__actions">
@@ -813,7 +821,9 @@ export const RoomPage = () => {
                 <StatusChip tone="success">ACCESS</StatusChip>
                 <h3>Participants</h3>
               </div>
-              <div className="settings-access-summary">ACTIVE ({snapshot.participants.length})</div>
+              <div className="settings-access-summary">
+                ACTIVE ({activeParticipantCount}/{snapshot.participants.length})
+              </div>
               <div className="settings-list settings-list--access">
                 {snapshot.participants.map((participant) => {
                   const isViewer = participant.id === snapshot.viewer.participantId;
