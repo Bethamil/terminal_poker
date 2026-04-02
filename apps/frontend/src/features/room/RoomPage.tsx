@@ -609,35 +609,37 @@ export const RoomPage = () => {
                 <StatusChip tone="success">DECK</StatusChip>
                 <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
               </div>
-              {isVoteBlocked ? (
-                <div
-                  aria-live="polite"
-                  className="deck-card__vote-alert"
-                  role="status"
-                >
-                  <span className="deck-card__vote-alert-label">Voting closed</span>
-                  <strong>{snapshot.viewer.selectedVote ? `Your last vote was ${snapshot.viewer.selectedVote}.` : "This round is already revealed."}</strong>
+              <div className="deck-card__body">
+                {isVoteBlocked ? (
+                  <div
+                    aria-live="polite"
+                    className="deck-card__vote-alert"
+                    role="status"
+                  >
+                    <span className="deck-card__vote-alert-label">Voting closed</span>
+                    <strong>{snapshot.viewer.selectedVote ? `Your last vote was ${snapshot.viewer.selectedVote}.` : "This round is already revealed."}</strong>
+                  </div>
+                ) : null}
+                <div className="vote-grid">
+                  {voteCardMeta.map((card) => {
+                    const isSelected = snapshot.viewer.selectedVote === card.value;
+                    return (
+                      <button
+                        aria-disabled={isVotingClosed}
+                        className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
+                          isVotingClosed ? "vote-tile--locked" : ""
+                        }`.trim()}
+                        key={card.value}
+                        onClick={() => castVote(card.value)}
+                        type="button"
+                      >
+                        <span className="vote-tile__shortcut">{card.shortcut}</span>
+                        <strong>{card.value}</strong>
+                        <span>{card.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-              ) : null}
-              <div className="vote-grid">
-                {voteCardMeta.map((card) => {
-                  const isSelected = snapshot.viewer.selectedVote === card.value;
-                  return (
-                    <button
-                      aria-disabled={isVotingClosed}
-                      className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
-                        isVotingClosed ? "vote-tile--locked" : ""
-                      }`.trim()}
-                      key={card.value}
-                      onClick={() => castVote(card.value)}
-                      type="button"
-                    >
-                      <span className="vote-tile__shortcut">{card.shortcut}</span>
-                      <strong>{card.value}</strong>
-                      <span>{card.label}</span>
-                    </button>
-                  );
-                })}
               </div>
             </section>
           </div>
