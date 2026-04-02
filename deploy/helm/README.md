@@ -4,12 +4,13 @@ These values files target the `generic-webapp` Helm chart, following the `helm-g
 
 - `frontend-values.yaml` deploys the built Vite SPA through `nginx`
 - `backend-values.yaml` deploys the Express + Socket.IO service
-- PostgreSQL and Redis are external dependencies and must be provided separately
+- PostgreSQL is required
+- Redis is optional and only needed for multi-instance Socket.IO fan-out
 
 ## Expected External Services
 
 - PostgreSQL reachable through `DATABASE_URL`
-- Redis reachable through `REDIS_URL`
+- Redis reachable through `REDIS_URL` when running more than one backend replica
 - TLS issuer already present in the cluster if `tls: true`
 
 ## Example Install
@@ -32,7 +33,7 @@ helm upgrade --install terminal-poker-backend dictu/generic-webapp \
 ## Production Notes
 
 - Replace the placeholder image coordinates with your published images.
-- Move `DATABASE_URL` and `REDIS_URL` into your secret-management workflow before production use.
-- Keep backend replica count above `1` only when Redis is configured, otherwise Socket.IO stays single-node.
+- Move `DATABASE_URL` into your secret-management workflow before production use.
+- Move `REDIS_URL` into your secret-management workflow too if you are running multiple backend replicas.
+- Keep backend replica count at `1` unless Redis is configured, otherwise Socket.IO stays single-node.
 - Set the frontend build args `VITE_API_BASE_URL` and `VITE_SOCKET_URL` to the backend public origin.
-

@@ -18,10 +18,10 @@ Requirements:
 - `pnpm`
 - Docker
 
-Start Postgres and Redis:
+Start Postgres:
 
 ```bash
-docker compose up -d
+docker compose up -d postgres
 ```
 
 Install dependencies:
@@ -35,9 +35,23 @@ Create `apps/backend/.env`:
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/terminal_poker?schema=public"
 CLIENT_ORIGIN="http://localhost:5173"
-REDIS_URL="redis://localhost:6379"
 PORT=4000
 PRESENCE_TTL_SECONDS=30
+```
+
+Redis is optional for local development and single-instance deployments. Only set `REDIS_URL` if you need the
+Socket.IO Redis adapter, for example when running multiple backend instances behind a load balancer.
+
+If you want to test multi-instance realtime locally, start Redis too:
+
+```bash
+docker compose up -d postgres redis
+```
+
+Then add:
+
+```env
+REDIS_URL="redis://localhost:6379"
 ```
 
 Generate Prisma client and push the schema:
