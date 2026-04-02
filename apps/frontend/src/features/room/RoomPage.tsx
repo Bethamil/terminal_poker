@@ -581,7 +581,7 @@ export const RoomPage = () => {
           </div>
 
           {isModerator ? (
-            <section className="card grid gap-4 border-white/5 bg-[#0a0a0d]/88 p-5">
+            <section className="card grid gap-5 border-white/5 bg-[#0a0a0d]/88 p-5">
               <div className="flex flex-wrap items-end gap-4">
                 <div className="min-w-[220px] flex-1">
                   <div className="mb-2 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.16em] text-[#6f6987]">
@@ -607,6 +607,39 @@ export const RoomPage = () => {
                 <span>{getVotingDeckName(snapshot.room.votingDeckId)}</span>
                 <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
                 <span>{snapshot.room.jiraBaseUrl ? "JIRA_ON" : "JIRA_OFF"}</span>
+              </div>
+              <div className="grid gap-4 border-t border-white/6 pt-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
+                  <Button
+                    className="min-h-[3.25rem] justify-center bg-gradient-to-br from-[#5b21b6] to-[#7c3aed] text-white"
+                    onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
+                    style={{
+                      background: "linear-gradient(135deg, #5b21b6, #7c3aed)",
+                      color: "#fbf8ff"
+                    }}
+                    stretch
+                    variant="primary"
+                  >
+                    {revealActionLabel}
+                  </Button>
+                  <Button className="min-h-[3.25rem] justify-center" onClick={resetRound} variant="ghost">
+                    RESET ROUND
+                  </Button>
+                </div>
+                <div className="grid gap-1 rounded-[14px] border border-white/6 bg-white/[0.02] px-4 py-3 text-right">
+                  <strong className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.14em] text-[#ece5ff]">
+                    {snapshot.round.status === "revealed"
+                      ? `Consensus ${consensusLabel}`
+                      : waitingVotes === 0
+                        ? "All votes are in"
+                        : `Awaiting ${waitingVotes} more`}
+                  </strong>
+                  <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#6f6987]">
+                    {snapshot.round.status === "revealed"
+                      ? `Average ${formattedAverage}`
+                      : `${votedCount}/${snapshot.participants.length} voted`}
+                  </span>
+                </div>
               </div>
             </section>
           ) : null}
@@ -655,38 +688,6 @@ export const RoomPage = () => {
               </div>
             </div>
           </section>
-
-          {isModerator ? (
-            <section className="mx-auto grid w-full max-w-xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[18px] border border-white/5 bg-[#09090b]/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.34)]">
-              <Button
-                className="min-h-[3.25rem] justify-start bg-gradient-to-br from-[#5b21b6] to-[#7c3aed] text-white"
-                onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
-                style={{
-                  background: "linear-gradient(135deg, #5b21b6, #7c3aed)",
-                  color: "#fbf8ff"
-                }}
-                stretch
-                variant="primary"
-              >
-                {revealActionLabel}
-              </Button>
-              <div className="grid gap-1 px-2 text-right">
-                <strong className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.14em] text-[#ece5ff]">
-                  {snapshot.round.status === "revealed"
-                    ? `Consensus ${consensusLabel}`
-                    : waitingVotes === 0
-                      ? "All votes are in"
-                      : `Awaiting ${waitingVotes} more`}
-                </strong>
-                <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#6f6987]">
-                  {snapshot.round.status === "revealed" ? `Average ${formattedAverage}` : "Ready to reveal"}
-                </span>
-              </div>
-              <Button className="col-span-2 justify-center" onClick={resetRound} variant="ghost">
-                RESET ROUND
-              </Button>
-            </section>
-          ) : null}
 
           {error || joinError ? <div className="notice notice--error">{error ?? joinError}</div> : null}
         </section>
