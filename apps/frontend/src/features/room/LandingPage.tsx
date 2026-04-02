@@ -141,27 +141,10 @@ export const LandingPage = () => {
     refreshPreviousRooms();
   };
 
-  const activeNodes = previousRooms.slice(0, 4);
-  const metricBars = Array.from({ length: 5 }, (_, index) => {
-    const room = previousRooms[index];
-
-    if (!room) {
-      return 28 + index * 10;
-    }
-
-    const ageHours = Math.max(
-      1,
-      Math.min(
-        24,
-        Math.round((Date.now() - new Date(room.lastVisitedAt).getTime()) / (1000 * 60 * 60))
-      )
-    );
-
-    return Math.max(26, 92 - ageHours * 2.2);
-  });
+  const recentNodes = previousRooms.slice(0, 3);
 
   return (
-    <div className="shell shell--landing relative overflow-hidden pb-20">
+    <div className="shell shell--landing relative overflow-hidden">
       <AppHeader>
         <nav
           aria-label="Primary"
@@ -187,10 +170,10 @@ export const LandingPage = () => {
 
           <aside className="hidden gap-8 lg:grid">
             <section className="grid gap-3">
-              <span className="rail-kicker">ACTIVE_NODES</span>
-              {activeNodes.length > 0 ? (
+              <span className="rail-kicker">RECENT_NODES</span>
+              {recentNodes.length > 0 ? (
                 <div className="grid gap-2">
-                  {activeNodes.map((room) => (
+                  {recentNodes.map((room) => (
                     <button
                       className="flex items-center justify-between gap-3 border-b border-white/5 pb-2 text-left font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.12em] text-[#a79ebd] transition hover:text-[#f0e9ff]"
                       key={room.roomCode}
@@ -207,27 +190,6 @@ export const LandingPage = () => {
                   No cached sessions yet.
                 </p>
               )}
-            </section>
-
-            <section className="grid gap-3">
-              <span className="rail-kicker">METRICS</span>
-              <div
-                aria-hidden="true"
-                className="flex h-24 items-end gap-1 border border-white/5 bg-white/[0.02] p-3"
-              >
-                {metricBars.map((height, index) => (
-                  <span
-                    className="w-full rounded-sm bg-gradient-to-t from-[#8b6bff] via-[#baa4ff] to-[#ddd1ff]"
-                    key={index}
-                    style={{ height: `${height}%`, opacity: 0.72 + index * 0.05 }}
-                  />
-                ))}
-              </div>
-              <p className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.14em] text-[#6f6987]">
-                {previousRooms.length > 0
-                  ? `${previousRooms.length} cached room${previousRooms.length === 1 ? "" : "s"} ready to resume.`
-                  : "Session history appears here after you join or create a room."}
-              </p>
             </section>
           </aside>
         </section>
@@ -409,7 +371,7 @@ export const LandingPage = () => {
       </main>
 
       <footer
-        className="fixed inset-x-0 bottom-0 z-20 flex h-10 items-center justify-between px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] backdrop-blur-xl"
+        className="app-footer z-20 flex h-10 items-center justify-between px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] backdrop-blur-xl"
         style={{
           background: "var(--shell-footer-bg)",
           borderTop: "1px solid var(--shell-footer-border)",

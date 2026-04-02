@@ -65,7 +65,7 @@
   --summary-soft: #6f6987;
   --action-accent-bg: linear-gradient(135deg, #5b21b6, #7c3aed);
   --action-accent-text: #fbf8ff;
-  --action-create-bg: linear-gradient(135deg, #19b676, #11955e);
+  --action-create-bg: linear-gradient(135deg, #10b981, #059669);
   --action-create-text: #f4fff8;
   --action-join-bg: linear-gradient(135deg, #3b82f6, #2563eb);
   --action-join-text: #f8fbff;
@@ -197,20 +197,26 @@ select {
 }
 
 .shell {
+  --shell-pad: 1.25rem;
   min-height: 100vh;
-  padding: 1.25rem;
+  padding: var(--shell-pad);
 }
 
 .shell--landing {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   gap: 1.5rem;
 }
 
 .shell--room {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   gap: 1.25rem;
+}
+
+.app-footer {
+  margin-inline: calc(-1 * var(--shell-pad));
+  margin-bottom: calc(-1 * var(--shell-pad));
 }
 
 .topbar {
@@ -1609,7 +1615,8 @@ select {
 
 @media (max-width: 720px) {
   .shell {
-    padding: 0.9rem;
+    --shell-pad: 0.9rem;
+    padding: var(--shell-pad);
   }
 
   .topbar {

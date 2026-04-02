@@ -481,7 +481,7 @@ export const RoomPage = () => {
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
   return (
-    <div className="shell shell--room relative overflow-hidden pb-20">
+    <div className="shell shell--room relative overflow-hidden">
       <AppHeader
         brandAside={
           <span className={`topbar__live-indicator ${isRealtimeReady ? "topbar__live-indicator--live" : ""}`.trim()}>
@@ -665,7 +665,7 @@ export const RoomPage = () => {
       </main>
 
       <footer
-        className="fixed inset-x-0 bottom-0 z-20 flex h-10 items-center justify-between px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] backdrop-blur-xl"
+        className="app-footer z-20 flex h-10 items-center justify-between px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] backdrop-blur-xl"
         style={{
           background: "var(--shell-footer-bg)",
           borderTop: "1px solid var(--shell-footer-border)",
