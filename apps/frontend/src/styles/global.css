@@ -232,6 +232,11 @@ select {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.room-content-grid--moderator {
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  align-items: start;
+}
+
 .room-layout {
   display: grid;
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
@@ -763,6 +768,110 @@ select {
   gap: 1.25rem;
 }
 
+.round-card {
+  align-content: start;
+}
+
+.section-header.round-card__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.round-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.round-card__meta-item,
+.round-card__panel-label {
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.round-card__meta-item {
+  padding: 0.42rem 0.66rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+}
+
+.round-card__body {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.round-card__panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: linear-gradient(180deg, var(--surface-high), var(--surface));
+  border: 1px solid var(--outline);
+  border-radius: calc(var(--radius) - 2px);
+}
+
+.round-card__panel--accent {
+  background:
+    radial-gradient(circle at top right, rgba(135, 245, 197, 0.12), transparent 36%),
+    linear-gradient(180deg, var(--surface-high), var(--surface));
+}
+
+.round-card__panel-head {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.round-card__panel-copy {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.round-card__action-title {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.3rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.ticket-editor.round-card__ticket-editor,
+.action-row.round-card__action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.round-card__ticket-editor > .field {
+  min-width: 0;
+}
+
+.round-card__ticket-editor > .button,
+.round-card__action-row > .button:last-child {
+  min-height: 3rem;
+}
+
+.round-card__action-row > .button:first-child {
+  min-height: 3.25rem;
+}
+
+.round-card__footnote {
+  padding: 0.95rem 1rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  line-height: 1.5;
+}
+
 .section-header.settings-card__header {
   display: flex;
   align-items: start;
@@ -955,6 +1064,10 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .room-content-grid--moderator {
+    grid-template-columns: 1fr;
+  }
+
   .participant-rail {
     order: 2;
   }
@@ -1011,8 +1124,20 @@ select {
     display: grid;
   }
 
-  .section-header.settings-card__header {
+  .room-content-grid--moderator,
+  .section-header.settings-card__header,
+  .section-header.round-card__header {
     display: grid;
+  }
+
+  .ticket-editor.round-card__ticket-editor,
+  .action-row.round-card__action-row,
+  .room-content-grid--moderator {
+    grid-template-columns: 1fr;
+  }
+
+  .round-card__meta {
+    justify-content: flex-start;
   }
 
   .shortcuts-list {

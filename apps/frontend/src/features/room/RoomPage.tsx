@@ -273,6 +273,15 @@ export const RoomPage = () => {
   }
 
   const isModerator = snapshot.viewer.role === "moderator";
+  const normalizedTicketDraft = ticketDraft.trim().toUpperCase();
+  const hasTicketChanged = normalizedTicketDraft !== (snapshot.round.jiraTicketKey ?? "");
+  const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
+  const revealActionTitle =
+    snapshot.round.status === "revealed" ? "Votes are visible to everyone" : "Reveal when the team is ready";
+  const revealActionCopy =
+    snapshot.round.status === "revealed"
+      ? "Switch back to blind voting if the team wants to adjust estimates before locking the round."
+      : "Keep votes hidden while people decide, then reveal everything together to start the discussion.";
 
   return (
     <div className="shell shell--room">
@@ -498,39 +507,78 @@ export const RoomPage = () => {
             </section>
           ) : null}
 
-          <div className="room-content-grid">
+          <div className={`room-content-grid ${isModerator ? "room-content-grid--moderator" : ""}`.trim()}>
             {isModerator ? (
               <section className="card round-card">
-                <div className="section-header">
-                  <StatusChip tone="accent">CONTROL</StatusChip>
-                  <h2>Round actions</h2>
+                <div className="section-header round-card__header">
+                  <div>
+                    <StatusChip tone="accent">CONTROL</StatusChip>
+                    <h2>Round actions</h2>
+                  </div>
+                  <div className="round-card__meta" aria-label="Round status">
+                    <span className="round-card__meta-item">
+                      {snapshot.round.status === "revealed" ? "REVEALED" : "HIDDEN"}
+                    </span>
+                    <span className="round-card__meta-item">
+                      {votedCount}/{snapshot.participants.length} VOTED
+                    </span>
+                  </div>
                 </div>
 
-                <div className="ticket-editor">
-                  <Field
-                    label="TICKET"
-                    value={ticketDraft}
-                    onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
-                    placeholder="PROJ-123"
-                  />
-                  <Button onClick={() => updateTicket(ticketDraft || null)} variant="secondary">
-                    SAVE
-                  </Button>
+                <div className="round-card__body">
+                  <section className="round-card__panel">
+                    <div className="round-card__panel-head">
+                      <span className="round-card__panel-label">Ticket</span>
+                      <p className="round-card__panel-copy">
+                        Point the room at the current Jira issue, or save an empty value to clear it.
+                      </p>
+                    </div>
+
+                    <div className="ticket-editor round-card__ticket-editor">
+                      <Field
+                        hint="Use the issue key only."
+                        label="TICKET"
+                        value={ticketDraft}
+                        onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
+                        placeholder="PROJ-123"
+                      />
+                      <Button
+                        disabled={!hasTicketChanged}
+                        onClick={() => updateTicket(normalizedTicketDraft || null)}
+                        variant="secondary"
+                      >
+                        SAVE
+                      </Button>
+                    </div>
+                  </section>
+
+                  <section className="round-card__panel round-card__panel--accent">
+                    <div className="round-card__panel-head">
+                      <span className="round-card__panel-label">Reveal flow</span>
+                      <h3 className="round-card__action-title">{revealActionTitle}</h3>
+                      <p className="round-card__panel-copy">{revealActionCopy}</p>
+                    </div>
+
+                    <div className="action-row round-card__action-row">
+                      <Button
+                        onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
+                        stretch
+                        variant={snapshot.round.status === "revealed" ? "danger" : "primary"}
+                      >
+                        {revealActionLabel}
+                      </Button>
+                      <Button onClick={resetRound} variant="secondary">
+                        RESET
+                      </Button>
+                    </div>
+                  </section>
                 </div>
 
-                <div className="action-row">
-                  <Button
-                    onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
-                    variant={snapshot.round.status === "revealed" ? "danger" : "primary"}
-                  >
-                    {snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL"}
-                  </Button>
-                  <Button onClick={resetRound} variant="secondary">
-                    RESET
-                  </Button>
+                <div className="waiting-banner round-card__footnote">
+                  {snapshot.round.summary
+                    ? "Votes are revealed. Reset the round to start the next estimate."
+                    : "Votes stay hidden until reveal."}
                 </div>
-
-                {!snapshot.round.summary ? <div className="waiting-banner">VOTES STAY HIDDEN UNTIL REVEAL.</div> : null}
               </section>
             ) : null}
 
