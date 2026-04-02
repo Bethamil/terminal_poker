@@ -7,6 +7,7 @@ import {
 } from "@terminal-poker/shared-types";
 
 import { AppHeader } from "../../components/AppHeader";
+import { AppModal } from "../../components/AppModal";
 import { Button } from "../../components/Button";
 import { Field } from "../../components/Field";
 import { SelectField } from "../../components/SelectField";
@@ -23,9 +24,7 @@ const initialCreateForm = {
 };
 
 const initialJoinForm = {
-  roomCode: "",
-  name: "",
-  joinPasscode: ""
+  roomCode: ""
 };
 
 export const LandingPage = () => {
@@ -33,7 +32,8 @@ export const LandingPage = () => {
   const navigate = useNavigate();
   const [createForm, setCreateForm] = useState(initialCreateForm);
   const [joinForm, setJoinForm] = useState(initialJoinForm);
-  const [busyForm, setBusyForm] = useState<"create" | "join" | null>(null);
+  const [busyForm, setBusyForm] = useState<"create" | null>(null);
+  const [activeDialog, setActiveDialog] = useState<"create" | "join" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [previousRooms, setPreviousRooms] = useState<StoredRoomRecord[]>(() => sessionStorageStore.getPreviousRooms());
@@ -76,6 +76,7 @@ export const LandingPage = () => {
       sessionStorageStore.setParticipantToken(response.roomCode, response.participantToken);
       sessionStorageStore.rememberRoom(response.roomCode, response.snapshot.room.name);
       refreshPreviousRooms();
+      setActiveDialog(null);
       navigate(`/room/${response.roomCode}`);
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : "Unable to create room.");
@@ -86,25 +87,16 @@ export const LandingPage = () => {
 
   const handleJoin = async (event: FormEvent) => {
     event.preventDefault();
-    setBusyForm("join");
     setError(null);
     setNotice(null);
 
-    try {
-      const roomCode = joinForm.roomCode.trim().toUpperCase();
-      const response = await apiClient.joinRoom(roomCode, {
-        name: joinForm.name,
-        joinPasscode: joinForm.joinPasscode || null
-      });
-      sessionStorageStore.setParticipantToken(response.roomCode, response.participantToken);
-      sessionStorageStore.rememberRoom(response.roomCode, response.snapshot.room.name);
-      refreshPreviousRooms();
-      navigate(`/room/${response.roomCode}`);
-    } catch (requestError) {
-      setError(requestError instanceof ApiError ? requestError.message : "Unable to join room.");
-    } finally {
-      setBusyForm(null);
+    const roomCode = joinForm.roomCode.trim().toUpperCase();
+    if (!roomCode) {
+      return;
     }
+
+    setActiveDialog(null);
+    navigate(`/room/${roomCode}`);
   };
 
   const openPreviousRoom = (roomCode: string) => {
@@ -201,152 +193,61 @@ export const LandingPage = () => {
           <div className="landing-window__command mb-8 flex items-start gap-4 font-['JetBrains_Mono'] text-base tracking-[0.18em] lg:text-lg">
             <span className="landing-window__prompt">&gt;</span>
             <p className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-              user@poker:~$ create_session --jira="
-              {createForm.jiraBaseUrl || "https://jira.example.com"}"
+              user@poker:~$ select_session_mode --target="create|join"
             </p>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <form
-              className="landing-form landing-form--create grid gap-4 rounded-[14px] border p-4 lg:p-5"
-              onSubmit={handleCreate}
-            >
+          <div className="landing-action-grid">
+            <article className="landing-action-card landing-form landing-form--create">
               <div className="section-header">
                 <StatusChip tone="success">CREATE</StatusChip>
                 <h2>[CREATE_SESSION]</h2>
               </div>
-              <Field
-                label="NAME"
-                value={createForm.name}
-                onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="root_dev"
-                required
-              />
-              <Field
-                label="ROOM NAME"
-                value={createForm.roomName}
-                onChange={(event) => setCreateForm((current) => ({ ...current, roomName: event.target.value }))}
-                placeholder="Platform sync"
-                required
-              />
-              <Field
-                label="JIRA URL"
-                value={createForm.jiraBaseUrl}
-                onChange={(event) => setCreateForm((current) => ({ ...current, jiraBaseUrl: event.target.value }))}
-                placeholder="https://jira.example.com"
-              />
-              <Field
-                label="PASSCODE"
-                value={createForm.joinPasscode}
-                onChange={(event) => setCreateForm((current) => ({ ...current, joinPasscode: event.target.value }))}
-                placeholder="optional"
-                type="password"
-                hint="Only if you want the room locked."
-              />
-              <SelectField
-                label="DECK"
-                value={createForm.votingDeckId}
-                onChange={(event) =>
-                  setCreateForm((current) => ({ ...current, votingDeckId: event.target.value as VotingDeckId }))
-                }
-                hint="Can be changed later."
-              >
-                {VOTING_DECK_OPTIONS.map((deck) => (
-                  <option key={deck.id} value={deck.id}>
-                    {deck.name}
-                  </option>
-                ))}
-              </SelectField>
+              <p className="hero-copy hero-copy--inline">
+                Start a new planning room with ticket sync, optional locking, and the deck you want.
+              </p>
+              <div className="shortcut-strip">
+                <span>JIRA OPTIONAL</span>
+                <span>LOCK OPTIONAL</span>
+                <span>DECK SELECTABLE</span>
+              </div>
               <Button
-                stretch
-                disabled={busyForm === "create"}
+                className="landing-action-card__button"
+                onClick={() => setActiveDialog("create")}
                 style={{
                   background: "var(--action-create-bg)",
                   color: "var(--action-create-text)"
                 }}
-                type="submit"
               >
-                {busyForm === "create" ? "CREATING..." : "CREATE ROOM"}
+                CREATE ROOM
               </Button>
-            </form>
+            </article>
 
-            <form
-              className="landing-form landing-form--join grid gap-4 rounded-[14px] border p-4 lg:p-5"
-              onSubmit={handleJoin}
-            >
+            <article className="landing-action-card landing-form landing-form--join">
               <div className="section-header">
                 <StatusChip>JOIN</StatusChip>
                 <h2>[JOIN_SESSION]</h2>
               </div>
-              <Field
-                label="ROOM CODE"
-                value={joinForm.roomCode}
-                onChange={(event) =>
-                  setJoinForm((current) => ({ ...current, roomCode: event.target.value.toUpperCase() }))
-                }
-                placeholder="AB123"
-                required
-              />
-              <Field
-                label="NAME"
-                value={joinForm.name}
-                onChange={(event) => setJoinForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="stack_trace"
-                required
-              />
-              <Field
-                label="PASSCODE"
-                value={joinForm.joinPasscode}
-                onChange={(event) => setJoinForm((current) => ({ ...current, joinPasscode: event.target.value }))}
-                placeholder="only if needed"
-                type="password"
-              />
-              <div className="grid gap-3">
-                <span className="rail-kicker">RECENT</span>
-                {previousRooms.length > 0 ? (
-                  <div className="history-list">
-                    {previousRooms.slice(0, 3).map((room) => {
-                      const hasActiveSession = Boolean(
-                        sessionStorageStore.getParticipantToken(room.roomCode)
-                      );
-
-                      return (
-                        <div className="history-row" key={room.roomCode}>
-                          <div className="history-row__identity">
-                            <strong>{room.roomName}</strong>
-                            <span>
-                              {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
-                            </span>
-                          </div>
-                          <div className="history-row__actions">
-                            <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
-                              {hasActiveSession ? "RESUME" : "OPEN"}
-                            </Button>
-                            <Button onClick={() => void removePreviousRoom(room)} variant="ghost">
-                              REMOVE
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="landing-history__empty">Rooms you visit will show up here.</div>
-                )}
+              <p className="hero-copy hero-copy--inline">
+                Enter the room code first. If the room needs a passcode or your name, the room gate asks next.
+              </p>
+              <div className="shortcut-strip">
+                <span>ROOM CODE FIRST</span>
+                <span>NAME NEXT</span>
+                <span>PASSCODE IF NEEDED</span>
               </div>
               <Button
-                stretch
+                className="landing-action-card__button"
                 style={{
                   background: "var(--action-join-bg)",
                   color: "var(--action-join-text)"
                 }}
-                type="submit"
                 variant="secondary"
-                disabled={busyForm === "join"}
+                onClick={() => setActiveDialog("join")}
               >
-                {busyForm === "join" ? "JOINING..." : "JOIN ROOM"}
+                JOIN ROOM
               </Button>
-            </form>
+            </article>
           </div>
 
           <div className="landing-note mt-6 border-l px-4 py-3">
@@ -392,6 +293,141 @@ export const LandingPage = () => {
         <div className="notice notice--error fixed bottom-14 right-4 z-30 max-w-md">
           {error}
         </div>
+      ) : null}
+
+      {activeDialog === "create" ? (
+        <AppModal
+          label="CREATE"
+          onClose={() => setActiveDialog(null)}
+          title="Create room"
+          titleId="landing-create-title"
+        >
+          <form className="landing-modal-form" onSubmit={handleCreate}>
+            <p className="hero-copy hero-copy--inline">
+              Set up the room once, then share the invite link from inside the session.
+            </p>
+            <Field
+              label="NAME"
+              value={createForm.name}
+              onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))}
+              placeholder="root_dev"
+              required
+            />
+            <Field
+              label="ROOM NAME"
+              value={createForm.roomName}
+              onChange={(event) => setCreateForm((current) => ({ ...current, roomName: event.target.value }))}
+              placeholder="Platform sync"
+              required
+            />
+            <Field
+              label="JIRA URL"
+              value={createForm.jiraBaseUrl}
+              onChange={(event) => setCreateForm((current) => ({ ...current, jiraBaseUrl: event.target.value }))}
+              placeholder="https://jira.example.com"
+            />
+            <Field
+              label="PASSCODE"
+              value={createForm.joinPasscode}
+              onChange={(event) => setCreateForm((current) => ({ ...current, joinPasscode: event.target.value }))}
+              placeholder="optional"
+              type="password"
+              hint="Only if you want the room locked."
+            />
+            <SelectField
+              label="DECK"
+              value={createForm.votingDeckId}
+              onChange={(event) =>
+                setCreateForm((current) => ({ ...current, votingDeckId: event.target.value as VotingDeckId }))
+              }
+              hint="Can be changed later."
+            >
+              {VOTING_DECK_OPTIONS.map((deck) => (
+                <option key={deck.id} value={deck.id}>
+                  {deck.name}
+                </option>
+              ))}
+            </SelectField>
+            <Button
+              stretch
+              disabled={busyForm === "create"}
+              style={{
+                background: "var(--action-create-bg)",
+                color: "var(--action-create-text)"
+              }}
+              type="submit"
+            >
+              {busyForm === "create" ? "CREATING..." : "CREATE ROOM"}
+            </Button>
+          </form>
+        </AppModal>
+      ) : null}
+
+      {activeDialog === "join" ? (
+        <AppModal
+          label="JOIN"
+          onClose={() => setActiveDialog(null)}
+          title="Join room"
+          titleId="landing-join-title"
+        >
+          <form className="landing-modal-form" onSubmit={handleJoin}>
+            <p className="hero-copy hero-copy--inline">
+              Enter the room code here. The room page will ask for your name and a passcode only if required.
+            </p>
+            <Field
+              label="ROOM CODE"
+              value={joinForm.roomCode}
+              onChange={(event) =>
+                setJoinForm((current) => ({ ...current, roomCode: event.target.value.toUpperCase() }))
+              }
+              placeholder="AB123"
+              required
+            />
+            <Button
+              stretch
+              style={{
+                background: "var(--action-join-bg)",
+                color: "var(--action-join-text)"
+              }}
+              type="submit"
+              variant="secondary"
+            >
+              OPEN ROOM
+            </Button>
+          </form>
+
+          <div className="landing-modal-section">
+            <span className="rail-kicker">RECENT</span>
+            {previousRooms.length > 0 ? (
+              <div className="history-list">
+                {previousRooms.slice(0, 3).map((room) => {
+                  const hasActiveSession = Boolean(sessionStorageStore.getParticipantToken(room.roomCode));
+
+                  return (
+                    <div className="history-row" key={room.roomCode}>
+                      <div className="history-row__identity">
+                        <strong>{room.roomName}</strong>
+                        <span>
+                          {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
+                        </span>
+                      </div>
+                      <div className="history-row__actions">
+                        <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
+                          {hasActiveSession ? "RESUME" : "OPEN"}
+                        </Button>
+                        <Button onClick={() => void removePreviousRoom(room)} variant="ghost">
+                          REMOVE
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="landing-history__empty">Rooms you visit will show up here.</div>
+            )}
+          </div>
+        </AppModal>
       ) : null}
     </div>
   );

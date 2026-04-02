@@ -731,6 +731,35 @@ select {
   border-color: var(--landing-form-join-border);
 }
 
+.landing-action-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.landing-action-card {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.landing-action-card__button {
+  width: 100%;
+  margin-top: auto;
+}
+
+.landing-modal-form,
+.landing-modal-section {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.landing-modal-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--outline);
+}
+
 .landing-note {
   border-left-color: var(--landing-note-border);
   background: var(--landing-note-bg);
@@ -830,100 +859,7 @@ select {
   color: var(--primary);
 }
 
-.shortcuts-card {
-  gap: 1.1rem;
-}
-
-.section-header.shortcuts-card__header {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.shortcuts-card__header > .button {
-  margin-left: auto;
-  align-self: start;
-}
-
-.shortcuts-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
-  gap: 1rem;
-}
-
-.shortcuts-section {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--settings-section-bg);
-  border: 1px solid var(--outline);
-  border-radius: calc(var(--radius) - 4px);
-}
-
-.shortcuts-section__label {
-  color: var(--muted);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.shortcuts-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 0.75rem;
-}
-
-.shortcut-item {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.8rem 0.9rem;
-  background: var(--panel-bg);
-  border: 1px solid var(--outline);
-  border-radius: 12px;
-}
-
-.shortcut-item kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.25rem;
-  height: 2.25rem;
-  padding: 0 0.45rem;
-  background: linear-gradient(180deg, var(--surface-high), var(--surface));
-  border: 1px solid var(--outline);
-  border-radius: 10px;
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.16);
-  color: var(--text);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.86rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.shortcut-item__copy {
-  display: grid;
-  gap: 0.18rem;
-  min-width: 0;
-}
-
-.shortcut-item__copy strong {
-  font-size: 0.92rem;
-}
-
-.shortcut-item__copy span {
-  color: var(--muted);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.ticket-link,
-.vote-tile__shortcut {
+.ticket-link {
   color: var(--primary);
 }
 
@@ -1728,6 +1664,17 @@ select {
   }
 }
 
+@media (min-width: 960px) {
+  .landing-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-action-card__button {
+    width: fit-content;
+    min-width: 12rem;
+  }
+}
+
 @media (min-width: 1101px) {
   .room-sidebar {
     position: sticky;
@@ -1820,8 +1767,7 @@ select {
   }
 
   .settings-grid,
-  .summary-grid,
-  .shortcuts-grid {
+  .summary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1883,10 +1829,6 @@ select {
     justify-self: start;
   }
 
-  .section-header.shortcuts-card__header {
-    display: grid;
-  }
-
   .room-content-grid--moderator,
   .section-header.settings-card__header,
   .section-header.round-card__header {
@@ -1896,10 +1838,6 @@ select {
   .ticket-editor.round-card__ticket-editor,
   .action-row.round-card__action-row,
   .room-content-grid--moderator {
-    grid-template-columns: 1fr;
-  }
-
-  .shortcuts-list {
     grid-template-columns: 1fr;
   }
 

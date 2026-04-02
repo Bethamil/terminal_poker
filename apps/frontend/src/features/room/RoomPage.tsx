@@ -1,4 +1,4 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -10,6 +10,7 @@ import {
 } from "@terminal-poker/shared-types";
 
 import { AppHeader } from "../../components/AppHeader";
+import { AppModal } from "../../components/AppModal";
 import { Button } from "../../components/Button";
 import { Field } from "../../components/Field";
 import { SelectField } from "../../components/SelectField";
@@ -113,64 +114,30 @@ const ParticipantRail = ({
   </aside>
 );
 
-const RoomModal = ({
-  actions,
-  children,
-  label,
-  onClose,
-  title,
-  titleId,
-  wide = false
-}: {
-  actions?: ReactNode;
-  children: ReactNode;
-  label: string;
-  onClose: () => void;
-  title: string;
-  titleId: string;
-  wide?: boolean;
-}) => (
-  <div
-    className="room-modal"
-    onClick={(event) => {
-      if (event.target === event.currentTarget) {
-        onClose();
-      }
-    }}
-    role="presentation"
-  >
-    <section
-      aria-labelledby={titleId}
-      aria-modal="true"
-      className={`card room-modal__dialog ${wide ? "room-modal__dialog--wide" : ""}`.trim()}
-      role="dialog"
-    >
-      <div className="section-header room-modal__header">
-        <div>
-          <StatusChip tone="accent">{label}</StatusChip>
-          <h2 id={titleId}>{title}</h2>
-        </div>
-        <Button
-          aria-label={`Close ${label.toLowerCase()} dialog`}
-          className="room-modal__close"
-          onClick={onClose}
-          variant="ghost"
-        >
-          X
-        </Button>
-      </div>
-      <div className="room-modal__body">{children}</div>
-      {actions ? <div className="room-modal__footer">{actions}</div> : null}
-    </section>
-  </div>
-);
-
 const formatAverage = (average: number | null) => {
   if (average === null) {
     return "n/a";
   }
 
   return Number.isInteger(average) ? String(average) : average.toFixed(1).replace(/\.0$/, "");
+};
+
+const formatVoteShortcutHint = (shortcuts: string[]) => {
+  const normalizedShortcuts = shortcuts.map((shortcut) => shortcut.toUpperCase());
+  const numericShortcuts = normalizedShortcuts.filter((shortcut) => /^\d$/.test(shortcut));
+  const extraShortcuts = normalizedShortcuts.filter((shortcut) => !/^\d$/.test(shortcut));
+
+  if (numericShortcuts.length === 0) {
+    return `[${extraShortcuts.join(" ")}] VOTE`;
+  }
+
+  const numericHint = numericShortcuts.includes("0")
+    ? "1-0"
+    : `1-${numericShortcuts[numericShortcuts.length - 1]}`;
+
+  return extraShortcuts.length > 0
+    ? `[${numericHint} ${extraShortcuts.join(" ")}] VOTE`
+    : `[${numericHint}] VOTE`;
 };
 
 export const RoomPage = () => {
@@ -184,7 +151,6 @@ export const RoomPage = () => {
   const [joinPasscode, setJoinPasscode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [roomLinkStatus, setRoomLinkStatus] = useState<"idle" | "copied" | "error">("idle");
   const [isLeaving, setIsLeaving] = useState(false);
   const [ticketDraft, setTicketDraft] = useState("");
@@ -265,28 +231,6 @@ export const RoomPage = () => {
   }, [error]);
 
   useEffect(() => {
-    if (!isSettingsOpen && !isShortcutsOpen) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsSettingsOpen(false);
-        setIsShortcutsOpen(false);
-      }
-    };
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [isSettingsOpen, isShortcutsOpen]);
-
-  useEffect(() => {
     if (roomLinkStatus === "idle") {
       return;
     }
@@ -303,18 +247,9 @@ export const RoomPage = () => {
     () => (snapshot ? getVoteCardMeta(snapshot.room.votingDeckId) : []),
     [snapshot]
   );
-  const moderatorShortcuts = useMemo(
-    () => [
-      {
-        key: "R",
-        label: snapshot?.round.status === "revealed" ? "Unreveal votes" : "Reveal votes"
-      },
-      {
-        key: "N",
-        label: "Reset round"
-      }
-    ],
-    [snapshot?.round.status]
+  const voteShortcutHint = useMemo(
+    () => formatVoteShortcutHint(voteCardMeta.map((card) => card.shortcut)),
+    [voteCardMeta]
   );
 
   const handleInlineJoin = async (event: FormEvent) => {
@@ -495,27 +430,12 @@ export const RoomPage = () => {
                 aria-expanded={isSettingsOpen}
                 aria-haspopup="dialog"
                 className="room-topbar__action"
-                onClick={() => {
-                  setIsSettingsOpen((current) => !current);
-                  setIsShortcutsOpen(false);
-                }}
+                onClick={() => setIsSettingsOpen((current) => !current)}
                 variant="ghost"
               >
                 {isSettingsOpen ? "CLOSE" : "SETTINGS"}
               </Button>
             ) : null}
-            <Button
-              aria-expanded={isShortcutsOpen}
-              aria-haspopup="dialog"
-              className="room-topbar__action"
-              onClick={() => {
-                setIsShortcutsOpen((current) => !current);
-                setIsSettingsOpen(false);
-              }}
-              variant="ghost"
-            >
-              {isShortcutsOpen ? "CLOSE KEYS" : "KEYS"}
-            </Button>
             <Button
               className="room-topbar__action"
               disabled={isLeaving}
@@ -674,7 +594,7 @@ export const RoomPage = () => {
       >
         <div className="flex items-center gap-4">
           <span>V2.4.0-STABLE</span>
-          <span>[1-8] VOTE</span>
+          <span>{voteShortcutHint}</span>
           <span>[R] REVEAL</span>
           <span>[N] NEXT</span>
         </div>
@@ -688,7 +608,7 @@ export const RoomPage = () => {
       </footer>
 
       {isModerator && isSettingsOpen ? (
-        <RoomModal
+        <AppModal
           label="SETTINGS"
           onClose={() => setIsSettingsOpen(false)}
           title="Room config"
@@ -791,52 +711,9 @@ export const RoomPage = () => {
               </div>
             </section>
           </div>
-        </RoomModal>
+        </AppModal>
       ) : null}
 
-      {isShortcutsOpen ? (
-        <RoomModal
-          actions={<div className="mono-muted">SHORTCUTS ONLY WORK WHEN YOU ARE NOT TYPING IN AN INPUT.</div>}
-          label="SHORTCUTS"
-          onClose={() => setIsShortcutsOpen(false)}
-          title={isModerator ? "Moderator controls" : "Keyboard controls"}
-          titleId="room-shortcuts-title"
-          wide
-        >
-          <div className="shortcuts-grid">
-            <section className="shortcuts-section">
-              <span className="shortcuts-section__label">VOTE</span>
-              <div className="shortcuts-list">
-                {voteCardMeta.map((card) => (
-                  <div className="shortcut-item" key={card.value}>
-                    <kbd>{card.shortcut.toUpperCase()}</kbd>
-                    <div className="shortcut-item__copy">
-                      <strong>{card.value}</strong>
-                      <span>{card.label}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {isModerator ? (
-              <section className="shortcuts-section">
-                <span className="shortcuts-section__label">MODERATOR</span>
-                <div className="shortcuts-list">
-                  {moderatorShortcuts.map((shortcut) => (
-                    <div className="shortcut-item" key={shortcut.key}>
-                      <kbd>{shortcut.key}</kbd>
-                      <div className="shortcut-item__copy">
-                        <strong>{shortcut.label}</strong>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-          </div>
-        </RoomModal>
-      ) : null}
     </div>
   );
 };
