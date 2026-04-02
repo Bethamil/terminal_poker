@@ -75,6 +75,7 @@ export const RoomPage = () => {
   const [joinPasscode, setJoinPasscode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [ticketDraft, setTicketDraft] = useState("");
   const [jiraBaseUrlDraft, setJiraBaseUrlDraft] = useState("");
   const [votingDeckIdDraft, setVotingDeckIdDraft] = useState<UpdateRoomSettingsPayload["votingDeckId"]>("modified-fibonacci");
@@ -133,6 +134,21 @@ export const RoomPage = () => {
     }
   }, [error]);
 
+  useEffect(() => {
+    if (!isShortcutsOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsShortcutsOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isShortcutsOpen]);
+
   const votedCount = useMemo(
     () => snapshot?.participants.filter((participant) => participant.hasVoted).length ?? 0,
     [snapshot]
@@ -140,6 +156,19 @@ export const RoomPage = () => {
   const voteCardMeta = useMemo<ReturnType<typeof getVoteCardMeta>>(
     () => (snapshot ? getVoteCardMeta(snapshot.room.votingDeckId) : []),
     [snapshot]
+  );
+  const moderatorShortcuts = useMemo(
+    () => [
+      {
+        key: "R",
+        label: snapshot?.round.status === "revealed" ? "Unreveal votes" : "Reveal votes"
+      },
+      {
+        key: "N",
+        label: "Reset round"
+      }
+    ],
+    [snapshot?.round.status]
   );
 
   const handleInlineJoin = async (event: FormEvent) => {
@@ -252,11 +281,19 @@ export const RoomPage = () => {
         <span className="mono-muted">{isRealtimeReady ? "LIVE" : "SYNCING"}</span>
         {isModerator ? (
           <Button onClick={() => setIsSettingsOpen((current) => !current)} variant="ghost">
-            {isSettingsOpen ? "CLOSE" : "SETTINGS"}
+            {isSettingsOpen ? "CLOSE SETTINGS" : "SETTINGS"}
           </Button>
         ) : null}
         <Button onClick={copyRoomLink} variant="ghost">
           COPY LINK
+        </Button>
+        <Button
+          aria-controls="room-shortcuts"
+          aria-expanded={isShortcutsOpen}
+          onClick={() => setIsShortcutsOpen((current) => !current)}
+          variant="ghost"
+        >
+          {isShortcutsOpen ? "KEYS ON" : "KEYS"}
         </Button>
       </AppHeader>
 
@@ -270,9 +307,14 @@ export const RoomPage = () => {
         <section className="room-main">
           {isModerator && isSettingsOpen ? (
             <section className="card settings-card">
-              <div className="section-header">
-                <StatusChip tone="accent">SETTINGS</StatusChip>
-                <h2>Room config</h2>
+              <div className="section-header settings-card__header">
+                <div>
+                  <StatusChip tone="accent">SETTINGS</StatusChip>
+                  <h2>Room config</h2>
+                </div>
+                <Button onClick={() => setIsSettingsOpen(false)} variant="ghost">
+                  X
+                </Button>
               </div>
 
               <div className="settings-grid">
@@ -406,6 +448,55 @@ export const RoomPage = () => {
               ) : null}
             </div>
           </div>
+
+          {isShortcutsOpen ? (
+            <section className="card shortcuts-card" id="room-shortcuts">
+              <div className="section-header shortcuts-card__header">
+                <div>
+                  <StatusChip tone="accent">SHORTCUTS</StatusChip>
+                  <h2>{isModerator ? "Moderator controls" : "Keyboard controls"}</h2>
+                </div>
+                <Button onClick={() => setIsShortcutsOpen(false)} variant="ghost">
+                  X
+                </Button>
+              </div>
+
+              <div className="shortcuts-grid">
+                <section className="shortcuts-section">
+                  <span className="shortcuts-section__label">VOTE</span>
+                  <div className="shortcuts-list">
+                    {voteCardMeta.map((card) => (
+                      <div className="shortcut-item" key={card.value}>
+                        <kbd>{card.shortcut.toUpperCase()}</kbd>
+                        <div className="shortcut-item__copy">
+                          <strong>{card.value}</strong>
+                          <span>{card.label}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {isModerator ? (
+                  <section className="shortcuts-section">
+                    <span className="shortcuts-section__label">MODERATOR</span>
+                    <div className="shortcuts-list">
+                      {moderatorShortcuts.map((shortcut) => (
+                        <div className="shortcut-item" key={shortcut.key}>
+                          <kbd>{shortcut.key}</kbd>
+                          <div className="shortcut-item__copy">
+                            <strong>{shortcut.label}</strong>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+              </div>
+
+              <div className="mono-muted">SHORTCUTS ONLY WORK WHEN YOU ARE NOT TYPING IN AN INPUT.</div>
+            </section>
+          ) : null}
 
           <div className="room-content-grid">
             {isModerator ? (
