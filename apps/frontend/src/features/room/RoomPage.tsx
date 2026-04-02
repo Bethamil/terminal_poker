@@ -534,15 +534,15 @@ export const RoomPage = () => {
           participants={snapshot.participants}
         />
 
-        <section className="grid gap-5">
-          <div className="grid gap-4 px-2 py-6 text-center lg:px-8 lg:py-12">
+        <section className="grid gap-4">
+          <div className="grid gap-3 px-2 py-2 text-center lg:px-6 lg:py-4">
             <div className="inline-flex justify-center">
               <StatusChip tone={snapshot.round.status === "revealed" ? "success" : "accent"}>
                 {snapshot.round.status === "revealed" ? "REVEALED" : "IN PROGRESS"}
               </StatusChip>
             </div>
-            <div className="grid gap-4">
-              <div className="hero-card__ticket items-center justify-items-center gap-3">
+            <div className="grid gap-2">
+              <div className="hero-card__ticket items-center justify-items-center gap-2">
                 <span className="hero-card__label">CURRENT TICKET</span>
                 <h1 className="ticket-title text-[clamp(3.8rem,10vw,8rem)]">
                   {snapshot.round.jiraTicketKey ?? "ROUND_OPEN"}
@@ -560,7 +560,7 @@ export const RoomPage = () => {
               </div>
             </div>
 
-            <div className="mx-auto flex min-h-[2.75rem] flex-wrap items-center justify-center gap-3">
+            <div className="mx-auto flex min-h-[2.25rem] flex-wrap items-center justify-center gap-3">
               <span className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</span>
               <span
                 aria-hidden={!roundSummary}
@@ -643,47 +643,32 @@ export const RoomPage = () => {
             </section>
           ) : null}
 
-          <section className={`card deck-card border-white/5 bg-transparent p-0 shadow-none ${isModerator ? "deck-card--moderator" : ""}`.trim()}>
-            <div className="grid gap-4 rounded-[18px] border border-white/5 bg-black/10 p-4 lg:p-6">
-              <div className="section-header">
-                <StatusChip tone="success">DECK</StatusChip>
-                <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
-              </div>
-              <div className="deck-card__body">
-                <div
-                  aria-live={isVoteBlocked ? "polite" : undefined}
-                  className={`deck-card__vote-alert ${isVoteBlocked ? "" : "invisible pointer-events-none"}`.trim()}
-                  role={isVoteBlocked ? "status" : undefined}
-                >
-                  <span className="deck-card__vote-alert-label">Voting closed</span>
-                  <strong>
-                    {isVoteBlocked
-                      ? snapshot.viewer.selectedVote
-                        ? `Your last vote was ${snapshot.viewer.selectedVote}.`
-                        : "This round is already revealed."
-                      : "This round is already revealed."}
-                  </strong>
-                </div>
-                <div className="vote-grid">
-                  {voteCardMeta.map((card) => {
-                    const isSelected = snapshot.viewer.selectedVote === card.value;
-                    return (
-                      <button
-                        aria-disabled={isVotingClosed}
-                        className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
-                          isVotingClosed ? "vote-tile--locked" : ""
-                        }`.trim()}
-                        key={card.value}
-                        onClick={() => castVote(card.value)}
-                        type="button"
-                      >
-                        <span className="vote-tile__shortcut">{card.shortcut}</span>
-                        <strong>{card.value}</strong>
-                        <span>{card.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+          <section
+            className={`deck-card ${isModerator ? "deck-card--moderator" : ""}`.trim()}
+          >
+            <div className="section-header">
+              <StatusChip tone="success">DECK</StatusChip>
+              <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
+            </div>
+            <div className="deck-card__body">
+              <div className="vote-grid">
+                {voteCardMeta.map((card) => {
+                  const isSelected = snapshot.viewer.selectedVote === card.value;
+                  return (
+                    <button
+                      aria-disabled={isVotingClosed}
+                      className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
+                        isVotingClosed ? "vote-tile--locked" : ""
+                      }`.trim()}
+                      key={card.value}
+                      onClick={() => castVote(card.value)}
+                      type="button"
+                    >
+                      <strong className="vote-tile__value">{card.value}</strong>
+                      <span className="vote-tile__label">{card.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </section>
