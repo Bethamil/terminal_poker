@@ -119,9 +119,39 @@ export const LandingPage = () => {
       </AppHeader>
 
       <main className="landing-grid">
-        <section className="landing-hero card card--ghost">
-          <h1 className="hero-title">Create a room or join one.</h1>
-          <p className="hero-copy">Everything starts here.</p>
+        <section className="landing-intro">
+          <section className="landing-hero card card--ghost">
+            <h1 className="hero-title">Create a room or join one.</h1>
+            <p className="hero-copy">Everything starts here.</p>
+          </section>
+
+          {previousRooms.length > 0 ? (
+            <section className="card landing-history">
+              <div className="section-header">
+                <StatusChip tone="accent">RECENT</StatusChip>
+                <h2>Previous rooms</h2>
+              </div>
+              <div className="history-list">
+                {previousRooms.map((room) => {
+                  const hasActiveSession = Boolean(sessionStorageStore.getParticipantToken(room.roomCode));
+
+                  return (
+                    <div className="history-row" key={room.roomCode}>
+                      <div className="history-row__identity">
+                        <strong>{room.roomName}</strong>
+                        <span>
+                          {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
+                        </span>
+                      </div>
+                      <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
+                        {hasActiveSession ? "RESUME" : "OPEN"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
         </section>
 
         <section className="landing-actions">
@@ -208,34 +238,6 @@ export const LandingPage = () => {
             </Button>
           </form>
         </section>
-
-        {previousRooms.length > 0 ? (
-          <section className="card landing-history">
-            <div className="section-header">
-              <StatusChip tone="accent">RECENT</StatusChip>
-              <h2>Previous rooms</h2>
-            </div>
-            <div className="history-list">
-              {previousRooms.map((room) => {
-                const hasActiveSession = Boolean(sessionStorageStore.getParticipantToken(room.roomCode));
-
-                return (
-                  <div className="history-row" key={room.roomCode}>
-                    <div className="history-row__identity">
-                      <strong>{room.roomName}</strong>
-                      <span>
-                        {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
-                      </span>
-                    </div>
-                    <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
-                      {hasActiveSession ? "RESUME" : "OPEN"}
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
       </main>
 
       {notice ? <div className="notice notice--info">{notice}</div> : null}

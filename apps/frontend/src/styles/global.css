@@ -376,6 +376,13 @@ select {
   align-items: start;
 }
 
+.landing-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+  gap: 1rem;
+  align-items: stretch;
+}
+
 .landing-actions,
 .room-content-grid {
   display: grid;
@@ -1171,6 +1178,10 @@ select {
   gap: 1rem;
 }
 
+.landing-history {
+  align-content: start;
+}
+
 .history-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1308,6 +1319,10 @@ select {
 
 @media (max-width: 1100px) {
   .room-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-intro {
     grid-template-columns: 1fr;
   }
 
