@@ -35,7 +35,7 @@ const ParticipantRail = ({
   roomLinkStatus: "idle" | "copied" | "error";
   participants: ParticipantSnapshot[];
 }) => (
-  <aside className="card card--rail grid h-full min-h-[420px] grid-rows-[auto_auto_1fr_auto] gap-5 border-white/5 bg-[#09090b]/92 p-5 lg:sticky lg:top-5">
+  <aside className="card card--rail grid h-full min-h-[420px] grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-5 border-white/5 bg-[#09090b]/92 p-5 lg:sticky lg:top-5 lg:h-[calc(100vh-7.25rem)]">
     <div className="grid gap-1">
       <h2 className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.18em] text-[#d7c7ff]">
         {roomName.replace(/\s+/g, "_")}
@@ -54,7 +54,7 @@ const ParticipantRail = ({
       </div>
     </div>
 
-    <div className="participant-list">
+    <div className="participant-list min-h-0 overflow-y-auto pr-1">
       {participants?.map((participant) => (
         <div
           className={`participant-row ${
@@ -547,11 +547,6 @@ export const RoomPage = () => {
                 <h1 className="ticket-title text-[clamp(3.8rem,10vw,8rem)]">
                   {snapshot.round.jiraTicketKey ?? "ROUND_OPEN"}
                 </h1>
-                <p className="mx-auto max-w-xl text-sm leading-7 text-[#7b7a88]">
-                  {snapshot.round.jiraTicketKey
-                    ? `${snapshot.room.name} is collecting estimates with the ${getVotingDeckName(snapshot.room.votingDeckId)} deck.`
-                    : `Set a ticket and collect estimates in ${snapshot.room.name}.`}
-                </p>
                 {snapshot.round.jiraTicketUrl ? (
                   <a
                     className="ticket-link inline-flex rounded-none border border-[#8c67ff]/50 px-5 py-3 text-[#d7c7ff] no-underline transition hover:bg-[#8c67ff]/10"
@@ -565,18 +560,22 @@ export const RoomPage = () => {
               </div>
             </div>
 
-            <div className="mx-auto flex flex-wrap items-center justify-center gap-3">
+            <div className="mx-auto flex min-h-[2.75rem] flex-wrap items-center justify-center gap-3">
               <span className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</span>
-              {roundSummary ? (
-                <>
-                  <span className="hero-card__terminal-line">
-                    <strong>AVG {formattedAverage}</strong>
-                  </span>
-                  <span className={`hero-card__terminal-line ${hasConsensus ? "hero-card__terminal-line--match" : ""}`.trim()}>
-                    <strong>{consensusLabel}</strong>
-                  </span>
-                </>
-              ) : null}
+              <span
+                aria-hidden={!roundSummary}
+                className={`hero-card__terminal-line ${roundSummary ? "" : "invisible pointer-events-none"}`.trim()}
+              >
+                <strong>{roundSummary ? `AVG ${formattedAverage}` : "AVG 00"}</strong>
+              </span>
+              <span
+                aria-hidden={!roundSummary}
+                className={`hero-card__terminal-line ${hasConsensus ? "hero-card__terminal-line--match" : ""} ${
+                  roundSummary ? "" : "invisible pointer-events-none"
+                }`.trim()}
+              >
+                <strong>{roundSummary ? consensusLabel : "split"}</strong>
+              </span>
             </div>
           </div>
 
@@ -651,20 +650,20 @@ export const RoomPage = () => {
                 <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
               </div>
               <div className="deck-card__body">
-                {isVoteBlocked ? (
-                  <div
-                    aria-live="polite"
-                    className="deck-card__vote-alert"
-                    role="status"
-                  >
-                    <span className="deck-card__vote-alert-label">Voting closed</span>
-                    <strong>
-                      {snapshot.viewer.selectedVote
+                <div
+                  aria-live={isVoteBlocked ? "polite" : undefined}
+                  className={`deck-card__vote-alert ${isVoteBlocked ? "" : "invisible pointer-events-none"}`.trim()}
+                  role={isVoteBlocked ? "status" : undefined}
+                >
+                  <span className="deck-card__vote-alert-label">Voting closed</span>
+                  <strong>
+                    {isVoteBlocked
+                      ? snapshot.viewer.selectedVote
                         ? `Your last vote was ${snapshot.viewer.selectedVote}.`
-                        : "This round is already revealed."}
-                    </strong>
-                  </div>
-                ) : null}
+                        : "This round is already revealed."
+                      : "This round is already revealed."}
+                  </strong>
+                </div>
                 <div className="vote-grid">
                   {voteCardMeta.map((card) => {
                     const isSelected = snapshot.viewer.selectedVote === card.value;
