@@ -33,6 +33,7 @@ Basic guidance for working in this repo.
   - `SelectField`
   - `StatusChip`
 - Keep visual changes aligned with the `DESIGN` reference in `/DESIGN`.
+- Prefer to use Tailwind CSS for layout and styling, rather than custom CSS classes.
 - Use `global.css` for theme tokens, shared utility classes, and cross-page layout rules.
 - Avoid hardcoded dark/light colors in JSX when a CSS variable already exists or should exist.
 
