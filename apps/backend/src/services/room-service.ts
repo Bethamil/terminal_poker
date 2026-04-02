@@ -367,6 +367,25 @@ export class RoomService {
     });
   }
 
+  async unrevealRound(roomCode: string, participantToken: string): Promise<void> {
+    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
+
+    if (authorized.role !== ParticipantRole.MODERATOR) {
+      throw new AppError(403, "FORBIDDEN", "Only moderators can unreveal a round.");
+    }
+
+    const round = authorized.room.rounds[0];
+    if (!round) {
+      throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
+    }
+
+    await this.prisma.$transaction(async (transaction) => {
+      const repo = this.repository(transaction);
+      await repo.touchParticipant(authorized.participantId);
+      await repo.unrevealRound(round.id);
+    });
+  }
+
   async resetRound(roomCode: string, participantToken: string): Promise<void> {
     const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
 

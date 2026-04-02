@@ -103,6 +103,16 @@ export class RoomRepository {
     });
   }
 
+  async unrevealRound(roundId: string) {
+    return this.db.round.update({
+      where: { id: roundId },
+      data: {
+        status: RoundStatus.ACTIVE,
+        revealedAt: null
+      }
+    });
+  }
+
   async upsertVote(roundId: string, participantId: string, value: string) {
     return this.db.vote.upsert({
       where: {

@@ -113,6 +113,33 @@ const createFakePrisma = (room: RoomAggregate): PrismaClient => {
 
         room.rounds.unshift(round as RoomAggregate["rounds"][number]);
         return round;
+      },
+      update: async ({
+        where,
+        data
+      }: {
+        where: { id: string };
+        data: { status?: RoundStatus; revealedAt?: Date | null; jiraTicketKey?: string | null };
+      }) => {
+        const round = room.rounds.find((entry) => entry.id === where.id);
+
+        if (!round) {
+          throw new Error("Round not found.");
+        }
+
+        if ("status" in data && data.status) {
+          round.status = data.status;
+        }
+
+        if ("revealedAt" in data) {
+          round.revealedAt = data.revealedAt ?? null;
+        }
+
+        if ("jiraTicketKey" in data) {
+          round.jiraTicketKey = data.jiraTicketKey ?? null;
+        }
+
+        return round;
       }
     },
     $transaction: async (callback: (transactionClient: PrismaClient) => Promise<unknown>) =>
@@ -170,5 +197,27 @@ describe("RoomService moderator actions", () => {
     await expect(service.castVote("AB123", "participant-token", "5")).rejects.toMatchObject({
       code: "INVALID_VOTE"
     } satisfies Partial<AppError>);
+  });
+
+  it("unreveals the current round without creating a new one", async () => {
+    const room = createRoomAggregate();
+    room.rounds[0].status = RoundStatus.REVEALED;
+    room.rounds[0].revealedAt = new Date("2026-01-01T10:10:00.000Z");
+    room.rounds[0].votes.push({
+      id: "vote_1",
+      roundId: "round_1",
+      participantId: "part_1",
+      value: "8",
+      createdAt: new Date("2026-01-01T10:09:00.000Z"),
+      updatedAt: new Date("2026-01-01T10:09:00.000Z")
+    });
+    const service = createService(room);
+
+    await service.unrevealRound("AB123", "moderator-token");
+
+    expect(room.rounds).toHaveLength(1);
+    expect(room.rounds[0].status).toBe(RoundStatus.ACTIVE);
+    expect(room.rounds[0].revealedAt).toBeNull();
+    expect(room.rounds[0].votes).toHaveLength(1);
   });
 });

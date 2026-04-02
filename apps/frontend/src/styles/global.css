@@ -562,6 +562,10 @@ select {
   border-color: rgba(135, 245, 197, 0.18);
 }
 
+.participant-row--revealed {
+  grid-template-columns: auto minmax(0, 1fr) minmax(3.75rem, auto);
+}
+
 .presence-dot {
   width: 0.55rem;
   height: 0.55rem;
@@ -595,6 +599,22 @@ select {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+
+.participant-row__vote {
+  justify-self: end;
+  min-width: 1.25rem;
+  text-align: right;
+}
+
+.participant-row__vote--revealed {
+  color: var(--text);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  text-transform: none;
 }
 
 .hero-card,

@@ -80,5 +80,6 @@ export interface ClientToServerEvents {
   "vote:cast": (payload: CastVotePayload) => void;
   "round:setTicket": (payload: SetTicketPayload) => void;
   "round:reveal": (payload: RoundActionPayload) => void;
+  "round:unreveal": (payload: RoundActionPayload) => void;
   "round:reset": (payload: RoundActionPayload) => void;
 }

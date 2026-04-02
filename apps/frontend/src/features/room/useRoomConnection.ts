@@ -19,6 +19,7 @@ interface UseRoomConnectionResult {
   isRealtimeReady: boolean;
   castVote: (value: VoteValue) => void;
   revealRound: () => void;
+  unrevealRound: () => void;
   resetRound: () => void;
   updateTicket: (jiraTicketKey: string | null) => void;
   updateRoomSettings: (
@@ -162,7 +163,7 @@ export const useRoomConnection = (
     });
   };
 
-  const emitRoundAction = (eventName: "round:reveal" | "round:reset") => {
+  const emitRoundAction = (eventName: "round:reveal" | "round:unreveal" | "round:reset") => {
     const socket = socketRef.current;
 
     if (!socket || !participantToken) {
@@ -251,7 +252,7 @@ export const useRoomConnection = (
 
       if (snapshot.viewer.role === "moderator" && normalizedKey === "r") {
         event.preventDefault();
-        emitRoundAction("round:reveal");
+        emitRoundAction(snapshot.round.status === "revealed" ? "round:unreveal" : "round:reveal");
       }
 
       if (snapshot.viewer.role === "moderator" && normalizedKey === "n") {
@@ -272,6 +273,7 @@ export const useRoomConnection = (
     isRealtimeReady,
     castVote: emitVote,
     revealRound: () => emitRoundAction("round:reveal"),
+    unrevealRound: () => emitRoundAction("round:unreveal"),
     resetRound: () => emitRoundAction("round:reset"),
     updateTicket: emitTicketUpdate,
     updateRoomSettings: emitRoomSettingsUpdate,

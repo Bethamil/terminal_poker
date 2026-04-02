@@ -175,6 +175,15 @@ export const registerRoomHandlers = (
     }
   });
 
+  socket.on("round:unreveal", async (payload) => {
+    try {
+      await roomService.unrevealRound(payload.roomCode, payload.participantToken);
+      await emitRoomSnapshots(io, roomService, payload.roomCode.toUpperCase());
+    } catch (error) {
+      emitSocketError(socket, error);
+    }
+  });
+
   socket.on("round:reset", async (payload) => {
     try {
       await roomService.resetRound(payload.roomCode, payload.participantToken);

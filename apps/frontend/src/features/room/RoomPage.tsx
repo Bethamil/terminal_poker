@@ -20,9 +20,11 @@ import { useRoomConnection } from "./useRoomConnection";
 
 const ParticipantRail = ({
   currentParticipantId,
+  roundStatus,
   participants
 }: {
   currentParticipantId: string;
+  roundStatus: "active" | "revealed";
   participants: ParticipantSnapshot[];
 }) => (
   <aside className="participant-rail card card--rail">
@@ -36,6 +38,8 @@ const ParticipantRail = ({
       {participants?.map((participant) => (
         <div
           className={`participant-row ${
+            roundStatus === "revealed" ? "participant-row--revealed" : ""
+          } ${
             participant.id === currentParticipantId ? "participant-row--active" : ""
           }`}
           key={participant.id}
@@ -47,7 +51,11 @@ const ParticipantRail = ({
               {participant.role === "moderator" ? "HOST" : participant.hasVoted ? "VOTED" : "WAITING"}
             </span>
           </div>
-          <div className="participant-row__vote">
+          <div
+            className={`participant-row__vote ${
+              participant.revealedVote ? "participant-row__vote--revealed" : ""
+            }`}
+          >
             {participant.revealedVote ? participant.revealedVote : participant.hasVoted ? "●" : "·"}
           </div>
         </div>
@@ -80,6 +88,7 @@ export const RoomPage = () => {
     kickParticipant,
     resetRound,
     revealRound,
+    unrevealRound,
     sessionEndedError,
     snapshot,
     updateRoomSettings,
@@ -254,6 +263,7 @@ export const RoomPage = () => {
       <main className="room-layout">
         <ParticipantRail
           currentParticipantId={snapshot.viewer.participantId}
+          roundStatus={snapshot.round.status}
           participants={snapshot.participants}
         />
 
@@ -406,8 +416,11 @@ export const RoomPage = () => {
                 </div>
 
                 <div className="action-row">
-                  <Button disabled={snapshot.round.status === "revealed"} onClick={revealRound}>
-                    REVEAL
+                  <Button
+                    onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
+                    variant={snapshot.round.status === "revealed" ? "danger" : "primary"}
+                  >
+                    {snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL"}
                   </Button>
                   <Button onClick={resetRound} variant="secondary">
                     RESET
