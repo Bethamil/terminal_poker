@@ -290,6 +290,47 @@ select {
   max-width: none;
 }
 
+.ticket-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ticket-summary {
+  display: inline-flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.ticket-summary__item {
+  min-width: 112px;
+  padding: 0.7rem 0.85rem;
+  background: linear-gradient(180deg, var(--surface-high), var(--surface));
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  text-align: right;
+}
+
+.ticket-summary__item span {
+  display: block;
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.ticket-summary__item strong {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
 .ticket-link,
 .vote-tile__shortcut {
   color: var(--primary);
@@ -845,6 +886,20 @@ select {
   .ticket-title,
   .hero-title {
     font-size: clamp(2.4rem, 12vw, 4.2rem);
+  }
+
+  .ticket-header,
+  .ticket-summary {
+    display: grid;
+  }
+
+  .ticket-summary {
+    justify-content: stretch;
+    margin-left: 0;
+  }
+
+  .ticket-summary__item {
+    text-align: left;
   }
 
   .vote-grid {

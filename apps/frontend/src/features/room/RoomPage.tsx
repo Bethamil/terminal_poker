@@ -383,15 +383,27 @@ export const RoomPage = () => {
                 {votedCount}/{snapshot.participants.length} VOTED
               </span>
             </div>
-            <h1 className="ticket-title">{snapshot.round.jiraTicketKey ?? "ROUND OPEN"}</h1>
+            <div className="ticket-header">
+              <h1 className="ticket-title">{snapshot.round.jiraTicketKey ?? "ROUND OPEN"}</h1>
+              {snapshot.round.summary ? (
+                <div className="ticket-summary" aria-label="Round summary">
+                  <div className="ticket-summary__item">
+                    <span>AVERAGE</span>
+                    <strong>{snapshot.round.summary.average ?? "n/a"}</strong>
+                  </div>
+                  <div className="ticket-summary__item">
+                    <span>CONSENSUS</span>
+                    <strong>{snapshot.round.summary.consensus ?? "split"}</strong>
+                  </div>
+                </div>
+              ) : null}
+            </div>
             <div className="hero-copy hero-copy--inline">
               {snapshot.round.jiraTicketUrl ? (
                 <a className="ticket-link" href={snapshot.round.jiraTicketUrl} rel="noreferrer" target="_blank">
                   OPEN JIRA
                 </a>
-              ) : (
-                <span className="mono-muted">SET TICKET WHEN READY</span>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -427,20 +439,7 @@ export const RoomPage = () => {
                   </Button>
                 </div>
 
-                {snapshot.round.summary ? (
-                  <div className="summary-grid">
-                    <div className="summary-card">
-                      <span>AVERAGE</span>
-                      <strong>{snapshot.round.summary.average ?? "n/a"}</strong>
-                    </div>
-                    <div className="summary-card">
-                      <span>CONSENSUS</span>
-                      <strong>{snapshot.round.summary.consensus ?? "split"}</strong>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="waiting-banner">VOTES STAY HIDDEN UNTIL REVEAL.</div>
-                )}
+                {!snapshot.round.summary ? <div className="waiting-banner">VOTES STAY HIDDEN UNTIL REVEAL.</div> : null}
               </section>
             ) : null}
 
