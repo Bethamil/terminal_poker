@@ -430,12 +430,7 @@ export const RoomPage = () => {
   const consensusLabel = roundSummary?.consensus ?? "split";
   const hasConsensus = roundSummary?.consensus !== null;
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
-  const revealActionTitle =
-    snapshot.round.status === "revealed" ? "Votes are visible to everyone" : "Reveal when the team is ready";
-  const revealActionCopy =
-    snapshot.round.status === "revealed"
-      ? "Switch back to blind voting if the team wants to adjust estimates before locking the round."
-      : "Keep votes hidden while people decide, then reveal everything together to start the discussion.";
+  const revealActionTitle = snapshot.round.status === "revealed" ? "Revealed" : "Blind voting";
 
   return (
     <div className="shell shell--room">
@@ -562,22 +557,17 @@ export const RoomPage = () => {
 
                 <div className="round-card__body">
                   <section className="round-card__panel">
-                    <div className="round-card__panel-head">
-                      <span className="round-card__panel-label">Ticket</span>
-                      <p className="round-card__panel-copy">
-                        Point the room at the current Jira issue, or save an empty value to clear it.
-                      </p>
-                    </div>
+                    <span className="round-card__panel-label">Ticket</span>
 
                     <div className="ticket-editor round-card__ticket-editor">
                       <Field
-                        hint="Use the issue key only."
-                        label="TICKET"
+                        aria-label="Ticket"
                         value={ticketDraft}
                         onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
                         placeholder="PROJ-123"
                       />
                       <Button
+                        className="round-card__ticket-save"
                         disabled={!hasTicketChanged}
                         onClick={() => updateTicket(normalizedTicketDraft || null)}
                         variant="secondary"
@@ -589,9 +579,8 @@ export const RoomPage = () => {
 
                   <section className="round-card__panel round-card__panel--accent">
                     <div className="round-card__panel-head">
-                      <span className="round-card__panel-label">Reveal flow</span>
+                      <span className="round-card__panel-label">Reveal</span>
                       <h3 className="round-card__action-title">{revealActionTitle}</h3>
-                      <p className="round-card__panel-copy">{revealActionCopy}</p>
                     </div>
 
                     <div className="action-row round-card__action-row">
@@ -607,12 +596,6 @@ export const RoomPage = () => {
                       </Button>
                     </div>
                   </section>
-                </div>
-
-                <div className="waiting-banner round-card__footnote">
-                  {snapshot.round.summary
-                    ? "Votes are revealed. Reset the round to start the next estimate."
-                    : "Votes stay hidden until reveal."}
                 </div>
               </section>
             ) : null}

@@ -1,13 +1,13 @@
 import type { InputHTMLAttributes } from "react";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
+  label?: string;
   hint?: string;
 }
 
 export const Field = ({ hint, label, ...props }: FieldProps) => (
   <label className="field">
-    <span className="field__label">{label}</span>
+    {label ? <span className="field__label">{label}</span> : null}
     <input className="field__input" {...props} />
     {hint ? <span className="field__hint">{hint}</span> : null}
   </label>
