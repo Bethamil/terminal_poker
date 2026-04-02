@@ -1,14 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="brand-gradient" x1="12" y1="12" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#87f5c5" />
-      <stop offset="1" stop-color="#1f8f73" />
+    <linearGradient id="brand-gradient" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d7c7ff" />
+      <stop offset="1" stop-color="#7c3aed" />
     </linearGradient>
   </defs>
-  <rect x="8" y="8" width="48" height="48" rx="10" fill="url(#brand-gradient)" />
-  <path
-    fill="#06281e"
-    fill-rule="evenodd"
-    d="M19 19H45V45H19V19ZM25 25V39H39V25H25Z"
-  />
+  <rect x="8" y="8" width="48" height="48" rx="12" fill="url(#brand-gradient)" />
+  <path d="M20 22L31 28L20 34V22Z" fill="#f7f3ff" />
+  <rect x="33" y="34" width="11" height="4" rx="2" fill="#f7f3ff" />
 </svg>
