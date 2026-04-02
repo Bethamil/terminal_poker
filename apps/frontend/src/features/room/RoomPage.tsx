@@ -515,14 +515,6 @@ export const RoomPage = () => {
                     <StatusChip tone="accent">CONTROL</StatusChip>
                     <h2>Round actions</h2>
                   </div>
-                  <div className="round-card__meta" aria-label="Round status">
-                    <span className="round-card__meta-item">
-                      {snapshot.round.status === "revealed" ? "REVEALED" : "HIDDEN"}
-                    </span>
-                    <span className="round-card__meta-item">
-                      {votedCount}/{snapshot.participants.length} VOTED
-                    </span>
-                  </div>
                 </div>
 
                 <div className="round-card__body">
