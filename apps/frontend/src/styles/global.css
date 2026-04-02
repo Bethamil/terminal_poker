@@ -1624,6 +1624,32 @@ select {
   .room-main {
     order: 1;
   }
+
+  .vote-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.8rem), 11.25rem));
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding-right: 0;
+  }
+
+  .vote-tile,
+  .deck-card--moderator .vote-tile {
+    width: 100%;
+    flex-basis: auto;
+    min-height: 7.5rem;
+    padding: 0.85rem 0.7rem;
+    aspect-ratio: 1 / 0.82;
+  }
+
+  .vote-tile__value {
+    font-size: clamp(1.8rem, 4vw + 0.8rem, 2.5rem);
+  }
+
+  .vote-tile__label {
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+  }
 }
 
 @media (min-width: 960px) {
@@ -1803,17 +1829,28 @@ select {
     grid-template-columns: 1fr;
   }
 
+}
+
+@media (max-width: 520px) {
   .vote-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(8.4rem, 1fr));
-    gap: 0.8rem;
-    padding-right: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    gap: 0.6rem;
   }
 
   .vote-tile,
   .deck-card--moderator .vote-tile {
-    width: auto;
-    flex-basis: auto;
+    min-height: 6.75rem;
+    padding: 0.75rem 0.55rem;
+    border-radius: 16px;
   }
 
+  .vote-tile__value {
+    font-size: clamp(1.55rem, 5vw + 0.65rem, 2.1rem);
+  }
+
+  .vote-tile__label {
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+  }
 }
