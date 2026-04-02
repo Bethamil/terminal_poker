@@ -172,6 +172,7 @@ select {
   align-items: center;
   gap: 0.75rem;
   justify-self: start;
+  min-width: 0;
 }
 
 .brand__mark {
@@ -193,8 +194,45 @@ select {
   letter-spacing: 0.18em;
 }
 
+.brand__aside {
+  display: inline-flex;
+  align-items: center;
+}
+
+.topbar__live-indicator,
 .topbar__center {
   display: flex;
+  align-items: center;
+}
+
+.topbar__live-indicator {
+  position: relative;
+  padding-left: 0.75rem;
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.topbar__live-indicator::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 999px;
+  background: currentColor;
+  transform: translateY(-50%);
+  opacity: 0.6;
+}
+
+.topbar__live-indicator--live {
+  color: var(--primary);
+}
+
+.topbar__center {
   align-items: center;
   justify-content: center;
   min-width: 0;

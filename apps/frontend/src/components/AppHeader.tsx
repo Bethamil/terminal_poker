@@ -4,14 +4,17 @@ import { ThemeToggle } from "./ThemeToggle";
 
 export const AppHeader = ({
   actions,
+  brandAside,
   children
 }: PropsWithChildren<{
   actions?: ReactNode;
+  brandAside?: ReactNode;
 }>) => (
   <header className="topbar">
     <div className="brand">
       <span className="brand__mark">▣</span>
       <span className="brand__text">TERMINAL_POKER</span>
+      {brandAside ? <div className="brand__aside">{brandAside}</div> : null}
     </div>
     <div className="topbar__center">{children}</div>
     <div className="topbar__actions">

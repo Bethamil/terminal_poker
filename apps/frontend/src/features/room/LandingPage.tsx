@@ -78,8 +78,6 @@ export const LandingPage = () => {
   return (
     <div className="shell shell--landing">
       <AppHeader>
-        <StatusChip tone="accent">TERMINAL POKER</StatusChip>
-        <span className="mono-muted">CREATE / JOIN</span>
       </AppHeader>
 
       <main className="landing-grid">

@@ -360,6 +360,11 @@ export const RoomPage = () => {
   return (
     <div className="shell shell--room">
       <AppHeader
+        brandAside={
+          <span className={`topbar__live-indicator ${isRealtimeReady ? "topbar__live-indicator--live" : ""}`.trim()}>
+            {isRealtimeReady ? "LIVE" : "SYNC"}
+          </span>
+        }
         actions={
           <>
             {isModerator ? (
@@ -395,9 +400,6 @@ export const RoomPage = () => {
           <div className="room-topbar__identity">
             <div className="room-topbar__meta">
               <span className="room-topbar__label">ROOM</span>
-              <span className={`room-topbar__status ${isRealtimeReady ? "room-topbar__status--live" : ""}`.trim()}>
-                {isRealtimeReady ? "LIVE" : "SYNC"}
-              </span>
             </div>
             <div className="room-topbar__code-row">
               <div className="room-topbar__code">{snapshot.room.code}</div>
