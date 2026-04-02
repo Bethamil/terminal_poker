@@ -1033,7 +1033,9 @@ select {
 }
 
 .round-card {
+  align-self: stretch;
   align-content: start;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .deck-card {
@@ -1065,6 +1067,8 @@ select {
 .round-card__body {
   display: grid;
   gap: 0.9rem;
+  align-content: start;
+  min-height: 0;
 }
 
 .round-card__panel {
