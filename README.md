@@ -1,17 +1,31 @@
-# Terminal Poker
+<p align="center">
+  <img src="apps/frontend/public/favicon.svg" alt="Terminal Poker logo" width="88" />
+</p>
 
-Simple scrum poker app for small teams. It includes a React frontend, an Express + Socket.IO backend, PostgreSQL for room state, and shared TypeScript types across the repo.
+<h1 align="center">Terminal Poker</h1>
 
-## Features
+<p align="center">
+  Fast scrum poker with a terminal edge.
+  <br />
+  Create a room, share a code, vote in real time, reveal, move on.
+</p>
 
-- Create and join rooms with a short code
-- Vote with a selectable planning deck
-- Reveal and reset rounds
-- Optional room passcode
-- Optional Jira room link and ticket tracking
-- Resume recent rooms in the same browser
+<p align="center">
+  <code>React</code>
+  <code>Vite</code>
+  <code>Node</code>
+  <code>Socket.IO</code>
+  <code>PostgreSQL</code>
+</p>
 
-## Local Development
+## Why It's Good
+
+- No account flow. Join with a name and a room code.
+- Real-time voting, reveal, reset, and optional room passcodes.
+- Jira-friendly room setup and ticket tracking.
+- Resume recent rooms in the same browser.
+
+## Quick Start
 
 Requirements:
 
@@ -39,10 +53,37 @@ PORT=4000
 PRESENCE_TTL_SECONDS=30
 ```
 
-Redis is optional for local development and single-instance deployments. Only set `REDIS_URL` if you need the
-Socket.IO Redis adapter, for example when running multiple backend instances behind a load balancer.
+Prepare the database and start the app:
 
-If you want to test multi-instance realtime locally, start Redis too:
+```bash
+pnpm prisma:generate
+pnpm --filter @terminal-poker/backend exec prisma db push
+pnpm dev
+```
+
+Open:
+
+- Frontend: [http://localhost:5173](http://localhost:5173)
+- Backend: [http://localhost:4000](http://localhost:4000)
+
+## Useful Commands
+
+```bash
+pnpm dev
+pnpm build
+pnpm test
+pnpm typecheck
+pnpm db:clear
+pnpm db:reset
+```
+
+## Redis
+
+Redis is optional for local development and single-instance deployments.
+
+Use `REDIS_URL` only if you need the Socket.IO Redis adapter, such as when you run multiple backend instances behind a load balancer.
+
+To test that locally:
 
 ```bash
 docker compose up -d postgres redis
@@ -53,31 +94,6 @@ Then add:
 ```env
 REDIS_URL="redis://localhost:6379"
 ```
-
-Generate Prisma client and push the schema:
-
-```bash
-pnpm prisma:generate
-pnpm --filter @terminal-poker/backend exec prisma db push
-```
-
-Start the app:
-
-```bash
-pnpm dev
-```
-
-Open:
-
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:4000`
-
-## Commands
-
-- `pnpm dev`
-- `pnpm build`
-- `pnpm test`
-- `pnpm typecheck`
 
 ## Repo Layout
 
