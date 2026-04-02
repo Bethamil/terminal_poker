@@ -36,7 +36,7 @@ const ParticipantRail = ({
   participants: ParticipantSnapshot[];
 }) => (
   <aside
-    className="card card--rail grid h-full min-h-[420px] grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-5 border-white/5 p-5 lg:sticky lg:top-5 lg:h-[calc(100vh-7.25rem)]"
+    className="room-sidebar card card--rail grid h-full min-h-[420px] grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-5 border-white/5 px-5 py-5"
     style={{ background: "var(--rail-panel-bg)" }}
   >
     <div className="grid gap-1">
@@ -94,7 +94,7 @@ const ParticipantRail = ({
       ))}
     </div>
 
-    <div className="grid gap-3">
+    <div className="grid gap-3 pt-3">
       <Button
         className="w-full justify-center"
         onClick={onInvite}

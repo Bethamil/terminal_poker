@@ -1042,6 +1042,10 @@ select {
   gap: 1rem;
 }
 
+.room-sidebar {
+  display: grid;
+}
+
 .participant-list {
   display: grid;
   align-content: start;
@@ -1049,6 +1053,7 @@ select {
   grid-auto-rows: max-content;
   gap: 0.5rem;
   min-height: 0;
+  padding-bottom: 0.25rem;
 }
 
 .participant-row {
@@ -1584,6 +1589,21 @@ select {
 
   .room-main {
     order: 1;
+  }
+}
+
+@media (min-width: 1101px) {
+  .room-sidebar {
+    position: sticky;
+    top: 1.25rem;
+    height: calc(100vh - 11rem);
+  }
+}
+
+@media (min-width: 1101px) and (max-height: 860px) {
+  .room-sidebar {
+    position: static;
+    height: auto;
   }
 }
 
