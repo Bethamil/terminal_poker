@@ -49,9 +49,6 @@ const ParticipantRail = ({
       <div className="border-l border-[#8c67ff] bg-white/[0.05] px-4 py-3 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#d5c3ff]">
         ACTIVE ({participants.length})
       </div>
-      <div className="px-4 py-2 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#6f6987]">
-        OBSERVERS
-      </div>
     </div>
 
     <div className="participant-list min-h-0 overflow-y-auto pr-1">
