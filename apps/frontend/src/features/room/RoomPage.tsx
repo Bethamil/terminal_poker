@@ -37,7 +37,7 @@ const ParticipantRail = ({
   participants: ParticipantSnapshot[];
 }) => (
   <aside
-    className="room-sidebar card card--rail grid h-full min-h-[420px] grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-5 border-white/5 px-5 py-5"
+    className="room-sidebar card card--rail order-2 grid min-h-0 gap-4 border-white/5 px-4 py-4 lg:order-1 lg:h-full lg:min-h-[420px] lg:grid-rows-[auto_auto_minmax(0,1fr)_auto] lg:gap-5 lg:px-5 lg:py-5"
     style={{ background: "var(--rail-panel-bg)" }}
   >
     <div className="grid gap-1">
@@ -67,7 +67,7 @@ const ParticipantRail = ({
       </div>
     </div>
 
-    <div className="participant-list min-h-0 overflow-y-auto pr-1">
+    <div className="participant-list min-h-0 max-h-[min(40vh,18rem)] overflow-y-auto pr-1 lg:max-h-none">
       {participants?.map((participant) => (
         <div
           className={`participant-row ${
@@ -450,6 +450,54 @@ export const RoomPage = () => {
             </Button>
           </>
         }
+        mobileMenu={{
+          label: "MENU",
+          title: snapshot.room.name,
+          renderContent: (closeMenu) => (
+            <>
+              <div className="mobile-menu__meta shortcut-strip">
+                <span>ID {snapshot.room.code}</span>
+                <span>{snapshot.participants.length} ACTIVE</span>
+                <span>{isRealtimeReady ? "LIVE" : "SYNC"}</span>
+              </div>
+              <div className="mobile-menu__actions">
+                <Button
+                  onClick={() => {
+                    closeMenu();
+                    void copyRoomLink();
+                  }}
+                  variant="secondary"
+                >
+                  {roomLinkStatus === "copied"
+                    ? "LINK COPIED"
+                    : roomLinkStatus === "error"
+                    ? "COPY FAILED"
+                    : "COPY INVITE"}
+                </Button>
+                {isModerator ? (
+                  <Button
+                    onClick={() => {
+                      closeMenu();
+                      setIsSettingsOpen(true);
+                    }}
+                    variant="ghost"
+                  >
+                    SETTINGS
+                  </Button>
+                ) : null}
+                <Button
+                  onClick={() => {
+                    closeMenu();
+                    void handleLeaveRoom();
+                  }}
+                  variant={isModerator ? "danger" : "ghost"}
+                >
+                  {isLeaving ? "LEAVING..." : isModerator ? "LEAVE & DELETE" : "LEAVE ROOM"}
+                </Button>
+              </div>
+            </>
+          )
+        }}
       />
 
       <main className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
@@ -463,7 +511,7 @@ export const RoomPage = () => {
           participants={snapshot.participants}
         />
 
-        <section className="grid gap-4">
+        <section className="order-1 grid gap-4 lg:order-2">
           <div className="grid gap-3 px-2 py-2 text-center lg:px-6 lg:py-4">
             <div className="inline-flex justify-center">
               <StatusChip tone={snapshot.round.status === "revealed" ? "success" : "accent"}>

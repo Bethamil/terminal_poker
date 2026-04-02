@@ -362,6 +362,20 @@ select {
   justify-self: end;
 }
 
+.topbar__actions-group,
+.topbar__theme-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.button.topbar__mobile-menu-trigger {
+  display: none;
+  min-height: 2.7rem;
+  padding: 0.78rem 1rem;
+}
+
 .room-topbar {
   display: inline-flex;
   align-items: center;
@@ -463,6 +477,28 @@ select {
 .room-topbar__action {
   min-height: 2.7rem;
   padding: 0.78rem 0.95rem;
+}
+
+.mobile-menu {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.mobile-menu__meta {
+  justify-content: flex-start;
+}
+
+.mobile-menu__actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mobile-menu__actions .button {
+  width: 100%;
+}
+
+.mobile-menu__theme {
+  padding-top: 0.2rem;
 }
 
 .mono-muted,
@@ -1649,10 +1685,34 @@ select {
     padding: 0.85rem 1rem;
   }
 
+  .topbar--mobile-menu-enabled {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
   .topbar__center,
   .topbar__actions,
   .room-topbar {
     width: 100%;
+  }
+
+  .topbar--mobile-menu-enabled .topbar__center {
+    display: none;
+  }
+
+  .topbar--mobile-menu-enabled .topbar__actions {
+    width: auto;
+    justify-self: end;
+  }
+
+  .topbar--mobile-menu-enabled .topbar__actions-group,
+  .topbar--mobile-menu-enabled .topbar__theme-slot {
+    display: none;
+  }
+
+  .topbar--mobile-menu-enabled .button.topbar__mobile-menu-trigger {
+    display: inline-flex;
+    width: auto;
   }
 
   .room-modal {
