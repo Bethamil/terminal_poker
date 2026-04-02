@@ -410,6 +410,7 @@ export const RoomPage = () => {
   const normalizedTicketDraft = ticketDraft.trim().toUpperCase();
   const hasTicketChanged = normalizedTicketDraft !== (snapshot.round.jiraTicketKey ?? "");
   const roundSummary = snapshot.round.summary;
+  const hasRoundSummary = Boolean(roundSummary);
   const formattedAverage = formatAverage(roundSummary?.average ?? null);
   const consensusLabel = roundSummary?.consensus ?? "split";
   const hasConsensus = roundSummary?.consensus !== null;
@@ -490,26 +491,32 @@ export const RoomPage = () => {
 
             <div className="mx-auto w-full max-w-[44rem]">
               <div
-                className="grid min-h-[6.4rem] items-center gap-4 rounded-[24px] border px-5 py-4 text-left shadow-[0_24px_70px_rgba(0,0,0,0.12)] md:grid-cols-[minmax(0,1fr)_auto_auto]"
+                className={`grid min-h-[6.4rem] items-center gap-4 rounded-[24px] border px-5 py-4 text-left md:grid-cols-[minmax(0,1fr)_auto_auto] ${
+                  hasRoundSummary ? "shadow-[0_24px_70px_rgba(0,0,0,0.12)]" : ""
+                }`.trim()}
                 style={{
-                  background:
-                    "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 90%, var(--surface-high) 10%), color-mix(in srgb, var(--card-bg) 96%, transparent))",
-                  borderColor: "var(--outline)"
+                  background: hasRoundSummary
+                    ? "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 90%, var(--surface-high) 10%), color-mix(in srgb, var(--card-bg) 96%, transparent))"
+                    : "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 68%, transparent), color-mix(in srgb, var(--card-bg) 74%, transparent))",
+                  borderColor: hasRoundSummary
+                    ? "var(--outline)"
+                    : "color-mix(in srgb, var(--outline) 56%, transparent)",
+                  opacity: hasRoundSummary ? 1 : 0.78
                 }}
               >
                 <div className="grid gap-1">
                   <span className="hero-card__label">STATISTICAL OUTPUT</span>
                   <strong
                     className="font-['JetBrains_Mono'] text-[clamp(1.35rem,2.9vw,2.2rem)] uppercase tracking-[0.06em]"
-                    style={{ color: "var(--text)" }}
+                    style={{ color: hasRoundSummary ? "var(--text)" : "var(--text-soft)" }}
                   >
-                    {roundSummary ? "SUMMARY_REPORT" : "SUMMARY_LOCKED"}
+                    {hasRoundSummary ? "SUMMARY_REPORT" : "SUMMARY_LOCKED"}
                   </strong>
                   <span
                     className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.14em]"
                     style={{ color: "var(--muted)" }}
                   >
-                    {roundSummary ? "Reveal complete" : "Reveal to compute results"}
+                    {hasRoundSummary ? "Reveal complete" : ""}
                   </span>
                 </div>
 
@@ -520,9 +527,9 @@ export const RoomPage = () => {
                   <span className="hero-card__label">AVERAGE</span>
                   <strong
                     className="font-['Space_Grotesk'] text-[clamp(2rem,4vw,3rem)] leading-none tracking-[-0.06em]"
-                    style={{ color: "var(--primary)" }}
+                    style={{ color: hasRoundSummary ? "var(--primary)" : "var(--muted)" }}
                   >
-                    {roundSummary ? formattedAverage : "—"}
+                    {hasRoundSummary ? formattedAverage : "—"}
                   </strong>
                 </div>
 
@@ -533,9 +540,11 @@ export const RoomPage = () => {
                   <span className="hero-card__label">CONSENSUS</span>
                   <strong
                     className="font-['Space_Grotesk'] text-[clamp(2rem,4vw,3rem)] leading-none tracking-[-0.06em] uppercase"
-                    style={{ color: roundSummary && hasConsensus ? "var(--vote-tile-selected-text)" : "var(--muted)" }}
+                    style={{
+                      color: hasRoundSummary && hasConsensus ? "var(--vote-tile-selected-text)" : "var(--muted)"
+                    }}
                   >
-                    {roundSummary ? consensusLabel : "—"}
+                    {hasRoundSummary ? consensusLabel : "—"}
                   </strong>
                 </div>
               </div>
