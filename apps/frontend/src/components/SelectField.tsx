@@ -9,7 +9,6 @@ interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
 export const SelectField = ({ children, hint, label, ...props }: SelectFieldProps) => (
   <label className="field">
     <span className="field__label">{label}</span>
-    <span className="field__prompt">&gt;</span>
     <select className="field__input field__select" {...props}>
       {children}
     </select>

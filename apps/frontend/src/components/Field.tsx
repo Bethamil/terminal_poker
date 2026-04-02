@@ -8,9 +8,7 @@ interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Field = ({ hint, label, ...props }: FieldProps) => (
   <label className="field">
     <span className="field__label">{label}</span>
-    <span className="field__prompt">&gt;</span>
     <input className="field__input" {...props} />
     {hint ? <span className="field__hint">{hint}</span> : null}
   </label>
 );
-

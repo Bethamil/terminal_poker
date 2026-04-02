@@ -28,8 +28,8 @@ const ParticipantRail = ({
   <aside className="participant-rail card card--rail">
     <div className="participant-rail__header">
       <div>
-        <div className="rail-kicker">ROOM STATE</div>
-        <h2>Connected participants</h2>
+        <div className="rail-kicker">PLAYERS</div>
+        <h2>{participants.length} connected</h2>
       </div>
     </div>
     <div className="participant-list">
@@ -43,7 +43,9 @@ const ParticipantRail = ({
           <div className={`presence-dot presence-dot--${participant.presence}`} />
           <div className="participant-row__identity">
             <strong>{participant.name}</strong>
-            <span>{participant.role === "moderator" ? "moderator" : participant.hasVoted ? "voted" : "waiting"}</span>
+            <span>
+              {participant.role === "moderator" ? "HOST" : participant.hasVoted ? "VOTED" : "WAITING"}
+            </span>
           </div>
           <div className="participant-row__vote">
             {participant.revealedVote ? participant.revealedVote : participant.hasVoted ? "●" : "·"}
@@ -194,25 +196,25 @@ export const RoomPage = () => {
         <main className="join-gate">
           <form className="card join-gate__card" onSubmit={handleInlineJoin}>
             <div className="section-header">
-              <StatusChip>JOIN ROOM</StatusChip>
-              <h1>Attach to {roomCode}</h1>
+              <StatusChip>JOIN</StatusChip>
+              <h1>ROOM {roomCode}</h1>
             </div>
             <Field
-              label="Display Name"
+              label="NAME"
               value={joinName}
               onChange={(event) => setJoinName(event.target.value)}
               placeholder="cyber_punk"
               required
             />
             <Field
-              label="Join Passcode"
+              label="PASSCODE"
               value={joinPasscode}
               onChange={(event) => setJoinPasscode(event.target.value)}
               placeholder="only if required"
               type="password"
             />
             <Button stretch type="submit">
-              [JOIN_SESSION]
+              JOIN ROOM
             </Button>
             {joinError ? <div className="notice notice--error">{joinError}</div> : null}
           </form>
@@ -225,9 +227,8 @@ export const RoomPage = () => {
     return (
       <div className="shell shell--room">
         <div className="loading-state card">
-          <StatusChip tone="accent">BOOTSTRAP</StatusChip>
-          <h1>Restoring room state…</h1>
-          <p>HTTP hydration is loading the authoritative room snapshot before realtime starts.</p>
+          <StatusChip tone="accent">SYNC</StatusChip>
+          <h1>Loading room…</h1>
         </div>
       </div>
     );
@@ -239,10 +240,10 @@ export const RoomPage = () => {
     <div className="shell shell--room">
       <AppHeader>
         <StatusChip tone="accent">ROOM {snapshot.room.code}</StatusChip>
-        <span className="mono-muted">{isRealtimeReady ? "SOCKET ONLINE" : "CONNECTING SOCKET"}</span>
+        <span className="mono-muted">{isRealtimeReady ? "LIVE" : "SYNCING"}</span>
         {isModerator ? (
           <Button onClick={() => setIsSettingsOpen((current) => !current)} variant="ghost">
-            {isSettingsOpen ? "CLOSE SETTINGS" : "ROOM SETTINGS"}
+            {isSettingsOpen ? "CLOSE" : "SETTINGS"}
           </Button>
         ) : null}
         <Button onClick={copyRoomLink} variant="ghost">
@@ -260,29 +261,29 @@ export const RoomPage = () => {
           {isModerator && isSettingsOpen ? (
             <section className="card settings-card">
               <div className="section-header">
-                <StatusChip tone="accent">MODERATOR_CONSOLE</StatusChip>
-                <h2>Room settings and participant access</h2>
+                <StatusChip tone="accent">SETTINGS</StatusChip>
+                <h2>Room config</h2>
               </div>
 
               <div className="settings-grid">
                 <section className="settings-section">
                   <div className="section-header">
-                    <StatusChip>ROOM_SETTINGS</StatusChip>
-                    <h3>Room defaults</h3>
+                    <StatusChip>DEFAULTS</StatusChip>
+                    <h3>Round setup</h3>
                   </div>
                   <Field
-                    label="Jira Base URL"
+                    label="JIRA URL"
                     value={jiraBaseUrlDraft}
                     onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
                     placeholder="https://jira.example.com"
                   />
                   <SelectField
-                    label="Voting Deck"
+                    label="DECK"
                     value={votingDeckIdDraft}
                     onChange={(event) =>
                       setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
                     }
-                    hint="Changing the deck starts a fresh round so old votes do not carry over to a new scale."
+                    hint="Changing the deck starts a new round."
                   >
                     {VOTING_DECK_OPTIONS.map((deck) => (
                       <option key={deck.id} value={deck.id}>
@@ -294,25 +295,25 @@ export const RoomPage = () => {
                     hint={
                       snapshot.room.hasJoinPasscode
                         ? "Leave blank to keep the current passcode."
-                        : "Optional. Leave blank to keep the room open."
+                        : "Leave blank to keep the room open."
                     }
-                    label="Set New Join Passcode"
+                    label="NEW PASSCODE"
                     value={newPasscodeDraft}
                     onChange={(event) => setNewPasscodeDraft(event.target.value)}
                     placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
                     type="password"
                   />
                   <div className="shortcut-strip settings-strip">
-                    <span>{snapshot.room.hasJoinPasscode ? "ROOM LOCKED" : "ROOM OPEN"}</span>
-                    <span>{snapshot.room.jiraBaseUrl ? "JIRA LINKED" : "JIRA BASE URL NOT SET"}</span>
+                    <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
+                    <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
                   </div>
                   <div className="action-row">
                     <Button onClick={handleSaveRoomSettings} variant="secondary">
-                      SAVE SETTINGS
+                      SAVE
                     </Button>
                     {snapshot.room.hasJoinPasscode ? (
                       <Button onClick={() => saveRoomSettings("clear")} variant="ghost">
-                        REMOVE PASSCODE
+                        CLEAR PASSCODE
                       </Button>
                     ) : null}
                   </div>
@@ -320,8 +321,8 @@ export const RoomPage = () => {
 
                 <section className="settings-section">
                   <div className="section-header">
-                    <StatusChip tone="success">ACCESS_CONTROL</StatusChip>
-                    <h3>Participant management</h3>
+                    <StatusChip tone="success">ACCESS</StatusChip>
+                    <h3>Participants</h3>
                   </div>
                   <div className="settings-list">
                     {snapshot.participants.map((participant) => {
@@ -335,11 +336,11 @@ export const RoomPage = () => {
                             <span>
                               {participant.role === "moderator"
                                 ? isViewer
-                                  ? "moderator / you"
-                                  : "moderator"
+                                  ? "HOST / YOU"
+                                  : "HOST"
                                 : participant.hasVoted
-                                  ? "participant / voted"
-                                  : "participant / waiting"}
+                                  ? "VOTED"
+                                  : "WAITING"}
                             </span>
                           </div>
                           {canKick ? (
@@ -349,7 +350,7 @@ export const RoomPage = () => {
                               onClick={() => handleKickParticipant(participant)}
                               variant="danger"
                             >
-                              {pendingKickId === participant.id ? "REMOVING..." : "KICK"}
+                              {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
                             </Button>
                           ) : (
                             <span className="mono-muted">{isViewer ? "YOU" : "LOCKED"}</span>
@@ -366,74 +367,74 @@ export const RoomPage = () => {
           <div className="card hero-card">
             <div className="hero-card__eyebrow">
               <StatusChip tone={snapshot.round.status === "revealed" ? "success" : "accent"}>
-                {snapshot.round.status === "revealed" ? "REVEALED_RESULTS" : "ACTIVE_SESSION"}
+                {snapshot.round.status === "revealed" ? "REVEALED" : "IN PROGRESS"}
               </StatusChip>
               <span className="mono-muted">
                 {votedCount}/{snapshot.participants.length} VOTED
               </span>
             </div>
-            <h1 className="ticket-title">{snapshot.round.jiraTicketKey ?? "NO_TICKET_SET"}</h1>
-            <p className="hero-copy">
+            <h1 className="ticket-title">{snapshot.round.jiraTicketKey ?? "ROUND OPEN"}</h1>
+            <div className="hero-copy hero-copy--inline">
               {snapshot.round.jiraTicketUrl ? (
                 <a className="ticket-link" href={snapshot.round.jiraTicketUrl} rel="noreferrer" target="_blank">
-                  Open Jira issue
+                  OPEN JIRA
                 </a>
               ) : (
-                "Set a Jira ticket key or numeric ID to anchor the current estimation round."
+                <span className="mono-muted">SET TICKET WHEN READY</span>
               )}
-            </p>
+            </div>
           </div>
 
           <div className="room-content-grid">
             {isModerator ? (
               <section className="card round-card">
                 <div className="section-header">
-                  <StatusChip tone="accent">ROUND CONTROL</StatusChip>
-                  <h2>Ticket and moderator actions</h2>
+                  <StatusChip tone="accent">CONTROL</StatusChip>
+                  <h2>Round actions</h2>
                 </div>
 
                 <div className="ticket-editor">
                   <Field
-                    label="Jira Ticket Key / ID"
+                    label="TICKET"
                     value={ticketDraft}
                     onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
                     placeholder="PROJ-123"
                   />
                   <Button onClick={() => updateTicket(ticketDraft || null)} variant="secondary">
-                    SAVE TICKET
+                    SAVE
                   </Button>
                 </div>
 
                 <div className="action-row">
                   <Button disabled={snapshot.round.status === "revealed"} onClick={revealRound}>
-                    [R] REVEAL
+                    REVEAL
                   </Button>
                   <Button onClick={resetRound} variant="secondary">
-                    [N] RESET
+                    RESET
                   </Button>
                 </div>
 
                 {snapshot.round.summary ? (
                   <div className="summary-grid">
                     <div className="summary-card">
-                      <span>Average</span>
+                      <span>AVERAGE</span>
                       <strong>{snapshot.round.summary.average ?? "n/a"}</strong>
                     </div>
                     <div className="summary-card">
-                      <span>Consensus</span>
+                      <span>CONSENSUS</span>
                       <strong>{snapshot.round.summary.consensus ?? "split"}</strong>
                     </div>
                   </div>
                 ) : (
-                  <div className="waiting-banner">Votes remain hidden until the moderator reveals the round.</div>
+                  <div className="waiting-banner">VOTES STAY HIDDEN UNTIL REVEAL.</div>
                 )}
               </section>
             ) : null}
 
             <section className="card deck-card">
               <div className="section-header">
-                <StatusChip tone="success">VOTING_DECK</StatusChip>
-                <h2>{getVotingDeckName(snapshot.room.votingDeckId)} estimation</h2>
+                <StatusChip tone="success">DECK</StatusChip>
+                <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
               </div>
               <div className="vote-grid">
                 {voteCardMeta.map((card) => {
@@ -455,15 +456,7 @@ export const RoomPage = () => {
             </section>
           </div>
 
-          <section className="card footer-card">
-            <div className="shortcut-strip">
-              <span>[1-0, -, /] VOTE</span>
-              {isModerator ? <span>[R] REVEAL</span> : null}
-              {isModerator ? <span>[N] RESET</span> : null}
-              <span>POSTGRESQL IS SOURCE OF TRUTH</span>
-            </div>
-            {error || joinError ? <div className="notice notice--error">{error ?? joinError}</div> : null}
-          </section>
+          {error || joinError ? <div className="notice notice--error">{error ?? joinError}</div> : null}
         </section>
       </main>
     </div>
