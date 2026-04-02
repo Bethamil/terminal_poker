@@ -675,6 +675,7 @@ select {
 .landing-node-link {
   border-bottom-color: var(--landing-node-border);
   color: var(--landing-node-text);
+  cursor: pointer;
 }
 
 .landing-node-link:hover {
