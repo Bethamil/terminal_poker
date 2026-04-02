@@ -11,6 +11,15 @@ interface SocketData {
   participantToken?: string;
 }
 
+const getActiveParticipantIds = (
+  sockets: Array<{ data: unknown }>
+): ReadonlySet<string> =>
+  new Set(
+    sockets
+      .map((socket) => (socket.data as SocketData).participantId)
+      .filter((participantId): participantId is string => Boolean(participantId))
+  );
+
 const emitRoomSnapshots = async (
   io: Server<ClientToServerEvents, ServerToClientEvents>,
   roomService: RoomService,
@@ -18,6 +27,7 @@ const emitRoomSnapshots = async (
 ) => {
   const room = await roomService.getRoomAggregate(roomCode);
   const sockets = await io.in(roomCode).fetchSockets();
+  const activeParticipantIds = getActiveParticipantIds(sockets as Array<{ data: unknown }>);
 
   sockets.forEach((socket) => {
     const participantId = (socket.data as SocketData).participantId;
@@ -37,7 +47,7 @@ const emitRoomSnapshots = async (
       return;
     }
 
-    socket.emit("room:snapshot", roomService.buildSnapshotForParticipant(room, participantId));
+    socket.emit("room:snapshot", roomService.buildSnapshotForParticipant(room, participantId, activeParticipantIds));
   });
 };
 
@@ -108,15 +118,6 @@ export const registerRoomHandlers = (
           message: appError.message
         }
       });
-      emitSocketError(socket, error);
-    }
-  });
-
-  socket.on("presence:heartbeat", async (payload) => {
-    try {
-      await roomService.markHeartbeat(payload.roomCode, payload.participantToken);
-      await emitRoomSnapshots(io, roomService, payload.roomCode.toUpperCase());
-    } catch (error) {
       emitSocketError(socket, error);
     }
   });
@@ -241,5 +242,15 @@ export const registerRoomHandlers = (
     } catch (error) {
       emitSocketError(socket, error);
     }
+  });
+
+  socket.on("disconnect", () => {
+    const roomCode = (socket.data as SocketData).roomCode;
+
+    if (!roomCode) {
+      return;
+    }
+
+    void emitRoomSnapshots(io, roomService, roomCode);
   });
 };

@@ -15,7 +15,7 @@ import { RoomService } from "./services/room-service";
 let redisClients: Awaited<ReturnType<typeof createSocketIoRedisClients>> = null;
 
 const bootstrap = async () => {
-  const roomService = new RoomService(prisma, new JiraRoomLinkProvider(), env.PRESENCE_TTL_SECONDS);
+  const roomService = new RoomService(prisma, new JiraRoomLinkProvider());
   const app = createApp(roomService);
   const httpServer = createServer(app);
   const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {

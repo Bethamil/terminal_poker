@@ -22,11 +22,7 @@ import type { IssueLinkProvider } from "./jira-provider";
 const sanitizeName = (name: string): string => name.trim().replace(/\s+/g, " ");
 
 export class RoomService {
-  constructor(
-    private readonly prisma: PrismaClient,
-    private readonly issueLinkProvider: IssueLinkProvider,
-    private readonly presenceTtlSeconds: number
-  ) {}
+  constructor(private readonly prisma: PrismaClient, private readonly issueLinkProvider: IssueLinkProvider) {}
 
   private repository(client: PrismaClient | Prisma.TransactionClient = this.prisma): RoomRepository {
     return new RoomRepository(client);
@@ -175,20 +171,9 @@ export class RoomService {
 
   async getRoomState(roomCode: string, participantToken: string): Promise<RoomStateResponse> {
     const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
-    await this.repository().touchParticipant(authorized.participantId);
-    const refreshedRoom = await this.repository().getRoomAggregateByCode(roomCode.toUpperCase());
-
-    if (!refreshedRoom) {
-      throw new AppError(404, "ROOM_NOT_FOUND", "Room not found.");
-    }
 
     return {
-      snapshot: buildRoomSnapshot(
-        refreshedRoom,
-        authorized.participantId,
-        this.issueLinkProvider,
-        this.presenceTtlSeconds
-      )
+      snapshot: buildRoomSnapshot(authorized.room, authorized.participantId, this.issueLinkProvider, new Set())
     };
   }
 
@@ -206,18 +191,12 @@ export class RoomService {
     await this.prisma.$queryRaw`SELECT 1`;
   }
 
-  buildSnapshotForParticipant(room: RoomAggregate, participantId: string) {
-    return buildRoomSnapshot(room, participantId, this.issueLinkProvider, this.presenceTtlSeconds);
-  }
-
-  async markHeartbeat(roomCode: string, participantToken: string): Promise<void> {
-    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
-    await this.repository().touchParticipant(authorized.participantId);
+  buildSnapshotForParticipant(room: RoomAggregate, participantId: string, activeParticipantIds: ReadonlySet<string>) {
+    return buildRoomSnapshot(room, participantId, this.issueLinkProvider, activeParticipantIds);
   }
 
   async joinRealtime(roomCode: string, participantToken: string): Promise<{ participantId: string }> {
     const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
-    await this.repository().touchParticipant(authorized.participantId);
     return { participantId: authorized.participantId };
   }
 
@@ -240,7 +219,6 @@ export class RoomService {
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
-      await repo.touchParticipant(authorized.participantId);
       await repo.upsertVote(round.id, authorized.participantId, value);
     });
   }
@@ -259,7 +237,6 @@ export class RoomService {
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
-      await repo.touchParticipant(authorized.participantId);
       await repo.updateRoundTicket(round.id, jiraTicketKey?.trim() || null);
     });
   }
@@ -287,7 +264,6 @@ export class RoomService {
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
-      await repo.touchParticipant(authorized.participantId);
       await repo.updateRoomSettings({
         roomId: authorized.room.id,
         jiraBaseUrl,
@@ -330,7 +306,6 @@ export class RoomService {
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
-      await repo.touchParticipant(authorized.participantId);
       await repo.removeParticipant(targetParticipantId);
     });
 
@@ -403,7 +378,6 @@ export class RoomService {
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
-      await repo.touchParticipant(authorized.participantId);
       await repo.revealRound(round.id);
     });
   }
@@ -422,7 +396,6 @@ export class RoomService {
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
-      await repo.touchParticipant(authorized.participantId);
       await repo.unrevealRound(round.id);
     });
   }
@@ -436,7 +409,6 @@ export class RoomService {
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
-      await repo.touchParticipant(authorized.participantId);
       await repo.createRound({
         roomId: authorized.room.id
       });

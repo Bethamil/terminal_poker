@@ -64,13 +64,6 @@ export class RoomRepository {
     });
   }
 
-  async touchParticipant(participantId: string) {
-    return this.db.participant.update({
-      where: { id: participantId },
-      data: { lastSeenAt: new Date() }
-    });
-  }
-
   async updateRoundTicket(roundId: string, jiraTicketKey: string | null) {
     return this.db.round.update({
       where: { id: roundId },

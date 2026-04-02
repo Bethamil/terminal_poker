@@ -11,7 +11,6 @@ export interface ParticipantSnapshot {
   presence: PresenceState;
   hasVoted: boolean;
   revealedVote: VoteValue | null;
-  lastSeenAt: string;
 }
 
 export interface RoundSummary {

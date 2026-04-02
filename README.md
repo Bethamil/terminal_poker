@@ -51,7 +51,6 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/terminal_poker?schem
 CLIENT_ORIGIN="http://localhost:5173"
 PORT=4000
 REDIS_MODE=none
-PRESENCE_TTL_SECONDS=30
 ```
 
 Create `apps/frontend/.env`:

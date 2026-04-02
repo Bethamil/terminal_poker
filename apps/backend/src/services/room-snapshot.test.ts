@@ -21,7 +21,6 @@ const baseRoom = (): RoomAggregate =>
         name: "Alice",
         role: ParticipantRole.MODERATOR,
         sessionTokenHash: "x",
-        lastSeenAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -31,7 +30,6 @@ const baseRoom = (): RoomAggregate =>
         name: "Bob",
         role: ParticipantRole.PARTICIPANT,
         sessionTokenHash: "y",
-        lastSeenAt: new Date(Date.now() - 60_000),
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -57,11 +55,11 @@ const baseRoom = (): RoomAggregate =>
         ]
       }
     ]
-  }) as RoomAggregate;
+  }) as unknown as RoomAggregate;
 
 describe("buildRoomSnapshot", () => {
   it("hides vote values before reveal but keeps the viewer vote", () => {
-    const snapshot = buildRoomSnapshot(baseRoom(), "p1", new JiraRoomLinkProvider(), 30);
+    const snapshot = buildRoomSnapshot(baseRoom(), "p1", new JiraRoomLinkProvider(), new Set(["p1"]));
 
     expect(snapshot.viewer.selectedVote).toBe("5");
     expect(snapshot.participants[0].revealedVote).toBeNull();
@@ -85,7 +83,7 @@ describe("buildRoomSnapshot", () => {
       updatedAt: new Date()
     });
 
-    const snapshot = buildRoomSnapshot(room, "p1", new JiraRoomLinkProvider(), 30);
+    const snapshot = buildRoomSnapshot(room, "p1", new JiraRoomLinkProvider(), new Set(["p1", "p2"]));
 
     expect(snapshot.round.summary?.average).toBe(6.5);
     expect(snapshot.round.jiraTicketUrl).toBe("https://jira.example.com/browse/PROJ-1");

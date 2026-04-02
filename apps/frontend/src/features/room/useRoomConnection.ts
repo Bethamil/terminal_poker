@@ -161,24 +161,6 @@ export const useRoomConnection = (
     }
   }, [snapshot?.round.status]);
 
-  useEffect(() => {
-    if (!participantToken || !isRealtimeReady || !socketRef.current) {
-      return;
-    }
-
-    const socket = socketRef.current;
-    const timer = window.setInterval(() => {
-      socket.emit("presence:heartbeat", {
-        roomCode: roomCode.toUpperCase(),
-        participantToken
-      });
-    }, 10_000);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [isRealtimeReady, participantToken, roomCode]);
-
   const emitVote = (value: VoteValue) => {
     const socket = socketRef.current;
 

@@ -23,7 +23,6 @@ const createRoomAggregate = (): RoomAggregate =>
         name: "Alice",
         role: ParticipantRole.MODERATOR,
         sessionTokenHash: hashSecret("moderator-token"),
-        lastSeenAt: new Date("2026-01-01T10:00:00.000Z"),
         createdAt: new Date("2026-01-01T10:00:00.000Z"),
         updatedAt: new Date("2026-01-01T10:00:00.000Z")
       },
@@ -33,7 +32,6 @@ const createRoomAggregate = (): RoomAggregate =>
         name: "Bob",
         role: ParticipantRole.PARTICIPANT,
         sessionTokenHash: hashSecret("participant-token"),
-        lastSeenAt: new Date("2026-01-01T10:00:00.000Z"),
         createdAt: new Date("2026-01-01T10:00:00.000Z"),
         updatedAt: new Date("2026-01-01T10:00:00.000Z")
       }
@@ -50,7 +48,7 @@ const createRoomAggregate = (): RoomAggregate =>
         votes: []
       }
     ]
-  }) as RoomAggregate;
+  }) as unknown as RoomAggregate;
 
 const createFakePrisma = (room: RoomAggregate): PrismaClient => {
   const client = {
@@ -84,16 +82,6 @@ const createFakePrisma = (room: RoomAggregate): PrismaClient => {
       }
     },
     participant: {
-      update: async ({ where }: { where: { id: string } }) => {
-        const participant = room.participants.find((entry) => entry.id === where.id);
-
-        if (!participant) {
-          throw new Error("Participant not found.");
-        }
-
-        participant.lastSeenAt = new Date("2026-01-01T10:05:00.000Z");
-        return participant;
-      },
       delete: async ({ where }: { where: { id: string } }) => {
         const participantIndex = room.participants.findIndex((entry) => entry.id === where.id);
 
@@ -159,7 +147,7 @@ const createFakePrisma = (room: RoomAggregate): PrismaClient => {
 };
 
 const createService = (room: RoomAggregate) =>
-  new RoomService(createFakePrisma(room), { buildIssueUrl: () => null }, 30);
+  new RoomService(createFakePrisma(room), { buildIssueUrl: () => null });
 
 describe("RoomService moderator actions", () => {
   it("updates room settings without clearing the passcode when mode is keep", async () => {

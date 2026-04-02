@@ -79,10 +79,9 @@ export const buildRoomSnapshot = (
   room: RoomAggregate,
   viewerParticipantId: string,
   issueLinkProvider: IssueLinkProvider,
-  presenceTtlSeconds: number
+  activeParticipantIds: ReadonlySet<string>
 ): RoomSnapshot => {
   const activeRound = room.rounds[0];
-  const presenceThreshold = Date.now() - presenceTtlSeconds * 1000;
   const votesByParticipantId = new Map(activeRound?.votes.map((vote) => [vote.participantId, vote.value as VoteValue]));
   const viewer = room.participants.find((participant) => participant.id === viewerParticipantId);
 
@@ -117,10 +116,9 @@ export const buildRoomSnapshot = (
       id: participant.id,
       name: participant.name,
       role: mapParticipantRole(participant.role),
-      presence: participant.lastSeenAt.getTime() >= presenceThreshold ? "online" : "away",
+      presence: activeParticipantIds.has(participant.id) ? "online" : "away",
       hasVoted: votesByParticipantId.has(participant.id),
-      revealedVote: isRevealed ? votesByParticipantId.get(participant.id) ?? null : null,
-      lastSeenAt: participant.lastSeenAt.toISOString()
+      revealedVote: isRevealed ? votesByParticipantId.get(participant.id) ?? null : null
     })),
     viewer: {
       participantId: viewer.id,

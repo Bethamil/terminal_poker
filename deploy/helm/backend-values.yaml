@@ -52,5 +52,3 @@ extraEnvVars:
   #   value: "redis://sentinel-1:26379,redis://sentinel-2:26379,redis://sentinel-3:26379"
   # - name: REDIS_SENTINEL_MASTER_NAME
   #   value: "mymaster"
-  - name: PRESENCE_TTL_SECONDS
-    value: "30"
