@@ -20,20 +20,40 @@ import { useRoomConnection } from "./useRoomConnection";
 
 const ParticipantRail = ({
   currentParticipantId,
+  onInvite,
   roundStatus,
+  roomCode,
+  roomName,
+  roomLinkStatus,
   participants
 }: {
   currentParticipantId: string;
+  onInvite: () => void;
   roundStatus: "active" | "revealed";
+  roomCode: string;
+  roomName: string;
+  roomLinkStatus: "idle" | "copied" | "error";
   participants: ParticipantSnapshot[];
 }) => (
-  <aside className="participant-rail card card--rail">
-    <div className="participant-rail__header">
-      <div>
-        <div className="rail-kicker">PLAYERS</div>
-        <h2>{participants.length} connected</h2>
+  <aside className="card card--rail grid h-full min-h-[420px] grid-rows-[auto_auto_1fr_auto] gap-5 border-white/5 bg-[#09090b]/92 p-5 lg:sticky lg:top-5">
+    <div className="grid gap-1">
+      <h2 className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.18em] text-[#d7c7ff]">
+        {roomName.replace(/\s+/g, "_")}
+      </h2>
+      <span className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#6f6987]">
+        ID: {roomCode}
+      </span>
+    </div>
+
+    <div className="grid gap-2">
+      <div className="border-l border-[#8c67ff] bg-white/[0.05] px-4 py-3 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#d5c3ff]">
+        ACTIVE ({participants.length})
+      </div>
+      <div className="px-4 py-2 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#6f6987]">
+        OBSERVERS
       </div>
     </div>
+
     <div className="participant-list">
       {participants?.map((participant) => (
         <div
@@ -61,6 +81,21 @@ const ParticipantRail = ({
         </div>
       ))}
     </div>
+
+    <Button
+      className="w-full justify-center bg-gradient-to-r from-[#6d28d9] to-[#7c3aed] text-white"
+      onClick={onInvite}
+      style={{
+        background: "linear-gradient(135deg, #6d28d9, #7c3aed)",
+        color: "#fbf8ff"
+      }}
+    >
+      {roomLinkStatus === "copied"
+        ? "LINK COPIED"
+        : roomLinkStatus === "error"
+          ? "COPY FAILED"
+          : "INVITE_DEV"}
+    </Button>
   </aside>
 );
 
@@ -430,10 +465,11 @@ export const RoomPage = () => {
   const consensusLabel = roundSummary?.consensus ?? "split";
   const hasConsensus = roundSummary?.consensus !== null;
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
-  const revealActionTitle = snapshot.round.status === "revealed" ? "Revealed" : "Blind voting";
+  const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
+  const roomPathLabel = snapshot.room.name.toLowerCase().replace(/\s+/g, "-");
 
   return (
-    <div className="shell shell--room">
+    <div className="shell shell--room relative overflow-hidden pb-20">
       <AppHeader
         brandAside={
           <span className={`topbar__live-indicator ${isRealtimeReady ? "topbar__live-indicator--live" : ""}`.trim()}>
@@ -479,128 +515,104 @@ export const RoomPage = () => {
           </>
         }
       >
-        <div className="room-topbar">
-          <span className="room-topbar__label">ROOM</span>
-          <div className="room-topbar__name" title={snapshot.room.name}>
-            {snapshot.room.name}
-          </div>
-          <span aria-hidden="true" className="room-topbar__divider">
-            /
+        <div className="flex items-center gap-3 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.16em] text-[#8f81bb]">
+          <span>~/rooms/{roomPathLabel}</span>
+          <span className="hidden rounded-full border border-white/8 px-3 py-1 text-[#d7c7ff] sm:inline-flex">
+            {snapshot.room.code}
           </span>
-          <div className="room-topbar__code">{snapshot.room.code}</div>
-          <button
-            aria-live="polite"
-            className="room-topbar__copy"
-            onClick={copyRoomLink}
-            type="button"
-          >
-            {roomLinkStatus === "copied"
-              ? "COPIED"
-              : roomLinkStatus === "error"
-                ? "ERROR"
-                : "COPY LINK"}
-          </button>
         </div>
       </AppHeader>
 
-      <main className="room-layout">
+      <main className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
         <ParticipantRail
           currentParticipantId={snapshot.viewer.participantId}
+          onInvite={() => void copyRoomLink()}
           roundStatus={snapshot.round.status}
+          roomCode={snapshot.room.code}
+          roomLinkStatus={roomLinkStatus}
+          roomName={snapshot.room.name}
           participants={snapshot.participants}
         />
 
-        <section className="room-main">
-          <div className="card hero-card">
-            <div className="hero-card__eyebrow">
+        <section className="grid gap-5">
+          <div className="grid gap-4 px-2 py-6 text-center lg:px-8 lg:py-12">
+            <div className="inline-flex justify-center">
               <StatusChip tone={snapshot.round.status === "revealed" ? "success" : "accent"}>
                 {snapshot.round.status === "revealed" ? "REVEALED" : "IN PROGRESS"}
               </StatusChip>
-              <span className="mono-muted">
-                {votedCount}/{snapshot.participants.length} VOTED
-              </span>
             </div>
-            <div className="hero-card__main">
-              <div className="hero-card__ticket">
+            <div className="grid gap-4">
+              <div className="hero-card__ticket items-center justify-items-center gap-3">
                 <span className="hero-card__label">CURRENT TICKET</span>
-                <h1 className="ticket-title">{snapshot.round.jiraTicketKey ?? "ROUND OPEN"}</h1>
+                <h1 className="ticket-title text-[clamp(3.8rem,10vw,8rem)]">
+                  {snapshot.round.jiraTicketKey ?? "ROUND_OPEN"}
+                </h1>
+                <p className="mx-auto max-w-xl text-sm leading-7 text-[#7b7a88]">
+                  {snapshot.round.jiraTicketKey
+                    ? `${snapshot.room.name} is collecting estimates with the ${getVotingDeckName(snapshot.room.votingDeckId)} deck.`
+                    : `Set a ticket and collect estimates in ${snapshot.room.name}.`}
+                </p>
                 {snapshot.round.jiraTicketUrl ? (
-                  <a className="ticket-link" href={snapshot.round.jiraTicketUrl} rel="noreferrer" target="_blank">
-                    OPEN JIRA
+                  <a
+                    className="ticket-link inline-flex rounded-none border border-[#8c67ff]/50 px-5 py-3 text-[#d7c7ff] no-underline transition hover:bg-[#8c67ff]/10"
+                    href={snapshot.round.jiraTicketUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    OPEN_IN_JIRA
                   </a>
                 ) : null}
               </div>
-              <div className={`hero-card__results ${roundSummary ? "" : "hero-card__results--hidden"}`.trim()}>
-                <div className="hero-card__average">
-                  <span className="hero-card__label">AVG</span>
-                  <strong className="hero-card__average-value">{formattedAverage}</strong>
-                </div>
-                <div className="hero-card__consensus">
-                  <span className="hero-card__label">CONSENSUS</span>
+            </div>
+
+            <div className="mx-auto flex flex-wrap items-center justify-center gap-3">
+              <span className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</span>
+              {roundSummary ? (
+                <>
+                  <span className="hero-card__terminal-line">
+                    <strong>AVG {formattedAverage}</strong>
+                  </span>
                   <span className={`hero-card__terminal-line ${hasConsensus ? "hero-card__terminal-line--match" : ""}`.trim()}>
                     <strong>{consensusLabel}</strong>
                   </span>
-                </div>
-              </div>
+                </>
+              ) : null}
             </div>
           </div>
 
-          <div className={`room-content-grid ${isModerator ? "room-content-grid--moderator" : ""}`.trim()}>
-            {isModerator ? (
-              <section className="card round-card">
-                <div className="section-header round-card__header">
-                  <div>
-                    <StatusChip tone="accent">CONTROL</StatusChip>
-                    <h2>Round actions</h2>
+          {isModerator ? (
+            <section className="card grid gap-4 border-white/5 bg-[#0a0a0d]/88 p-5">
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="min-w-[220px] flex-1">
+                  <div className="mb-2 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.16em] text-[#6f6987]">
+                    ROUND_TICKET
                   </div>
+                  <Field
+                    aria-label="Ticket"
+                    value={ticketDraft}
+                    onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
+                    placeholder="PROJ-123"
+                  />
                 </div>
+                <Button
+                  className="min-w-[10rem]"
+                  disabled={!hasTicketChanged}
+                  onClick={() => updateTicket(normalizedTicketDraft || null)}
+                  variant="secondary"
+                >
+                  SYNC_TICKET
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-3 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#6f6987]">
+                <span>{getVotingDeckName(snapshot.room.votingDeckId)}</span>
+                <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
+                <span>{snapshot.room.jiraBaseUrl ? "JIRA_ON" : "JIRA_OFF"}</span>
+              </div>
+            </section>
+          ) : null}
 
-                <div className="round-card__body">
-                  <section className="round-card__panel">
-                    <span className="round-card__panel-label">Ticket</span>
-
-                    <div className="ticket-editor round-card__ticket-editor">
-                      <Field
-                        aria-label="Ticket"
-                        value={ticketDraft}
-                        onChange={(event) => setTicketDraft(event.target.value.toUpperCase())}
-                        placeholder="PROJ-123"
-                      />
-                      <Button
-                        className="round-card__ticket-save"
-                        disabled={!hasTicketChanged}
-                        onClick={() => updateTicket(normalizedTicketDraft || null)}
-                        variant="secondary"
-                      >
-                        SAVE
-                      </Button>
-                    </div>
-                  </section>
-
-                  <section className="round-card__panel round-card__panel--accent">
-                    <div className="round-card__panel-head">
-                      <span className="round-card__panel-label">Reveal</span>
-                      <h3 className="round-card__action-title">{revealActionTitle}</h3>
-                    </div>
-
-                    <div className="action-row round-card__action-row">
-                      <Button
-                        onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
-                        stretch
-                        variant={snapshot.round.status === "revealed" ? "danger" : "primary"}
-                      >
-                        {revealActionLabel}
-                      </Button>
-                      <Button onClick={resetRound} variant="secondary">
-                        RESET
-                      </Button>
-                    </div>
-                  </section>
-                </div>
-              </section>
-            ) : null}
-
-            <section className={`card deck-card ${isModerator ? "deck-card--moderator" : ""}`.trim()}>
+          <section className={`card deck-card border-white/5 bg-transparent p-0 shadow-none ${isModerator ? "deck-card--moderator" : ""}`.trim()}>
+            <div className="grid gap-4 rounded-[18px] border border-white/5 bg-black/10 p-4 lg:p-6">
               <div className="section-header">
                 <StatusChip tone="success">DECK</StatusChip>
                 <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
@@ -613,7 +625,11 @@ export const RoomPage = () => {
                     role="status"
                   >
                     <span className="deck-card__vote-alert-label">Voting closed</span>
-                    <strong>{snapshot.viewer.selectedVote ? `Your last vote was ${snapshot.viewer.selectedVote}.` : "This round is already revealed."}</strong>
+                    <strong>
+                      {snapshot.viewer.selectedVote
+                        ? `Your last vote was ${snapshot.viewer.selectedVote}.`
+                        : "This round is already revealed."}
+                    </strong>
                   </div>
                 ) : null}
                 <div className="vote-grid">
@@ -637,12 +653,57 @@ export const RoomPage = () => {
                   })}
                 </div>
               </div>
+            </div>
+          </section>
+
+          {isModerator ? (
+            <section className="mx-auto grid w-full max-w-xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[18px] border border-white/5 bg-[#09090b]/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.34)]">
+              <Button
+                className="min-h-[3.25rem] justify-start bg-gradient-to-br from-[#5b21b6] to-[#7c3aed] text-white"
+                onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
+                style={{
+                  background: "linear-gradient(135deg, #5b21b6, #7c3aed)",
+                  color: "#fbf8ff"
+                }}
+                stretch
+                variant="primary"
+              >
+                {revealActionLabel}
+              </Button>
+              <div className="grid gap-1 px-2 text-right">
+                <strong className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.14em] text-[#ece5ff]">
+                  {snapshot.round.status === "revealed"
+                    ? `Consensus ${consensusLabel}`
+                    : waitingVotes === 0
+                      ? "All votes are in"
+                      : `Awaiting ${waitingVotes} more`}
+                </strong>
+                <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#6f6987]">
+                  {snapshot.round.status === "revealed" ? `Average ${formattedAverage}` : "Ready to reveal"}
+                </span>
+              </div>
+              <Button className="col-span-2 justify-center" onClick={resetRound} variant="ghost">
+                RESET ROUND
+              </Button>
             </section>
-          </div>
+          ) : null}
 
           {error || joinError ? <div className="notice notice--error">{error ?? joinError}</div> : null}
         </section>
       </main>
+
+      <footer className="fixed inset-x-0 bottom-0 z-20 flex h-10 items-center justify-between border-t border-white/5 bg-[#09090b]/92 px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#6f6987] backdrop-blur-xl">
+        <div className="flex items-center gap-4">
+          <span>V2.4.0-STABLE</span>
+          <span>[1-8] VOTE</span>
+          <span>[R] REVEAL</span>
+          <span>[N] NEXT</span>
+        </div>
+        <div className="hidden items-center gap-2 md:flex">
+          <span className={`h-1.5 w-1.5 rounded-full ${isRealtimeReady ? "bg-[#a98fff]" : "bg-[#6f6987]"}`} />
+          <span>{isRealtimeReady ? "CONNECTION_STABLE" : "SYNCING"}</span>
+        </div>
+      </footer>
 
       {isModerator && isSettingsOpen ? (
         <RoomModal

@@ -13,7 +13,7 @@ export const AppHeader = ({
 }>) => (
   <header className="topbar">
     <Link aria-label="Go to homepage" className="brand" to="/">
-      <span className="brand__mark">▣</span>
+      <span className="brand__mark">&gt;_</span>
       <span className="brand__text">TERMINAL_POKER</span>
       {brandAside ? <div className="brand__aside">{brandAside}</div> : null}
     </Link>

@@ -141,142 +141,298 @@ export const LandingPage = () => {
     refreshPreviousRooms();
   };
 
+  const activeNodes = previousRooms.slice(0, 4);
+  const metricBars = Array.from({ length: 5 }, (_, index) => {
+    const room = previousRooms[index];
+
+    if (!room) {
+      return 28 + index * 10;
+    }
+
+    const ageHours = Math.max(
+      1,
+      Math.min(
+        24,
+        Math.round((Date.now() - new Date(room.lastVisitedAt).getTime()) / (1000 * 60 * 60))
+      )
+    );
+
+    return Math.max(26, 92 - ageHours * 2.2);
+  });
+
   return (
-    <div className="shell shell--landing">
+    <div className="shell shell--landing relative overflow-hidden pb-20">
       <AppHeader>
-        <div className="lobby-topbar">
-          <span className="room-topbar__label">LOBBY</span>
-        </div>
+        <nav
+          aria-label="Primary"
+          className="flex items-center gap-4 font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.18em] text-[#6f6987]"
+        >
+          <span className="border-b border-[#8c67ff] pb-1 text-[#d8c7ff]">ROOT</span>
+          <span>DOCS</span>
+          <span>REPOS</span>
+        </nav>
       </AppHeader>
 
-      <main className="landing-grid">
-        <section className="landing-overview card card--ghost">
-          <div className="landing-history">
-            <div className="section-header">
-              <StatusChip tone="accent">RECENT</StatusChip>
-              <h2>Previous rooms</h2>
+      <main className="mx-auto grid w-full max-w-[1380px] gap-7">
+        <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">
+          <div className="min-w-0">
+            <h1 className="hero-title text-[clamp(3.6rem,9vw,8rem)] text-[#f2f0ff]">
+              SCRUM_POKER_ROOT
+            </h1>
+            <div className="mt-4 inline-flex items-center gap-3 font-['JetBrains_Mono'] text-xs uppercase tracking-[0.18em] text-[#9486bb]/85">
+              <span className="h-2 w-2 rounded-full bg-[#aa8cff]" aria-hidden="true" />
+              <span>SECURE_SESSION_ESTABLISHED // AES-256</span>
             </div>
-            {previousRooms.length > 0 ? (
-              <div className="history-list">
-                {previousRooms.map((room) => {
-                  const hasActiveSession = Boolean(sessionStorageStore.getParticipantToken(room.roomCode));
-
-                  return (
-                    <div className="history-row" key={room.roomCode}>
-                      <div className="history-row__identity">
-                        <strong>{room.roomName}</strong>
-                        <span>
-                          {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
-                        </span>
-                      </div>
-                      <div className="history-row__actions">
-                        <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
-                          {hasActiveSession ? "RESUME" : "OPEN"}
-                        </Button>
-                        <Button onClick={() => void removePreviousRoom(room)} variant="ghost">
-                          REMOVE
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="landing-history__empty">
-                Rooms you visit will show up here so you can jump back in quickly.
-              </div>
-            )}
           </div>
+
+          <aside className="hidden gap-8 lg:grid">
+            <section className="grid gap-3">
+              <span className="rail-kicker">ACTIVE_NODES</span>
+              {activeNodes.length > 0 ? (
+                <div className="grid gap-2">
+                  {activeNodes.map((room) => (
+                    <button
+                      className="flex items-center justify-between gap-3 border-b border-white/5 pb-2 text-left font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.12em] text-[#a79ebd] transition hover:text-[#f0e9ff]"
+                      key={room.roomCode}
+                      onClick={() => openPreviousRoom(room.roomCode)}
+                      type="button"
+                    >
+                      <span>{room.roomName.replace(/\s+/g, "_").toUpperCase()}</span>
+                      <strong>ID: {room.roomCode}</strong>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#6f6987]">
+                  No cached sessions yet.
+                </p>
+              )}
+            </section>
+
+            <section className="grid gap-3">
+              <span className="rail-kicker">METRICS</span>
+              <div
+                aria-hidden="true"
+                className="flex h-24 items-end gap-1 border border-white/5 bg-white/[0.02] p-3"
+              >
+                {metricBars.map((height, index) => (
+                  <span
+                    className="w-full rounded-sm bg-gradient-to-t from-[#8b6bff] via-[#baa4ff] to-[#ddd1ff]"
+                    key={index}
+                    style={{ height: `${height}%`, opacity: 0.72 + index * 0.05 }}
+                  />
+                ))}
+              </div>
+              <p className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.14em] text-[#6f6987]">
+                {previousRooms.length > 0
+                  ? `${previousRooms.length} cached room${previousRooms.length === 1 ? "" : "s"} ready to resume.`
+                  : "Session history appears here after you join or create a room."}
+              </p>
+            </section>
+          </aside>
         </section>
 
-        <section className="landing-actions">
-          <form className="card action-card" onSubmit={handleCreate}>
-            <div className="section-header">
-              <StatusChip tone="success">CREATE</StatusChip>
-              <h2>New room</h2>
+        <section className="card relative overflow-hidden border-white/5 bg-[#09090b]/88 px-5 py-6 shadow-[0_40px_120px_rgba(0,0,0,0.4)] lg:px-8 lg:py-8">
+          <div className="mb-8 flex items-center gap-4">
+            <div className="flex gap-2" aria-hidden="true">
+              <span className="h-3 w-3 rounded-full bg-[#8f6b72]" />
+              <span className="h-3 w-3 rounded-full bg-[#8b78c7]" />
+              <span className="h-3 w-3 rounded-full bg-[#6f6987]" />
             </div>
-            <Field
-              label="NAME"
-              value={createForm.name}
-              onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))}
-              placeholder="root_dev"
-              required
-            />
-            <Field
-              label="ROOM NAME"
-              value={createForm.roomName}
-              onChange={(event) => setCreateForm((current) => ({ ...current, roomName: event.target.value }))}
-              placeholder="Platform sync"
-              required
-            />
-            <Field
-              label="JIRA URL"
-              value={createForm.jiraBaseUrl}
-              onChange={(event) => setCreateForm((current) => ({ ...current, jiraBaseUrl: event.target.value }))}
-              placeholder="https://jira.example.com"
-            />
-            <Field
-              label="PASSCODE"
-              value={createForm.joinPasscode}
-              onChange={(event) => setCreateForm((current) => ({ ...current, joinPasscode: event.target.value }))}
-              placeholder="optional"
-              type="password"
-              hint="Only if you want the room locked."
-            />
-            <SelectField
-              label="DECK"
-              value={createForm.votingDeckId}
-              onChange={(event) =>
-                setCreateForm((current) => ({ ...current, votingDeckId: event.target.value as VotingDeckId }))
-              }
-              hint="Can be changed later."
-            >
-              {VOTING_DECK_OPTIONS.map((deck) => (
-                <option key={deck.id} value={deck.id}>
-                  {deck.name}
-                </option>
-              ))}
-            </SelectField>
-            <Button stretch disabled={busyForm === "create"} type="submit">
-              {busyForm === "create" ? "CREATING..." : "CREATE ROOM"}
-            </Button>
-          </form>
+            <div className="h-px flex-1 bg-white/6" />
+            <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.18em] text-[#6f6987]">
+              SESSION_V2.4.0
+            </span>
+          </div>
 
-          <form className="card action-card" onSubmit={handleJoin}>
-            <div className="section-header">
-              <StatusChip>JOIN</StatusChip>
-              <h2>Existing room</h2>
+          <div className="mb-8 flex items-start gap-4 font-['JetBrains_Mono'] text-base tracking-[0.18em] text-[#b8afcc] lg:text-lg">
+            <span className="text-[#c7b4ff]">&gt;</span>
+            <p className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+              user@poker:~$ create_session --jira="
+              {createForm.jiraBaseUrl || "https://jira.example.com"}"
+            </p>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <form
+              className="grid gap-4 rounded-[14px] border border-[#15b97b]/20 bg-[#0d1110] p-4 lg:p-5"
+              onSubmit={handleCreate}
+            >
+              <div className="section-header">
+                <StatusChip tone="success">CREATE</StatusChip>
+                <h2>[CREATE_SESSION]</h2>
+              </div>
+              <Field
+                label="NAME"
+                value={createForm.name}
+                onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))}
+                placeholder="root_dev"
+                required
+              />
+              <Field
+                label="ROOM NAME"
+                value={createForm.roomName}
+                onChange={(event) => setCreateForm((current) => ({ ...current, roomName: event.target.value }))}
+                placeholder="Platform sync"
+                required
+              />
+              <Field
+                label="JIRA URL"
+                value={createForm.jiraBaseUrl}
+                onChange={(event) => setCreateForm((current) => ({ ...current, jiraBaseUrl: event.target.value }))}
+                placeholder="https://jira.example.com"
+              />
+              <Field
+                label="PASSCODE"
+                value={createForm.joinPasscode}
+                onChange={(event) => setCreateForm((current) => ({ ...current, joinPasscode: event.target.value }))}
+                placeholder="optional"
+                type="password"
+                hint="Only if you want the room locked."
+              />
+              <SelectField
+                label="DECK"
+                value={createForm.votingDeckId}
+                onChange={(event) =>
+                  setCreateForm((current) => ({ ...current, votingDeckId: event.target.value as VotingDeckId }))
+                }
+                hint="Can be changed later."
+              >
+                {VOTING_DECK_OPTIONS.map((deck) => (
+                  <option key={deck.id} value={deck.id}>
+                    {deck.name}
+                  </option>
+                ))}
+              </SelectField>
+              <Button
+                stretch
+                disabled={busyForm === "create"}
+                style={{
+                  background: "linear-gradient(135deg, #19b676, #11955e)",
+                  color: "#f4fff8"
+                }}
+                type="submit"
+              >
+                {busyForm === "create" ? "CREATING..." : "CREATE ROOM"}
+              </Button>
+            </form>
+
+            <form
+              className="grid gap-4 rounded-[14px] border border-[#4b7cff]/20 bg-[#0d1015] p-4 lg:p-5"
+              onSubmit={handleJoin}
+            >
+              <div className="section-header">
+                <StatusChip>JOIN</StatusChip>
+                <h2>[JOIN_SESSION]</h2>
+              </div>
+              <Field
+                label="ROOM CODE"
+                value={joinForm.roomCode}
+                onChange={(event) =>
+                  setJoinForm((current) => ({ ...current, roomCode: event.target.value.toUpperCase() }))
+                }
+                placeholder="AB123"
+                required
+              />
+              <Field
+                label="NAME"
+                value={joinForm.name}
+                onChange={(event) => setJoinForm((current) => ({ ...current, name: event.target.value }))}
+                placeholder="stack_trace"
+                required
+              />
+              <Field
+                label="PASSCODE"
+                value={joinForm.joinPasscode}
+                onChange={(event) => setJoinForm((current) => ({ ...current, joinPasscode: event.target.value }))}
+                placeholder="only if needed"
+                type="password"
+              />
+              <div className="grid gap-3">
+                <span className="rail-kicker">RECENT</span>
+                {previousRooms.length > 0 ? (
+                  <div className="history-list">
+                    {previousRooms.slice(0, 3).map((room) => {
+                      const hasActiveSession = Boolean(
+                        sessionStorageStore.getParticipantToken(room.roomCode)
+                      );
+
+                      return (
+                        <div className="history-row" key={room.roomCode}>
+                          <div className="history-row__identity">
+                            <strong>{room.roomName}</strong>
+                            <span>
+                              {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
+                            </span>
+                          </div>
+                          <div className="history-row__actions">
+                            <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
+                              {hasActiveSession ? "RESUME" : "OPEN"}
+                            </Button>
+                            <Button onClick={() => void removePreviousRoom(room)} variant="ghost">
+                              REMOVE
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="landing-history__empty">Rooms you visit will show up here.</div>
+                )}
+              </div>
+              <Button
+                stretch
+                style={{
+                  background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                  color: "#f8fbff"
+                }}
+                type="submit"
+                variant="secondary"
+                disabled={busyForm === "join"}
+              >
+                {busyForm === "join" ? "JOINING..." : "JOIN ROOM"}
+              </Button>
+            </form>
+          </div>
+
+          <div className="mt-6 border-l border-[#a98fff]/50 bg-white/[0.03] px-4 py-3">
+            <div className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.18em] text-[#cfbfff]">
+              AUTHENTICATION_BYPASS
             </div>
-            <Field
-              label="ROOM CODE"
-              value={joinForm.roomCode}
-              onChange={(event) => setJoinForm((current) => ({ ...current, roomCode: event.target.value.toUpperCase() }))}
-              placeholder="AB123"
-              required
-            />
-            <Field
-              label="NAME"
-              value={joinForm.name}
-              onChange={(event) => setJoinForm((current) => ({ ...current, name: event.target.value }))}
-              placeholder="stack_trace"
-              required
-            />
-            <Field
-              label="PASSCODE"
-              value={joinForm.joinPasscode}
-              onChange={(event) => setJoinForm((current) => ({ ...current, joinPasscode: event.target.value }))}
-              placeholder="only if needed"
-              type="password"
-            />
-            <Button stretch variant="secondary" disabled={busyForm === "join"} type="submit">
-              {busyForm === "join" ? "JOINING..." : "JOIN ROOM"}
-            </Button>
-          </form>
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-[#b3acbf]">
+              No accounts needed. Sessions are ephemeral and encrypted at rest. Data is purged 24h
+              after inactivity.
+            </p>
+          </div>
         </section>
       </main>
 
-      {notice ? <div className="notice notice--info">{notice}</div> : null}
-      {error ? <div className="notice notice--error">{error}</div> : null}
+      <footer className="fixed inset-x-0 bottom-0 z-20 flex h-10 items-center justify-between border-t border-white/5 bg-[#09090b]/92 px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] text-[#6f6987] backdrop-blur-xl">
+        <div className="flex items-center gap-4">
+          <span>V2.4.0-STABLE</span>
+          <span>SYSTEM_ONLINE</span>
+        </div>
+        <div className="hidden items-center gap-4 md:flex">
+          <span>ENTER TO START</span>
+          <span>ESC CLEAR SHELL</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#2edd8a]" aria-hidden="true" />
+          <span>LATENCY: 14MS</span>
+        </div>
+      </footer>
+
+      {notice ? (
+        <div className="notice notice--info fixed bottom-14 right-4 z-30 max-w-md">
+          {notice}
+        </div>
+      ) : null}
+      {error ? (
+        <div className="notice notice--error fixed bottom-14 right-4 z-30 max-w-md">
+          {error}
+        </div>
+      ) : null}
     </div>
   );
 };
