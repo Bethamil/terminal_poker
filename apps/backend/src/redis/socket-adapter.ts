@@ -81,25 +81,35 @@ const createSentinelClient = (env: Env, label: string) => {
 };
 
 export const createSocketIoRedisClients = async (env: Env): Promise<SocketIoRedisClients | null> => {
-  if (env.REDIS_MODE === "none") {
-    return null;
-  }
+  switch (env.REDIS_MODE) {
+    case "none":
+      return null;
+    case "standalone": {
+      const pubClient = createStandaloneClient(env, "socket-publisher");
+      const subClient = createStandaloneClient(env, "socket-subscriber");
 
-  const createClient =
-    env.REDIS_MODE === "standalone"
-      ? (label: string) => createStandaloneClient(env, label)
-      : (label: string) => createSentinelClient(env, label);
+      try {
+        await Promise.all([pubClient.connect(), subClient.connect()]);
+        return { pubClient, subClient };
+      } catch (error) {
+        pubClient.disconnect();
+        subClient.disconnect();
+        throw error;
+      }
+    }
+    case "sentinel": {
+      const pubClient = createSentinelClient(env, "socket-publisher");
+      const subClient = createSentinelClient(env, "socket-subscriber");
 
-  const pubClient = createClient("socket-publisher");
-  const subClient = createClient("socket-subscriber");
-
-  try {
-    await Promise.all([pubClient.connect(), subClient.connect()]);
-    return { pubClient, subClient };
-  } catch (error) {
-    pubClient.disconnect();
-    subClient.disconnect();
-    throw error;
+      try {
+        await Promise.all([pubClient.connect(), subClient.connect()]);
+        return { pubClient, subClient };
+      } catch (error) {
+        pubClient.disconnect();
+        subClient.disconnect();
+        throw error;
+      }
+    }
   }
 };
 
