@@ -378,7 +378,7 @@ export const RoomPage = () => {
               <h1>ROOM {roomCode}</h1>
             </div>
             <Field
-              label="NAME"
+              label="USER NAME"
               value={joinName}
               onChange={(event) => setJoinName(event.target.value)}
               placeholder="cyber_punk"

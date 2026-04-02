@@ -626,16 +626,21 @@ select {
   display: flex;
   align-items: start;
   gap: 1rem;
-  padding-right: 3.75rem;
+  padding-right: 7rem;
+}
+
+.room-modal__heading {
+  display: grid;
+  gap: 0.65rem;
 }
 
 .room-modal__close {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 1.25rem;
+  right: 1.25rem;
   min-width: 2.5rem;
   min-height: 2.5rem;
-  padding: 0;
+  padding: 0.7rem 0.9rem;
 }
 
 .room-modal__body {
@@ -1590,6 +1595,10 @@ select {
   max-width: 34rem;
   width: 100%;
   gap: 1rem;
+}
+
+.join-gate__card {
+  display: grid;
 }
 
 .rail-kicker {

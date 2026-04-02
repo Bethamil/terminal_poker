@@ -226,11 +226,11 @@ export const LandingPage = () => {
                 <h2>[JOIN_SESSION]</h2>
               </div>
               <p className="hero-copy hero-copy--inline">
-                Enter the room code first. If the room needs a passcode or your name, the room gate asks next.
+                Enter the room code first. If the room needs a passcode or your user name, the room gate asks next.
               </p>
               <div className="shortcut-strip">
                 <span>ROOM CODE FIRST</span>
-                <span>NAME NEXT</span>
+                <span>USER NAME NEXT</span>
                 <span>PASSCODE IF NEEDED</span>
               </div>
               <Button
@@ -252,7 +252,7 @@ export const LandingPage = () => {
               AUTHENTICATION_BYPASS
             </div>
             <p className="landing-note__body mt-2 max-w-3xl text-sm leading-7">
-              No accounts. No signup loops. Drop in with a name, lock the room with a passcode if
+              No accounts. No signup loops. Drop in with a user name, lock the room with a passcode if
               needed, and resume in the same browser.
             </p>
           </div>
@@ -300,7 +300,7 @@ export const LandingPage = () => {
               Set up the room once, then share the invite link from inside the session.
             </p>
             <Field
-              label="NAME"
+              label="USER NAME"
               value={createForm.name}
               onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))}
               placeholder="root_dev"
@@ -365,7 +365,7 @@ export const LandingPage = () => {
         >
           <form className="landing-modal-form" onSubmit={handleJoin}>
             <p className="hero-copy hero-copy--inline">
-              Enter the room code here. The room page will ask for your name and a passcode only if required.
+              Enter the room code here. The room page will ask for your user name and a passcode only if required.
             </p>
             <Field
               label="ROOM CODE"

@@ -54,7 +54,7 @@ export const AppModal = ({
         role="dialog"
       >
         <div className="section-header room-modal__header">
-          <div>
+          <div className="room-modal__heading">
             <StatusChip tone="accent">{label}</StatusChip>
             <h2 id={titleId}>{title}</h2>
           </div>
@@ -64,7 +64,7 @@ export const AppModal = ({
             onClick={onClose}
             variant="ghost"
           >
-            X
+            Close
           </Button>
         </div>
         <div className="room-modal__body">{children}</div>
