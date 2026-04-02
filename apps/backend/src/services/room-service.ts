@@ -8,6 +8,7 @@ import {
   isVoteValue,
   normalizeJiraBaseUrl
 } from "@terminal-poker/shared-types";
+import type { JoinPasscodeMode, UpdateRoomSettingsPayload } from "@terminal-poker/shared-types";
 
 import { AppError } from "../http/errors";
 import { RoomRepository } from "../repositories/room-repository";
@@ -244,6 +245,93 @@ export class RoomService {
       await repo.touchParticipant(authorized.participantId);
       await repo.updateRoundTicket(round.id, jiraTicketKey?.trim() || null);
     });
+  }
+
+  async updateRoomSettings(
+    roomCode: string,
+    participantToken: string,
+    input: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "joinPasscode" | "joinPasscodeMode">
+  ): Promise<void> {
+    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
+
+    if (authorized.role !== ParticipantRole.MODERATOR) {
+      throw new AppError(403, "FORBIDDEN", "Only moderators can update room settings.");
+    }
+
+    const jiraBaseUrl = normalizeJiraBaseUrl(input.jiraBaseUrl);
+    const joinPasscode = input.joinPasscode?.trim() || null;
+    const joinPasscodeHash = this.resolveJoinPasscodeHash(
+      authorized.room.joinPasscodeHash,
+      input.joinPasscodeMode,
+      joinPasscode
+    );
+
+    await this.prisma.$transaction(async (transaction) => {
+      const repo = this.repository(transaction);
+      await repo.touchParticipant(authorized.participantId);
+      await repo.updateRoomSettings({
+        roomId: authorized.room.id,
+        jiraBaseUrl,
+        joinPasscodeHash
+      });
+    });
+  }
+
+  async kickParticipant(
+    roomCode: string,
+    participantToken: string,
+    targetParticipantId: string
+  ): Promise<{ participantId: string; participantName: string }> {
+    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
+
+    if (authorized.role !== ParticipantRole.MODERATOR) {
+      throw new AppError(403, "FORBIDDEN", "Only moderators can remove participants.");
+    }
+
+    if (authorized.participantId === targetParticipantId) {
+      throw new AppError(400, "CANNOT_KICK_SELF", "Moderators cannot remove themselves.");
+    }
+
+    const participant = authorized.room.participants.find((entry) => entry.id === targetParticipantId);
+
+    if (!participant) {
+      throw new AppError(404, "PARTICIPANT_NOT_FOUND", "Participant not found.");
+    }
+
+    if (participant.role === ParticipantRole.MODERATOR) {
+      throw new AppError(403, "FORBIDDEN", "Moderators cannot remove other moderators.");
+    }
+
+    await this.prisma.$transaction(async (transaction) => {
+      const repo = this.repository(transaction);
+      await repo.touchParticipant(authorized.participantId);
+      await repo.removeParticipant(targetParticipantId);
+    });
+
+    return {
+      participantId: participant.id,
+      participantName: participant.name
+    };
+  }
+
+  private resolveJoinPasscodeHash(
+    currentHash: string | null,
+    mode: JoinPasscodeMode,
+    joinPasscode: string | null
+  ): string | null {
+    if (mode === "keep") {
+      return currentHash;
+    }
+
+    if (mode === "clear") {
+      return null;
+    }
+
+    if (!joinPasscode) {
+      throw new AppError(400, "INVALID_PASSCODE", "Join passcode cannot be empty.");
+    }
+
+    return hashSecret(joinPasscode);
   }
 
   async revealRound(roomCode: string, participantToken: string): Promise<void> {

@@ -4,6 +4,7 @@ import {
   VOTE_CARD_META,
   type RoomErrorPayload,
   type RoomSnapshot,
+  type UpdateRoomSettingsPayload,
   type VoteValue
 } from "@terminal-poker/shared-types";
 
@@ -13,12 +14,17 @@ import { createRoomSocket } from "../../lib/socket/room-socket";
 interface UseRoomConnectionResult {
   snapshot: RoomSnapshot | null;
   error: string | null;
+  sessionEndedError: RoomErrorPayload | null;
   isLoading: boolean;
   isRealtimeReady: boolean;
   castVote: (value: VoteValue) => void;
   revealRound: () => void;
   resetRound: () => void;
   updateTicket: (jiraTicketKey: string | null) => void;
+  updateRoomSettings: (
+    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "joinPasscode" | "joinPasscodeMode">
+  ) => void;
+  kickParticipant: (participantId: string) => void;
 }
 
 export const useRoomConnection = (
@@ -29,6 +35,7 @@ export const useRoomConnection = (
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRealtimeReady, setIsRealtimeReady] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionEndedError, setSessionEndedError] = useState<RoomErrorPayload | null>(null);
   const socketRef = useRef<ReturnType<typeof createRoomSocket> | null>(null);
 
   useEffect(() => {
@@ -37,12 +44,14 @@ export const useRoomConnection = (
       setIsLoading(false);
       setIsRealtimeReady(false);
       setError(null);
+      setSessionEndedError(null);
       return;
     }
 
     let disposed = false;
     setIsLoading(true);
     setError(null);
+    setSessionEndedError(null);
 
     apiClient
       .getRoomState(roomCode, participantToken)
@@ -67,6 +76,10 @@ export const useRoomConnection = (
 
         socket.on("room:error", (payload: RoomErrorPayload) => {
           setError(payload.message);
+
+          if (payload.code === "INVALID_SESSION" || payload.code === "KICKED") {
+            setSessionEndedError(payload);
+          }
         });
 
         socket.emit(
@@ -78,6 +91,11 @@ export const useRoomConnection = (
           (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => {
             if (!result.ok) {
               setError(result.error.message);
+
+              if (result.error.code === "INVALID_SESSION" || result.error.code === "KICKED") {
+                setSessionEndedError(result.error);
+              }
+
               return;
             }
 
@@ -89,6 +107,17 @@ export const useRoomConnection = (
         const message =
           requestError instanceof ApiError ? requestError.message : "Unable to load room state.";
         setError(message);
+
+        if (
+          requestError instanceof ApiError &&
+          (requestError.code === "INVALID_SESSION" || requestError.code === "KICKED")
+        ) {
+          setSessionEndedError({
+            code: requestError.code,
+            message
+          });
+        }
+
         setSnapshot(null);
         setIsLoading(false);
       });
@@ -119,9 +148,49 @@ export const useRoomConnection = (
     };
   }, [isRealtimeReady, participantToken, roomCode]);
 
-  const sendIfReady = <T extends VoteValue | string | null>(
-    eventName: "vote:cast" | "round:setTicket" | "round:reveal" | "round:reset",
-    payload?: T
+  const emitVote = (value: VoteValue) => {
+    const socket = socketRef.current;
+
+    if (!socket || !participantToken) {
+      return;
+    }
+
+    socket.emit("vote:cast", {
+      roomCode: roomCode.toUpperCase(),
+      participantToken,
+      value
+    });
+  };
+
+  const emitRoundAction = (eventName: "round:reveal" | "round:reset") => {
+    const socket = socketRef.current;
+
+    if (!socket || !participantToken) {
+      return;
+    }
+
+    socket.emit(eventName, {
+      roomCode: roomCode.toUpperCase(),
+      participantToken
+    });
+  };
+
+  const emitTicketUpdate = (jiraTicketKey: string | null) => {
+    const socket = socketRef.current;
+
+    if (!socket || !participantToken) {
+      return;
+    }
+
+    socket.emit("round:setTicket", {
+      roomCode: roomCode.toUpperCase(),
+      participantToken,
+      jiraTicketKey
+    });
+  };
+
+  const emitRoomSettingsUpdate = (
+    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "joinPasscode" | "joinPasscodeMode">
   ) => {
     const socket = socketRef.current;
 
@@ -129,35 +198,25 @@ export const useRoomConnection = (
       return;
     }
 
-    if (eventName === "vote:cast" && payload) {
-      socket.emit("vote:cast", {
-        roomCode: roomCode.toUpperCase(),
-        participantToken,
-        value: payload as VoteValue
-      });
+    socket.emit("room:updateSettings", {
+      roomCode: roomCode.toUpperCase(),
+      participantToken,
+      ...payload
+    });
+  };
+
+  const emitKickParticipant = (participantId: string) => {
+    const socket = socketRef.current;
+
+    if (!socket || !participantToken) {
+      return;
     }
 
-    if (eventName === "round:setTicket") {
-      socket.emit("round:setTicket", {
-        roomCode: roomCode.toUpperCase(),
-        participantToken,
-        jiraTicketKey: payload as string | null
-      });
-    }
-
-    if (eventName === "round:reveal") {
-      socket.emit("round:reveal", {
-        roomCode: roomCode.toUpperCase(),
-        participantToken
-      });
-    }
-
-    if (eventName === "round:reset") {
-      socket.emit("round:reset", {
-        roomCode: roomCode.toUpperCase(),
-        participantToken
-      });
-    }
+    socket.emit("room:kickParticipant", {
+      roomCode: roomCode.toUpperCase(),
+      participantToken,
+      participantId
+    });
   };
 
   const availableShortcuts = useMemo(() => new Map(VOTE_CARD_META.map((card) => [card.shortcut, card.value])), []);
@@ -181,17 +240,17 @@ export const useRoomConnection = (
 
       if (vote) {
         event.preventDefault();
-        sendIfReady("vote:cast", vote);
+        emitVote(vote);
       }
 
       if (snapshot.viewer.role === "moderator" && normalizedKey === "r") {
         event.preventDefault();
-        sendIfReady("round:reveal");
+        emitRoundAction("round:reveal");
       }
 
       if (snapshot.viewer.role === "moderator" && normalizedKey === "n") {
         event.preventDefault();
-        sendIfReady("round:reset");
+        emitRoundAction("round:reset");
       }
     };
 
@@ -202,11 +261,14 @@ export const useRoomConnection = (
   return {
     snapshot,
     error,
+    sessionEndedError,
     isLoading,
     isRealtimeReady,
-    castVote: (value) => sendIfReady("vote:cast", value),
-    revealRound: () => sendIfReady("round:reveal"),
-    resetRound: () => sendIfReady("round:reset"),
-    updateTicket: (jiraTicketKey) => sendIfReady("round:setTicket", jiraTicketKey)
+    castVote: emitVote,
+    revealRound: () => emitRoundAction("round:reveal"),
+    resetRound: () => emitRoundAction("round:reset"),
+    updateTicket: emitTicketUpdate,
+    updateRoomSettings: emitRoomSettingsUpdate,
+    kickParticipant: emitKickParticipant
   };
 };

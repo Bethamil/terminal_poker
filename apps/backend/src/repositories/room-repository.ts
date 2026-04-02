@@ -72,6 +72,20 @@ export class RoomRepository {
     });
   }
 
+  async updateRoomSettings(data: {
+    roomId: string;
+    jiraBaseUrl: string | null;
+    joinPasscodeHash: string | null;
+  }) {
+    return this.db.room.update({
+      where: { id: data.roomId },
+      data: {
+        jiraBaseUrl: data.jiraBaseUrl,
+        joinPasscodeHash: data.joinPasscodeHash
+      }
+    });
+  }
+
   async revealRound(roundId: string) {
     return this.db.round.update({
       where: { id: roundId },
@@ -98,6 +112,12 @@ export class RoomRepository {
       update: {
         value
       }
+    });
+  }
+
+  async removeParticipant(participantId: string) {
+    return this.db.participant.delete({
+      where: { id: participantId }
     });
   }
 }

@@ -26,7 +26,39 @@ const emitRoomSnapshots = async (
       return;
     }
 
+    const participantExists = room.participants.some((participant) => participant.id === participantId);
+
+    if (!participantExists) {
+      socket.emit("room:error", {
+        code: "INVALID_SESSION",
+        message: "Participant session is invalid."
+      });
+      socket.disconnect(true);
+      return;
+    }
+
     socket.emit("room:snapshot", roomService.buildSnapshotForParticipant(room, participantId));
+  });
+};
+
+const disconnectParticipantSockets = async (
+  io: Server<ClientToServerEvents, ServerToClientEvents>,
+  roomCode: string,
+  participantId: string,
+  message: string
+) => {
+  const sockets = await io.in(roomCode).fetchSockets();
+
+  sockets.forEach((socket) => {
+    if ((socket.data as SocketData).participantId !== participantId) {
+      return;
+    }
+
+    socket.emit("room:error", {
+      code: "KICKED",
+      message
+    });
+    socket.disconnect(true);
   });
 };
 
@@ -79,6 +111,34 @@ export const registerRoomHandlers = (
     }
   });
 
+  socket.on("room:updateSettings", async (payload) => {
+    try {
+      await roomService.updateRoomSettings(payload.roomCode, payload.participantToken, payload);
+      await emitRoomSnapshots(io, roomService, payload.roomCode.toUpperCase());
+    } catch (error) {
+      emitSocketError(socket, error);
+    }
+  });
+
+  socket.on("room:kickParticipant", async (payload) => {
+    try {
+      const result = await roomService.kickParticipant(
+        payload.roomCode,
+        payload.participantToken,
+        payload.participantId
+      );
+      await disconnectParticipantSockets(
+        io,
+        payload.roomCode.toUpperCase(),
+        result.participantId,
+        `${result.participantName} was removed by the moderator.`
+      );
+      await emitRoomSnapshots(io, roomService, payload.roomCode.toUpperCase());
+    } catch (error) {
+      emitSocketError(socket, error);
+    }
+  });
+
   socket.on("vote:cast", async (payload) => {
     try {
       await roomService.castVote(payload.roomCode, payload.participantToken, payload.value);
@@ -124,4 +184,3 @@ export const registerRoomHandlers = (
     }
   });
 };
-

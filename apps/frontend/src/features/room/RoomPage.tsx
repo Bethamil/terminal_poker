@@ -1,7 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { VOTE_CARD_META, type ParticipantSnapshot } from "@terminal-poker/shared-types";
+import {
+  VOTE_CARD_META,
+  type ParticipantSnapshot,
+  type UpdateRoomSettingsPayload
+} from "@terminal-poker/shared-types";
 
 import { Button } from "../../components/Button";
 import { Field } from "../../components/Field";
@@ -56,15 +60,61 @@ export const RoomPage = () => {
   const [joinName, setJoinName] = useState("");
   const [joinPasscode, setJoinPasscode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [ticketDraft, setTicketDraft] = useState("");
-  const { castVote, error, isLoading, isRealtimeReady, resetRound, revealRound, snapshot, updateTicket } =
-    useRoomConnection(roomCode, participantToken);
+  const [jiraBaseUrlDraft, setJiraBaseUrlDraft] = useState("");
+  const [newPasscodeDraft, setNewPasscodeDraft] = useState("");
+  const [pendingKickId, setPendingKickId] = useState<string | null>(null);
+  const {
+    castVote,
+    error,
+    isLoading,
+    isRealtimeReady,
+    kickParticipant,
+    resetRound,
+    revealRound,
+    sessionEndedError,
+    snapshot,
+    updateRoomSettings,
+    updateTicket
+  } = useRoomConnection(roomCode, participantToken);
 
   useEffect(() => {
     if (snapshot) {
       setTicketDraft(snapshot.round.jiraTicketKey ?? "");
     }
   }, [snapshot?.round.id, snapshot?.round.jiraTicketKey]);
+
+  useEffect(() => {
+    if (!snapshot) {
+      return;
+    }
+
+    setJiraBaseUrlDraft(snapshot.room.jiraBaseUrl ?? "");
+    setNewPasscodeDraft("");
+  }, [snapshot?.room.id, snapshot?.room.jiraBaseUrl, snapshot?.room.hasJoinPasscode]);
+
+  useEffect(() => {
+    if (!sessionEndedError) {
+      return;
+    }
+
+    sessionStorageStore.clearParticipantToken(roomCode);
+    setParticipantToken(null);
+    setJoinError(sessionEndedError.message);
+  }, [roomCode, sessionEndedError]);
+
+  useEffect(() => {
+    if (!pendingKickId || !snapshot?.participants.some((participant) => participant.id === pendingKickId)) {
+      setPendingKickId(null);
+    }
+  }, [pendingKickId, snapshot?.participants]);
+
+  useEffect(() => {
+    if (error) {
+      setPendingKickId(null);
+    }
+  }, [error]);
 
   const votedCount = useMemo(
     () => snapshot?.participants.filter((participant) => participant.hasVoted).length ?? 0,
@@ -82,6 +132,8 @@ export const RoomPage = () => {
       });
       sessionStorageStore.setParticipantToken(response.roomCode, response.participantToken);
       setParticipantToken(response.participantToken);
+      setJoinName("");
+      setJoinPasscode("");
     } catch (requestError) {
       setJoinError(requestError instanceof ApiError ? requestError.message : "Unable to join room.");
     }
@@ -89,6 +141,32 @@ export const RoomPage = () => {
 
   const copyRoomLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
+  };
+
+  const saveRoomSettings = (
+    joinPasscodeMode: UpdateRoomSettingsPayload["joinPasscodeMode"] = "keep"
+  ) => {
+    const trimmedPasscode = newPasscodeDraft.trim();
+
+    updateRoomSettings({
+      jiraBaseUrl: jiraBaseUrlDraft.trim() || null,
+      joinPasscode: joinPasscodeMode === "set" ? trimmedPasscode : null,
+      joinPasscodeMode
+    });
+  };
+
+  const handleSaveRoomSettings = () => {
+    const joinPasscodeMode = newPasscodeDraft.trim() ? "set" : "keep";
+    saveRoomSettings(joinPasscodeMode);
+  };
+
+  const handleKickParticipant = (participant: ParticipantSnapshot) => {
+    if (!window.confirm(`Remove ${participant.name} from room ${roomCode}?`)) {
+      return;
+    }
+
+    setPendingKickId(participant.id);
+    kickParticipant(participant.id);
   };
 
   if (!roomCode) {
@@ -158,6 +236,11 @@ export const RoomPage = () => {
         <div className="topbar__meta">
           <StatusChip tone="accent">ROOM {snapshot.room.code}</StatusChip>
           <span className="mono-muted">{isRealtimeReady ? "SOCKET ONLINE" : "CONNECTING SOCKET"}</span>
+          {snapshot.viewer.role === "moderator" ? (
+            <Button onClick={() => setIsSettingsOpen((current) => !current)} variant="ghost">
+              {isSettingsOpen ? "CLOSE SETTINGS" : "ROOM SETTINGS"}
+            </Button>
+          ) : null}
           <Button onClick={copyRoomLink} variant="ghost">
             COPY LINK
           </Button>
@@ -171,6 +254,98 @@ export const RoomPage = () => {
         />
 
         <section className="room-main">
+          {snapshot.viewer.role === "moderator" && isSettingsOpen ? (
+            <section className="card settings-card">
+              <div className="section-header">
+                <StatusChip tone="accent">MODERATOR_CONSOLE</StatusChip>
+                <h2>Room settings and participant access</h2>
+              </div>
+
+              <div className="settings-grid">
+                <section className="settings-section">
+                  <div className="section-header">
+                    <StatusChip>ROOM_SETTINGS</StatusChip>
+                    <h3>Room defaults</h3>
+                  </div>
+                  <Field
+                    label="Jira Base URL"
+                    value={jiraBaseUrlDraft}
+                    onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
+                    placeholder="https://jira.example.com"
+                  />
+                  <Field
+                    hint={
+                      snapshot.room.hasJoinPasscode
+                        ? "Leave blank to keep the current passcode."
+                        : "Optional. Leave blank to keep the room open."
+                    }
+                    label="Set New Join Passcode"
+                    value={newPasscodeDraft}
+                    onChange={(event) => setNewPasscodeDraft(event.target.value)}
+                    placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
+                    type="password"
+                  />
+                  <div className="shortcut-strip settings-strip">
+                    <span>{snapshot.room.hasJoinPasscode ? "ROOM LOCKED" : "ROOM OPEN"}</span>
+                    <span>{snapshot.room.jiraBaseUrl ? "JIRA LINKED" : "JIRA BASE URL NOT SET"}</span>
+                  </div>
+                  <div className="action-row">
+                    <Button onClick={handleSaveRoomSettings} variant="secondary">
+                      SAVE SETTINGS
+                    </Button>
+                    {snapshot.room.hasJoinPasscode ? (
+                      <Button onClick={() => saveRoomSettings("clear")} variant="ghost">
+                        REMOVE PASSCODE
+                      </Button>
+                    ) : null}
+                  </div>
+                </section>
+
+                <section className="settings-section">
+                  <div className="section-header">
+                    <StatusChip tone="success">ACCESS_CONTROL</StatusChip>
+                    <h3>Participant management</h3>
+                  </div>
+                  <div className="settings-list">
+                    {snapshot.participants.map((participant) => {
+                      const isViewer = participant.id === snapshot.viewer.participantId;
+                      const canKick = !isViewer && participant.role !== "moderator";
+
+                      return (
+                        <div className="settings-user-row" key={participant.id}>
+                          <div className="settings-user-row__identity">
+                            <strong>{participant.name}</strong>
+                            <span>
+                              {participant.role === "moderator"
+                                ? isViewer
+                                  ? "moderator / you"
+                                  : "moderator"
+                                : participant.hasVoted
+                                  ? "participant / voted"
+                                  : "participant / waiting"}
+                            </span>
+                          </div>
+                          {canKick ? (
+                            <Button
+                              className="settings-user-row__action"
+                              disabled={pendingKickId === participant.id}
+                              onClick={() => handleKickParticipant(participant)}
+                              variant="danger"
+                            >
+                              {pendingKickId === participant.id ? "REMOVING..." : "KICK"}
+                            </Button>
+                          ) : (
+                            <span className="mono-muted">{isViewer ? "YOU" : "LOCKED"}</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              </div>
+            </section>
+          ) : null}
+
           <div className="card hero-card">
             <div className="hero-card__eyebrow">
               <StatusChip tone={snapshot.round.status === "revealed" ? "success" : "accent"}>

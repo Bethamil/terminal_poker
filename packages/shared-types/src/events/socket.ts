@@ -23,6 +23,22 @@ export interface SetTicketPayload {
   jiraTicketKey: string | null;
 }
 
+export type JoinPasscodeMode = "keep" | "clear" | "set";
+
+export interface UpdateRoomSettingsPayload {
+  roomCode: string;
+  participantToken: string;
+  jiraBaseUrl: string | null;
+  joinPasscode: string | null;
+  joinPasscodeMode: JoinPasscodeMode;
+}
+
+export interface KickParticipantPayload {
+  roomCode: string;
+  participantToken: string;
+  participantId: string;
+}
+
 export interface RoundActionPayload {
   roomCode: string;
   participantToken: string;
@@ -57,10 +73,11 @@ export interface ClientToServerEvents {
     payload: RoomJoinRealtimePayload,
     ack?: (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => void
   ) => void;
+  "room:updateSettings": (payload: UpdateRoomSettingsPayload) => void;
+  "room:kickParticipant": (payload: KickParticipantPayload) => void;
   "presence:heartbeat": (payload: PresenceHeartbeatPayload) => void;
   "vote:cast": (payload: CastVotePayload) => void;
   "round:setTicket": (payload: SetTicketPayload) => void;
   "round:reveal": (payload: RoundActionPayload) => void;
   "round:reset": (payload: RoundActionPayload) => void;
 }
-
