@@ -503,8 +503,6 @@ select {
 
 .mono-muted,
 .shortcut-strip,
-.field__label,
-.field__hint,
 .rail-kicker {
   font-family: "JetBrains Mono", monospace;
 }
@@ -882,51 +880,6 @@ select {
   text-transform: uppercase;
 }
 
-.field {
-  position: relative;
-  display: grid;
-  gap: 0.45rem;
-}
-
-.field__label,
-.field__hint {
-  color: var(--muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.field__input {
-  width: 100%;
-  border: 1px solid var(--outline);
-  border-radius: 10px;
-  background: var(--input-bg);
-  color: var(--text);
-  padding: 0.9rem 1rem;
-  transition:
-    border-color 140ms ease,
-    background 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.field__input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(135, 245, 197, 0.12);
-}
-
-.field__input:disabled {
-  opacity: 0.6;
-}
-
-.field__input::placeholder {
-  color: var(--input-placeholder);
-}
-
-.field__select {
-  appearance: none;
-}
-
 .button {
   display: inline-flex;
   align-items: center;
@@ -1279,10 +1232,6 @@ select {
 
 .action-row.round-card__action-row {
   align-items: end;
-}
-
-.round-card__ticket-editor > .field {
-  min-width: 0;
 }
 
 .round-card__ticket-save {
