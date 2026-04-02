@@ -1,16 +1,18 @@
 import { createServer } from "node:http";
 
 import { createAdapter } from "@socket.io/redis-adapter";
-import { createClient } from "redis";
 import { Server } from "socket.io";
 import { ClientToServerEvents, ServerToClientEvents } from "@terminal-poker/shared-types";
 
 import { createApp } from "./app";
 import { env } from "./config/env";
 import { prisma } from "./prisma/client";
+import { closeSocketIoRedisClients, createSocketIoRedisClients } from "./redis/socket-adapter";
 import { registerRoomHandlers } from "./sockets/register-room-handlers";
 import { JiraRoomLinkProvider } from "./services/jira-provider";
 import { RoomService } from "./services/room-service";
+
+let redisClients: Awaited<ReturnType<typeof createSocketIoRedisClients>> = null;
 
 const bootstrap = async () => {
   const roomService = new RoomService(prisma, new JiraRoomLinkProvider(), env.PRESENCE_TTL_SECONDS);
@@ -23,13 +25,10 @@ const bootstrap = async () => {
     }
   });
 
-  if (env.REDIS_URL) {
-    const publisher = createClient({ url: env.REDIS_URL });
-    const subscriber = publisher.duplicate();
-
-    await publisher.connect();
-    await subscriber.connect();
-    io.adapter(createAdapter(publisher, subscriber));
+  redisClients = await createSocketIoRedisClients(env);
+  
+  if (redisClients) {
+    io.adapter(createAdapter(redisClients.pubClient, redisClients.subClient));
   }
 
   io.on("connection", (socket) => {
@@ -38,6 +37,8 @@ const bootstrap = async () => {
 
   httpServer.listen(env.PORT, () => {
     // eslint-disable-next-line no-console
+    console.log(`socket adapter mode: ${env.REDIS_MODE}`);
+    // eslint-disable-next-line no-console
     console.log(`backend listening on http://localhost:${env.PORT}`);
   });
 };
@@ -45,7 +46,7 @@ const bootstrap = async () => {
 bootstrap().catch(async (error) => {
   // eslint-disable-next-line no-console
   console.error(error);
+  closeSocketIoRedisClients(redisClients);
   await prisma.$disconnect();
   process.exit(1);
 });
-

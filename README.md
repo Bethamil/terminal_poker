@@ -50,7 +50,15 @@ Create `apps/backend/.env`:
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/terminal_poker?schema=public"
 CLIENT_ORIGIN="http://localhost:5173"
 PORT=4000
+REDIS_MODE=none
 PRESENCE_TTL_SECONDS=30
+```
+
+Create `apps/frontend/.env`:
+
+```env
+VITE_API_BASE_URL="http://localhost:4000"
+VITE_SOCKET_URL="http://localhost:4000"
 ```
 
 Prepare the database and start the app:
@@ -81,7 +89,11 @@ pnpm db:reset
 
 Redis is optional for local development and single-instance deployments.
 
-Use `REDIS_URL` only if you need the Socket.IO Redis adapter, such as when you run multiple backend instances behind a load balancer.
+Use one of these modes:
+
+- `REDIS_MODE=none`: no Redis
+- `REDIS_MODE=standalone`: one Redis instance
+- `REDIS_MODE=sentinel`: Redis Sentinel-managed Redis
 
 To test that locally:
 
@@ -89,10 +101,25 @@ To test that locally:
 docker compose up -d postgres redis
 ```
 
-Then add:
+No Redis:
 
 ```env
+REDIS_MODE=none
+```
+
+Standalone Redis:
+
+```env
+REDIS_MODE=standalone
 REDIS_URL="redis://localhost:6379"
+```
+
+Sentinel Redis:
+
+```env
+REDIS_MODE=sentinel
+REDIS_SENTINEL_URL="redis://sentinel-1:26379,redis://sentinel-2:26379,redis://sentinel-3:26379"
+REDIS_SENTINEL_MASTER_NAME="mymaster"
 ```
 
 ## Repo Layout

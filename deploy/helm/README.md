@@ -10,7 +10,9 @@ These values files target the `generic-webapp` Helm chart, following the `helm-g
 ## Expected External Services
 
 - PostgreSQL reachable through `DATABASE_URL`
-- Redis reachable through `REDIS_URL` when running more than one backend replica
+- Redis optional with `REDIS_MODE=none`
+- Standalone Redis reachable through `REDIS_URL` when `REDIS_MODE=standalone`
+- Redis Sentinel reachable through `REDIS_SENTINEL_URL` and `REDIS_SENTINEL_MASTER_NAME` when `REDIS_MODE=sentinel`
 - TLS issuer already present in the cluster if `tls: true`
 
 ## Example Install
@@ -34,6 +36,6 @@ helm upgrade --install terminal-poker-backend dictu/generic-webapp \
 
 - Replace the placeholder image coordinates with your published images.
 - Move `DATABASE_URL` into your secret-management workflow before production use.
-- Move `REDIS_URL` into your secret-management workflow too if you are running multiple backend replicas.
+- Move your Redis env vars into your secret-management workflow too if you are running multiple backend replicas.
 - Keep backend replica count at `1` unless Redis is configured, otherwise Socket.IO stays single-node.
 - Set the frontend build args `VITE_API_BASE_URL` and `VITE_SOCKET_URL` to the backend public origin.

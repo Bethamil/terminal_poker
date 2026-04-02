@@ -43,8 +43,14 @@ extraEnvVars:
     value: "https://poker.example.com"
   - name: DATABASE_URL
     value: "postgresql://REPLACE_ME"
+  - name: REDIS_MODE
+    value: "standalone"
   - name: REDIS_URL
     value: "redis://REPLACE_ME:6379"
+  # Switch REDIS_MODE to "sentinel" and provide these instead of REDIS_URL when using Redis Sentinel.
+  # - name: REDIS_SENTINEL_URL
+  #   value: "redis://sentinel-1:26379,redis://sentinel-2:26379,redis://sentinel-3:26379"
+  # - name: REDIS_SENTINEL_MASTER_NAME
+  #   value: "mymaster"
   - name: PRESENCE_TTL_SECONDS
     value: "30"
-
