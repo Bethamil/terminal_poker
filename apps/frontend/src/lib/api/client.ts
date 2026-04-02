@@ -55,6 +55,18 @@ export const apiClient = {
     });
   },
 
+  leaveRoom(roomCode: string, participantToken: string) {
+    return request<{ participantId: string; participantName: string; roomDeleted: boolean }>(
+      `/api/rooms/${roomCode}/leave`,
+      {
+        method: "POST",
+        headers: {
+          "x-participant-token": participantToken
+        }
+      }
+    );
+  },
+
   getRoomState(roomCode: string, participantToken: string) {
     return request<RoomStateResponse>(`/api/rooms/${roomCode}/state`, {
       headers: {
@@ -63,4 +75,3 @@ export const apiClient = {
     });
   }
 };
-

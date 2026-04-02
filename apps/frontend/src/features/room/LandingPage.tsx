@@ -113,24 +113,50 @@ export const LandingPage = () => {
     navigate(`/room/${roomCode}`);
   };
 
+  const removePreviousRoom = async (room: StoredRoomRecord) => {
+    const participantToken = sessionStorageStore.getParticipantToken(room.roomCode);
+
+    setError(null);
+    setNotice(null);
+
+    try {
+      if (participantToken) {
+        const result = await apiClient.leaveRoom(room.roomCode, participantToken);
+        setNotice(
+          result.roomDeleted ? `${room.roomName} was deleted.` : `You left ${room.roomName}.`
+        );
+      }
+    } catch (requestError) {
+      if (
+        !(requestError instanceof ApiError) ||
+        (requestError.code !== "ROOM_NOT_FOUND" && requestError.code !== "INVALID_SESSION")
+      ) {
+        setError(requestError instanceof ApiError ? requestError.message : "Unable to leave room.");
+        return;
+      }
+    }
+
+    sessionStorageStore.clearParticipantToken(room.roomCode);
+    sessionStorageStore.forgetRoom(room.roomCode);
+    refreshPreviousRooms();
+  };
+
   return (
     <div className="shell shell--landing">
       <AppHeader>
+        <div className="lobby-topbar">
+          <span className="room-topbar__label">LOBBY</span>
+        </div>
       </AppHeader>
 
       <main className="landing-grid">
-        <section className="landing-intro">
-          <section className="landing-hero card card--ghost">
-            <h1 className="hero-title">Create a room or join one.</h1>
-            <p className="hero-copy">Everything starts here.</p>
-          </section>
-
-          {previousRooms.length > 0 ? (
-            <section className="card landing-history">
-              <div className="section-header">
-                <StatusChip tone="accent">RECENT</StatusChip>
-                <h2>Previous rooms</h2>
-              </div>
+        <section className="landing-overview card card--ghost">
+          <div className="landing-history">
+            <div className="section-header">
+              <StatusChip tone="accent">RECENT</StatusChip>
+              <h2>Previous rooms</h2>
+            </div>
+            {previousRooms.length > 0 ? (
               <div className="history-list">
                 {previousRooms.map((room) => {
                   const hasActiveSession = Boolean(sessionStorageStore.getParticipantToken(room.roomCode));
@@ -143,15 +169,24 @@ export const LandingPage = () => {
                           {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
                         </span>
                       </div>
-                      <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
-                        {hasActiveSession ? "RESUME" : "OPEN"}
-                      </Button>
+                      <div className="history-row__actions">
+                        <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
+                          {hasActiveSession ? "RESUME" : "OPEN"}
+                        </Button>
+                        <Button onClick={() => void removePreviousRoom(room)} variant="ghost">
+                          REMOVE
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
-            </section>
-          ) : null}
+            ) : (
+              <div className="landing-history__empty">
+                Rooms you visit will show up here so you can jump back in quickly.
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="landing-actions">

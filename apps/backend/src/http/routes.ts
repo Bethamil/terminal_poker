@@ -53,6 +53,25 @@ export const createApiRouter = (roomService: RoomService): ExpressRouter => {
     }
   });
 
+  router.post("/api/rooms/:code/leave", async (request, response, next) => {
+    try {
+      const participantToken = request.header("x-participant-token");
+
+      if (!participantToken) {
+        response.status(401).json({
+          code: "MISSING_SESSION",
+          message: "Missing participant token."
+        });
+        return;
+      }
+
+      const result = await roomService.leaveRoom(request.params.code, participantToken);
+      response.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get("/api/rooms/:code/state", async (request, response, next) => {
     try {
       const participantToken = request.header("x-participant-token");
