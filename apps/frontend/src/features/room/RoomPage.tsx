@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -62,6 +62,58 @@ const ParticipantRail = ({
       ))}
     </div>
   </aside>
+);
+
+const RoomModal = ({
+  actions,
+  children,
+  label,
+  onClose,
+  title,
+  titleId,
+  wide = false
+}: {
+  actions?: ReactNode;
+  children: ReactNode;
+  label: string;
+  onClose: () => void;
+  title: string;
+  titleId: string;
+  wide?: boolean;
+}) => (
+  <div
+    className="room-modal"
+    onClick={(event) => {
+      if (event.target === event.currentTarget) {
+        onClose();
+      }
+    }}
+    role="presentation"
+  >
+    <section
+      aria-labelledby={titleId}
+      aria-modal="true"
+      className={`card room-modal__dialog ${wide ? "room-modal__dialog--wide" : ""}`.trim()}
+      role="dialog"
+    >
+      <div className="section-header room-modal__header">
+        <div>
+          <StatusChip tone="accent">{label}</StatusChip>
+          <h2 id={titleId}>{title}</h2>
+        </div>
+        <Button
+          aria-label={`Close ${label.toLowerCase()} dialog`}
+          className="room-modal__close"
+          onClick={onClose}
+          variant="ghost"
+        >
+          X
+        </Button>
+      </div>
+      <div className="room-modal__body">{children}</div>
+      {actions ? <div className="room-modal__footer">{actions}</div> : null}
+    </section>
+  </div>
 );
 
 export const RoomPage = () => {
@@ -136,19 +188,26 @@ export const RoomPage = () => {
   }, [error]);
 
   useEffect(() => {
-    if (!isShortcutsOpen) {
+    if (!isSettingsOpen && !isShortcutsOpen) {
       return;
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        setIsSettingsOpen(false);
         setIsShortcutsOpen(false);
       }
     };
 
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isShortcutsOpen]);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isSettingsOpen, isShortcutsOpen]);
 
   useEffect(() => {
     if (roomLinkStatus === "idle") {
@@ -305,18 +364,26 @@ export const RoomPage = () => {
           <>
             {isModerator ? (
               <Button
+                aria-expanded={isSettingsOpen}
+                aria-haspopup="dialog"
                 className="room-topbar__action"
-                onClick={() => setIsSettingsOpen((current) => !current)}
+                onClick={() => {
+                  setIsSettingsOpen((current) => !current);
+                  setIsShortcutsOpen(false);
+                }}
                 variant="ghost"
               >
                 {isSettingsOpen ? "CLOSE" : "SETTINGS"}
               </Button>
             ) : null}
             <Button
-              aria-controls="room-shortcuts"
               aria-expanded={isShortcutsOpen}
+              aria-haspopup="dialog"
               className="room-topbar__action"
-              onClick={() => setIsShortcutsOpen((current) => !current)}
+              onClick={() => {
+                setIsShortcutsOpen((current) => !current);
+                setIsSettingsOpen(false);
+              }}
               variant="ghost"
             >
               {isShortcutsOpen ? "CLOSE KEYS" : "KEYS"}
@@ -359,117 +426,6 @@ export const RoomPage = () => {
         />
 
         <section className="room-main">
-          {isModerator && isSettingsOpen ? (
-            <section className="card settings-card">
-              <div className="section-header settings-card__header">
-                <div>
-                  <StatusChip tone="accent">SETTINGS</StatusChip>
-                  <h2>Room config</h2>
-                </div>
-                <Button onClick={() => setIsSettingsOpen(false)} variant="ghost">
-                  X
-                </Button>
-              </div>
-
-              <div className="settings-grid">
-                <section className="settings-section">
-                  <div className="section-header">
-                    <StatusChip>DEFAULTS</StatusChip>
-                    <h3>Round setup</h3>
-                  </div>
-                  <Field
-                    label="JIRA URL"
-                    value={jiraBaseUrlDraft}
-                    onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
-                    placeholder="https://jira.example.com"
-                  />
-                  <SelectField
-                    label="DECK"
-                    value={votingDeckIdDraft}
-                    onChange={(event) =>
-                      setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
-                    }
-                    hint="Changing the deck starts a new round."
-                  >
-                    {VOTING_DECK_OPTIONS.map((deck) => (
-                      <option key={deck.id} value={deck.id}>
-                        {deck.name}
-                      </option>
-                    ))}
-                  </SelectField>
-                  <Field
-                    hint={
-                      snapshot.room.hasJoinPasscode
-                        ? "Leave blank to keep the current passcode."
-                        : "Leave blank to keep the room open."
-                    }
-                    label="NEW PASSCODE"
-                    value={newPasscodeDraft}
-                    onChange={(event) => setNewPasscodeDraft(event.target.value)}
-                    placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
-                    type="password"
-                  />
-                  <div className="shortcut-strip settings-strip">
-                    <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
-                    <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
-                  </div>
-                  <div className="action-row">
-                    <Button onClick={handleSaveRoomSettings} variant="secondary">
-                      SAVE
-                    </Button>
-                    {snapshot.room.hasJoinPasscode ? (
-                      <Button onClick={() => saveRoomSettings("clear")} variant="ghost">
-                        CLEAR PASSCODE
-                      </Button>
-                    ) : null}
-                  </div>
-                </section>
-
-                <section className="settings-section">
-                  <div className="section-header">
-                    <StatusChip tone="success">ACCESS</StatusChip>
-                    <h3>Participants</h3>
-                  </div>
-                  <div className="settings-list">
-                    {snapshot.participants.map((participant) => {
-                      const isViewer = participant.id === snapshot.viewer.participantId;
-                      const canKick = !isViewer && participant.role !== "moderator";
-
-                      return (
-                        <div className="settings-user-row" key={participant.id}>
-                          <div className="settings-user-row__identity">
-                            <strong>{participant.name}</strong>
-                            <span>
-                              {participant.role === "moderator"
-                                ? isViewer
-                                  ? "HOST / YOU"
-                                  : "HOST"
-                                : participant.hasVoted
-                                  ? "VOTED"
-                                  : "WAITING"}
-                            </span>
-                          </div>
-                          {canKick ? (
-                            <Button
-                              className="settings-user-row__action"
-                              disabled={pendingKickId === participant.id}
-                              onClick={() => handleKickParticipant(participant)}
-                              variant="danger"
-                            >
-                              {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
-                            </Button>
-                          ) : (
-                            <span className="mono-muted">{isViewer ? "YOU" : "LOCKED"}</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              </div>
-            </section>
-          ) : null}
-
           <div className="card hero-card">
             <div className="hero-card__eyebrow">
               <StatusChip tone={snapshot.round.status === "revealed" ? "success" : "accent"}>
@@ -502,55 +458,6 @@ export const RoomPage = () => {
               ) : null}
             </div>
           </div>
-
-          {isShortcutsOpen ? (
-            <section className="card shortcuts-card" id="room-shortcuts">
-              <div className="section-header shortcuts-card__header">
-                <div>
-                  <StatusChip tone="accent">SHORTCUTS</StatusChip>
-                  <h2>{isModerator ? "Moderator controls" : "Keyboard controls"}</h2>
-                </div>
-                <Button onClick={() => setIsShortcutsOpen(false)} variant="ghost">
-                  X
-                </Button>
-              </div>
-
-              <div className="shortcuts-grid">
-                <section className="shortcuts-section">
-                  <span className="shortcuts-section__label">VOTE</span>
-                  <div className="shortcuts-list">
-                    {voteCardMeta.map((card) => (
-                      <div className="shortcut-item" key={card.value}>
-                        <kbd>{card.shortcut.toUpperCase()}</kbd>
-                        <div className="shortcut-item__copy">
-                          <strong>{card.value}</strong>
-                          <span>{card.label}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {isModerator ? (
-                  <section className="shortcuts-section">
-                    <span className="shortcuts-section__label">MODERATOR</span>
-                    <div className="shortcuts-list">
-                      {moderatorShortcuts.map((shortcut) => (
-                        <div className="shortcut-item" key={shortcut.key}>
-                          <kbd>{shortcut.key}</kbd>
-                          <div className="shortcut-item__copy">
-                            <strong>{shortcut.label}</strong>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                ) : null}
-              </div>
-
-              <div className="mono-muted">SHORTCUTS ONLY WORK WHEN YOU ARE NOT TYPING IN AN INPUT.</div>
-            </section>
-          ) : null}
 
           <div className={`room-content-grid ${isModerator ? "room-content-grid--moderator" : ""}`.trim()}>
             {isModerator ? (
@@ -647,6 +554,157 @@ export const RoomPage = () => {
           {error || joinError ? <div className="notice notice--error">{error ?? joinError}</div> : null}
         </section>
       </main>
+
+      {isModerator && isSettingsOpen ? (
+        <RoomModal
+          label="SETTINGS"
+          onClose={() => setIsSettingsOpen(false)}
+          title="Room config"
+          titleId="room-settings-title"
+          wide
+        >
+          <div className="settings-grid">
+            <section className="settings-section">
+              <div className="section-header">
+                <StatusChip>DEFAULTS</StatusChip>
+                <h3>Round setup</h3>
+              </div>
+              <Field
+                label="JIRA URL"
+                value={jiraBaseUrlDraft}
+                onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
+                placeholder="https://jira.example.com"
+              />
+              <SelectField
+                label="DECK"
+                value={votingDeckIdDraft}
+                onChange={(event) =>
+                  setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
+                }
+                hint="Changing the deck starts a new round."
+              >
+                {VOTING_DECK_OPTIONS.map((deck) => (
+                  <option key={deck.id} value={deck.id}>
+                    {deck.name}
+                  </option>
+                ))}
+              </SelectField>
+              <Field
+                hint={
+                  snapshot.room.hasJoinPasscode
+                    ? "Leave blank to keep the current passcode."
+                    : "Leave blank to keep the room open."
+                }
+                label="NEW PASSCODE"
+                value={newPasscodeDraft}
+                onChange={(event) => setNewPasscodeDraft(event.target.value)}
+                placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
+                type="password"
+              />
+              <div className="shortcut-strip settings-strip">
+                <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
+                <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
+              </div>
+              <div className="action-row">
+                <Button onClick={handleSaveRoomSettings} variant="secondary">
+                  SAVE
+                </Button>
+                {snapshot.room.hasJoinPasscode ? (
+                  <Button onClick={() => saveRoomSettings("clear")} variant="ghost">
+                    CLEAR PASSCODE
+                  </Button>
+                ) : null}
+              </div>
+            </section>
+
+            <section className="settings-section">
+              <div className="section-header">
+                <StatusChip tone="success">ACCESS</StatusChip>
+                <h3>Participants</h3>
+              </div>
+              <div className="settings-list">
+                {snapshot.participants.map((participant) => {
+                  const isViewer = participant.id === snapshot.viewer.participantId;
+                  const canKick = !isViewer && participant.role !== "moderator";
+
+                  return (
+                    <div className="settings-user-row" key={participant.id}>
+                      <div className="settings-user-row__identity">
+                        <strong>{participant.name}</strong>
+                        <span>
+                          {participant.role === "moderator"
+                            ? isViewer
+                              ? "HOST / YOU"
+                              : "HOST"
+                            : participant.hasVoted
+                              ? "VOTED"
+                              : "WAITING"}
+                        </span>
+                      </div>
+                      {canKick ? (
+                        <Button
+                          className="settings-user-row__action"
+                          disabled={pendingKickId === participant.id}
+                          onClick={() => handleKickParticipant(participant)}
+                          variant="danger"
+                        >
+                          {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
+                        </Button>
+                      ) : (
+                        <span className="mono-muted">{isViewer ? "YOU" : "LOCKED"}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+        </RoomModal>
+      ) : null}
+
+      {isShortcutsOpen ? (
+        <RoomModal
+          actions={<div className="mono-muted">SHORTCUTS ONLY WORK WHEN YOU ARE NOT TYPING IN AN INPUT.</div>}
+          label="SHORTCUTS"
+          onClose={() => setIsShortcutsOpen(false)}
+          title={isModerator ? "Moderator controls" : "Keyboard controls"}
+          titleId="room-shortcuts-title"
+          wide
+        >
+          <div className="shortcuts-grid">
+            <section className="shortcuts-section">
+              <span className="shortcuts-section__label">VOTE</span>
+              <div className="shortcuts-list">
+                {voteCardMeta.map((card) => (
+                  <div className="shortcut-item" key={card.value}>
+                    <kbd>{card.shortcut.toUpperCase()}</kbd>
+                    <div className="shortcut-item__copy">
+                      <strong>{card.value}</strong>
+                      <span>{card.label}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {isModerator ? (
+              <section className="shortcuts-section">
+                <span className="shortcuts-section__label">MODERATOR</span>
+                <div className="shortcuts-list">
+                  {moderatorShortcuts.map((shortcut) => (
+                    <div className="shortcut-item" key={shortcut.key}>
+                      <kbd>{shortcut.key}</kbd>
+                      <div className="shortcut-item__copy">
+                        <strong>{shortcut.label}</strong>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
+        </RoomModal>
+      ) : null}
     </div>
   );
 };

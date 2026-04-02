@@ -364,6 +364,68 @@ select {
   gap: 1rem;
 }
 
+.room-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at top, rgba(135, 245, 197, 0.12), transparent 32%),
+    rgba(8, 10, 11, 0.68);
+  backdrop-filter: blur(14px);
+}
+
+.room-modal__dialog {
+  position: relative;
+  width: min(100%, 42rem);
+  max-height: min(calc(100vh - 3rem), 52rem);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 1.1rem;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--outline) 72%, var(--primary) 28%);
+  box-shadow:
+    0 32px 96px rgba(0, 0, 0, 0.38),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.room-modal__dialog--wide {
+  width: min(100%, 68rem);
+}
+
+.room-modal__header {
+  display: flex;
+  align-items: start;
+  gap: 1rem;
+  padding-right: 3.75rem;
+}
+
+.room-modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0;
+}
+
+.room-modal__body {
+  min-height: 0;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.room-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .card {
   background: var(--card-bg);
   backdrop-filter: blur(14px);
@@ -1194,6 +1256,22 @@ select {
   .topbar__actions,
   .room-topbar {
     width: 100%;
+  }
+
+  .room-modal {
+    padding: 0.8rem;
+    align-items: end;
+  }
+
+  .room-modal__dialog,
+  .room-modal__dialog--wide {
+    width: 100%;
+    max-height: min(calc(100vh - 1.6rem), 100%);
+  }
+
+  .room-modal__header,
+  .room-modal__footer {
+    display: grid;
   }
 
   .topbar__center {
