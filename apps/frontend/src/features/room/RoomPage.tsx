@@ -644,7 +644,7 @@ export const RoomPage = () => {
           ) : null}
 
           <section
-            className={`deck-card ${isModerator ? "deck-card--moderator" : ""}`.trim()}
+            className={`deck-card mx-auto w-full max-w-[82rem] ${isModerator ? "deck-card--moderator" : ""}`.trim()}
           >
             <div className="section-header">
               <StatusChip tone="success">DECK</StatusChip>
