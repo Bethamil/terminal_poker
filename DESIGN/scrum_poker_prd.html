@@ -1,0 +1,37 @@
+# Scrum Poker for Developers - Product Definition Document
+
+## 1. Vision & Core Value Proposition
+A "developer-first" scrum poker experience that prioritizes efficiency, keyboard-centric UX, and a terminal-inspired aesthetic. No accounts, no friction, just fast and effective estimation.
+
+## 2. Key User Flows
+1.  **Creation:** A group leader creates a session, sets a base Jira URL, and gets a shareable link.
+2.  **Joining:** Participants enter the link, choose a name, and wait in a queue for the leader's approval.
+3.  **Active Session:**
+    *   Leader inputs a Jira ticket ID (e.g., PROJ-123).
+    *   System generates a live link to the ticket based on the base URL.
+    *   Users cast their "votes" using numeric shortcuts (0, 1, 2, 3, 5, 8, 13, 20, 40, 100, ?).
+    *   Reveal Phase: The leader reveals all votes to discuss the estimation.
+
+## 3. Keyboard-First Interaction (Shortcuts)
+- `Cmd + K` or `Ctrl + K`: Global search/command palette.
+- `1-9`: Vote on the corresponding Fibonacci number.
+- `R`: Reveal votes (Leader only).
+- `N`: Next ticket (Leader only).
+- `L`: Copy session link to clipboard.
+
+## 4. Planned Screen Inventory
+1.  **Landing / Setup Screen:** Terminal-style prompt to "Create Session" or "Join Session". Input for Base Jira URL.
+2.  **Waiting Room (Participant):** "Awaiting access..." state with a terminal log showing status (e.g., `ping server... success`, `status: pending_approval`).
+3.  **Admin Approval Dashboard:** Leader view to see incoming join requests with simple `[Accept]` or `[Deny]` terminal-style buttons.
+4.  **Main Poker Room (Leader/Participant):** The core interactive screen.
+    *   Left Sidebar: Participant list with status indicators (voted, waiting).
+    *   Center: Ticket detail (Jira ID and clickable link) + The voting board.
+    *   Bottom: Command-line style status bar with current shortcuts and session info.
+5.  **Reveal & Result View:** A modified state of the Poker Room showing the distribution of votes and average.
+
+## 5. Visual Direction (Kilo.ai Inspired)
+- **Theme:** Ultra-dark mode (`#0B0E14` or similar).
+- **Typography:** Space Grotesk for headings, JetBrains Mono for data/terminal text.
+- **Accents:** Neon Lime (`#A3E635`) for positive actions, Electric Blue (`#3B82F6`) for info.
+- **Borders:** Subtle 1px lines, maybe slightly glowing for active states.
+- **Micro-interactions:** Blinking cursor effects, typewriter animations for logs.

@@ -1,0 +1,50 @@
+replicaCount: 2
+
+image:
+  registry: docker.io
+  repository: your-registry/terminal-poker-backend
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+command: ["node"]
+args: ["dist/server.js"]
+
+containerPorts:
+  http: 4000
+
+ingress:
+  enabled: true
+  hostname: api.poker.example.com
+  tls: true
+  tlsIssuerName: letsencrypt-production
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 150m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+
+livenessProbe:
+  enabled: true
+  path: /healthz
+  initialDelaySeconds: 20
+
+readinessProbe:
+  enabled: true
+  path: /readyz
+  initialDelaySeconds: 10
+
+extraEnvVars:
+  - name: PORT
+    value: "4000"
+  - name: CLIENT_ORIGIN
+    value: "https://poker.example.com"
+  - name: DATABASE_URL
+    value: "postgresql://REPLACE_ME"
+  - name: REDIS_URL
+    value: "redis://REPLACE_ME:6379"
+  - name: PRESENCE_TTL_SECONDS
+    value: "30"
+

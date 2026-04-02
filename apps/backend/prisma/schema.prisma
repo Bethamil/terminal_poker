@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id               String        @id @default(cuid())
+  code             String        @unique @db.VarChar(8)
+  jiraBaseUrl      String?
+  joinPasscodeHash String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  participants     Participant[]
+  rounds           Round[]
+}
+
+model Participant {
+  id               String          @id @default(cuid())
+  roomId           String
+  room             Room            @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  name             String          @db.VarChar(80)
+  role             ParticipantRole
+  sessionTokenHash String          @unique
+  lastSeenAt       DateTime        @default(now())
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  votes            Vote[]
+
+  @@index([roomId])
+}
+
+model Round {
+  id           String      @id @default(cuid())
+  roomId       String
+  room         Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  status       RoundStatus @default(ACTIVE)
+  jiraTicketKey String?
+  revealedAt   DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  votes        Vote[]
+
+  @@index([roomId, createdAt(sort: Desc)])
+}
+
+model Vote {
+  id            String      @id @default(cuid())
+  roundId       String
+  round         Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  value         String      @db.VarChar(8)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([roundId, participantId])
+  @@index([participantId])
+}
+
+enum ParticipantRole {
+  MODERATOR
+  PARTICIPANT
+}
+
+enum RoundStatus {
+  ACTIVE
+  REVEALED
+}
+

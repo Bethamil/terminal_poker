@@ -1,0 +1,20 @@
+{
+  "name": "terminal-poker",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "concurrently -n backend,frontend -c cyan,magenta \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+    "dev:backend": "pnpm --filter @terminal-poker/backend dev",
+    "dev:frontend": "pnpm --filter @terminal-poker/frontend dev",
+    "postinstall": "pnpm --filter @terminal-poker/shared-types build",
+    "prisma:generate": "pnpm --filter @terminal-poker/backend prisma:generate",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm --filter @terminal-poker/shared-types build && pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "typescript": "^5.6.3"
+  }
+}

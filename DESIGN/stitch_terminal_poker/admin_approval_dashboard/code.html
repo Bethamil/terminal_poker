@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SESSION_ADMIN_DASHBOARD</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed-dim": "#c7c6c6",
+              "surface-container-lowest": "#0e0e0e",
+              "inverse-surface": "#e2e2e2",
+              "tertiary-fixed-dim": "#c6c6c7",
+              "on-error": "#690005",
+              "secondary-fixed": "#e3e2e2",
+              "outline-variant": "#4a4455",
+              "background": "#131313",
+              "on-primary-fixed-variant": "#5b00c5",
+              "on-tertiary-fixed": "#1a1c1c",
+              "on-primary": "#3f008d",
+              "on-secondary": "#2f3131",
+              "on-surface": "#e2e2e2",
+              "on-tertiary-container": "#cecfcf",
+              "surface-dim": "#131313",
+              "error": "#ffb4ab",
+              "on-primary-container": "#dac5ff",
+              "surface-container-low": "#1b1b1b",
+              "on-tertiary": "#2f3131",
+              "tertiary": "#c6c6c7",
+              "surface-container-high": "#2a2a2a",
+              "outline": "#958da1",
+              "inverse-primary": "#7331df",
+              "surface-bright": "#393939",
+              "on-background": "#e2e2e2",
+              "tertiary-fixed": "#e2e2e2",
+              "surface": "#131313",
+              "primary-fixed-dim": "#d3bbff",
+              "secondary-container": "#484949",
+              "on-error-container": "#ffdad6",
+              "primary-container": "#6d28d9",
+              "surface-container-highest": "#353535",
+              "on-secondary-fixed": "#1a1c1c",
+              "surface-variant": "#353535",
+              "error-container": "#93000a",
+              "tertiary-container": "#565859",
+              "primary": "#d3bbff",
+              "surface-tint": "#d3bbff",
+              "on-surface-variant": "#ccc3d7",
+              "on-tertiary-fixed-variant": "#454747",
+              "inverse-on-surface": "#303030",
+              "secondary": "#c7c6c6",
+              "primary-fixed": "#ebddff",
+              "surface-container": "#1f1f1f",
+              "on-secondary-container": "#b8b8b8",
+              "on-primary-fixed": "#250059",
+              "on-secondary-fixed-variant": "#464747"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Inter"],
+              "label": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .glass {
+        background: rgba(31, 31, 31, 0.7);
+        backdrop-filter: blur(20px);
+      }
+      .grid-pattern {
+        background-image: linear-gradient(rgba(226, 226, 226, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(226, 226, 226, 0.05) 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen flex flex-col overflow-hidden">
+<!-- Grid Overlay -->
+<div class="fixed inset-0 grid-pattern pointer-events-none z-0"></div>
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#131313]/70 backdrop-blur-xl flex justify-between items-center px-6 h-14 w-full">
+<div class="flex items-center gap-4">
+<span class="font-black text-xl text-[#D3BBFF] tracking-[0.2em] font-headline">TERMINAL_POKER</span>
+<div class="hidden md:flex gap-6 ml-8">
+<a class="text-[#D3BBFF] border-b-2 border-[#6D28D9] pb-1 font-['Space_Grotesk'] tracking-tighter uppercase text-sm" href="#">~/rooms/alpha-session</a>
+</div>
+</div>
+<div class="flex items-center gap-4 text-[#D3BBFF]">
+<span class="material-symbols-outlined hover:text-[#D3BBFF] hover:bg-white/5 transition-colors cursor-pointer p-2 rounded-lg scale-95 active:scale-90 transition-transform">terminal</span>
+<span class="material-symbols-outlined hover:text-[#D3BBFF] hover:bg-white/5 transition-colors cursor-pointer p-2 rounded-lg scale-95 active:scale-90 transition-transform">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="minimalist pixel art character portrait of a developer with purple hair and dark clothing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0wBaetuYw_6gvsyfdDX-CdLVJ3nTRse5FS-D5YrUvDEBGrCD-yj8Iat3Ct7PcKKYwoM_OIP9Jdpxw-VHkSHo7ITSqU0Hjt243FeZC9_g136MYS1QcqmAFCCJ1Ve8MnmyD2qDRenKdAJtV9RkPJM2rP0FEOeyAGeABTXRziYznAx1fsOZOonBXwNuZWk09C7psu5p3RJzXBe1_gZ8BNiCn0AYO8UxtFUH8SyK04PSqbzZO5wva0PtzoPI9f9_lTrQbNXRk0VwNCTY"/>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 bg-[#2A2A2A] h-[1px] w-full"></div>
+</header>
+<div class="flex flex-1 pt-14 pb-10">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 h-[calc(100vh-6rem)] w-64 bg-[#0E0E0E] flex flex-col border-r border-white/5 z-40">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-10 h-10 bg-primary-container/20 flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-primary">hub</span>
+</div>
+<div>
+<div class="text-[#D3BBFF] font-bold font-headline text-sm tracking-wider uppercase">ALPHA_SESSION</div>
+<div class="font-label text-[10px] text-gray-500">ID: 0x4F2A</div>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-2">
+<div class="bg-[#2A2A2A] text-[#D3BBFF] border-l-2 border-[#6D28D9] py-3 px-4 flex items-center gap-3 font-label text-xs uppercase cursor-pointer mb-1">
+<span class="material-symbols-outlined">tune</span>
+<span>Settings</span>
+</div>
+<div class="text-gray-600 py-3 px-4 flex items-center gap-3 hover:text-gray-300 font-label text-xs uppercase cursor-pointer hover:bg-[#1A1A1A] transition-all duration-200">
+<span class="material-symbols-outlined">group</span>
+<span>Active</span>
+</div>
+<div class="text-gray-600 py-3 px-4 flex items-center gap-3 hover:text-gray-300 font-label text-xs uppercase cursor-pointer hover:bg-[#1A1A1A] transition-all duration-200">
+<span class="material-symbols-outlined">visibility</span>
+<span>Observers</span>
+</div>
+<div class="text-gray-600 py-3 px-4 flex items-center gap-3 hover:text-gray-300 font-label text-xs uppercase cursor-pointer hover:bg-[#1A1A1A] transition-all duration-200">
+<span class="material-symbols-outlined">history</span>
+<span>History</span>
+</div>
+</nav>
+<div class="p-4 border-t border-white/5">
+<button class="w-full py-2 bg-primary-container text-on-primary-container font-label text-xs uppercase tracking-widest hover:shadow-[0_0_15px_rgba(109,40,217,0.3)] transition-all">
+                    INVITE_DEV
+                </button>
+</div>
+<div class="mt-auto px-2 pb-4">
+<div class="text-gray-600 py-3 px-4 flex items-center gap-3 hover:text-gray-300 font-label text-xs uppercase cursor-pointer hover:bg-[#1A1A1A]">
+<span class="material-symbols-outlined">list_alt</span>
+<span>Logs</span>
+</div>
+<div class="text-gray-600 py-3 px-4 flex items-center gap-3 hover:text-gray-300 font-label text-xs uppercase cursor-pointer hover:bg-[#1A1A1A]">
+<span class="material-symbols-outlined">keyboard_arrow_right</span>
+<span>Terminal</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex flex-1 overflow-hidden">
+<!-- Left Side: Pending List -->
+<section class="w-80 bg-surface-container-low border-r border-white/5 flex flex-col">
+<div class="p-6 border-b border-white/5">
+<h2 class="font-headline font-bold text-xs uppercase tracking-[0.2em] text-on-surface-variant flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                        Pending Approval
+                    </h2>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-4">
+<!-- Pending User Card 1 -->
+<div class="bg-surface-container-high p-4 border-l-2 border-primary-container">
+<div class="font-label text-xs text-[#D3BBFF] mb-3">DEV_NEXUS_7</div>
+<div class="flex gap-2">
+<button class="flex-1 py-1.5 border border-primary text-primary font-label text-[10px] uppercase hover:bg-primary/10 transition-colors">
+                                [APPROVE]
+                            </button>
+<button class="flex-1 py-1.5 border border-error/50 text-error/70 font-label text-[10px] uppercase hover:bg-error/5 transition-colors">
+                                [DENY]
+                            </button>
+</div>
+</div>
+<!-- Pending User Card 2 -->
+<div class="bg-surface-container-high p-4 border-l-2 border-primary-container">
+<div class="font-label text-xs text-[#D3BBFF] mb-3">VOID_WALKER</div>
+<div class="flex gap-2">
+<button class="flex-1 py-1.5 border border-primary text-primary font-label text-[10px] uppercase hover:bg-primary/10 transition-colors">
+                                [APPROVE]
+                            </button>
+<button class="flex-1 py-1.5 border border-error/50 text-error/70 font-label text-[10px] uppercase hover:bg-error/5 transition-colors">
+                                [DENY]
+                            </button>
+</div>
+</div>
+<!-- Pending User Card 3 -->
+<div class="bg-surface-container-high p-4 border-l-2 border-primary-container">
+<div class="font-label text-xs text-[#D3BBFF] mb-3">CYBER_PHANTOM</div>
+<div class="flex gap-2">
+<button class="flex-1 py-1.5 border border-primary text-primary font-label text-[10px] uppercase hover:bg-primary/10 transition-colors">
+                                [APPROVE]
+                            </button>
+<button class="flex-1 py-1.5 border border-error/50 text-error/70 font-label text-[10px] uppercase hover:bg-error/5 transition-colors">
+                                [DENY]
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Center Content: Session Settings -->
+<section class="flex-1 p-10 overflow-y-auto relative">
+<div class="max-w-3xl">
+<h1 class="font-headline font-extrabold text-4xl mb-2 tracking-tighter">SESSION_ADMIN_DASHBOARD</h1>
+<p class="text-on-surface-variant font-label text-xs mb-10 tracking-widest uppercase">Admin clearance level 0x01 // Alpha Cluster</p>
+<div class="grid grid-cols-1 gap-8">
+<!-- Setting Module: Base URL -->
+<div class="glass p-8 rounded-lg border border-white/5">
+<h3 class="font-headline font-bold text-sm uppercase tracking-widest text-[#D3BBFF] mb-6 flex items-center gap-3">
+<span class="material-symbols-outlined">link</span>
+                                Integration: Jira Source
+                            </h3>
+<div class="space-y-4">
+<label class="block font-label text-[10px] text-gray-500 uppercase tracking-widest">Base Jira URL</label>
+<div class="relative flex items-center">
+<span class="absolute left-4 text-primary font-label">&gt;</span>
+<input class="w-full bg-surface-container-lowest border-0 border-b-2 border-transparent focus:border-primary transition-colors pl-10 py-3 font-label text-sm text-on-surface" type="text" value="https://jira.alpha-corp.tech/projects/STB"/>
+</div>
+<p class="font-label text-[10px] text-gray-600 italic">Endpoints are automatically validated via OAuth2 flow.</p>
+</div>
+</div>
+<!-- Setting Module: Session ID -->
+<div class="glass p-8 rounded-lg border border-white/5">
+<h3 class="font-headline font-bold text-sm uppercase tracking-widest text-[#D3BBFF] mb-6 flex items-center gap-3">
+<span class="material-symbols-outlined">share</span>
+                                Broadcast Identity
+                            </h3>
+<div class="flex items-center gap-6">
+<div class="flex-1">
+<label class="block font-label text-[10px] text-gray-500 uppercase tracking-widest mb-2">Active Session Token</label>
+<div class="bg-surface-container-lowest p-4 rounded border border-white/5 font-label text-2xl text-primary tracking-widest flex items-center justify-between">
+<span>0x4F2A-P9</span>
+<span class="material-symbols-outlined text-sm cursor-pointer hover:text-white transition-colors">content_copy</span>
+</div>
+</div>
+<div class="w-32 h-32 bg-white/5 p-2 rounded flex items-center justify-center">
+<div class="w-full h-full bg-on-surface opacity-10">
+<!-- Placeholder for QR-like abstract pattern -->
+<div class="w-full h-full border-2 border-dashed border-white/20 flex items-center justify-center text-[10px] text-center p-2 uppercase">Sync Module</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Status Cards Grid -->
+<div class="grid grid-cols-3 gap-4">
+<div class="bg-surface-container-high p-4 rounded border border-white/5">
+<div class="font-label text-[10px] text-gray-500 uppercase mb-1">Status</div>
+<div class="font-headline font-bold text-lg text-green-500">ACTIVE</div>
+</div>
+<div class="bg-surface-container-high p-4 rounded border border-white/5">
+<div class="font-label text-[10px] text-gray-500 uppercase mb-1">Uptime</div>
+<div class="font-label text-lg font-bold">14:22:01</div>
+</div>
+<div class="bg-surface-container-high p-4 rounded border border-white/5">
+<div class="font-label text-[10px] text-gray-500 uppercase mb-1">Nodes</div>
+<div class="font-label text-lg font-bold">12 / 24</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Side: Log Feed -->
+<section class="w-96 bg-surface-container-lowest border-l border-white/5 flex flex-col font-label">
+<div class="p-6 border-b border-white/5 bg-[#0E0E0E]">
+<h2 class="font-headline font-bold text-xs uppercase tracking-[0.2em] text-[#D3BBFF] flex items-center gap-2">
+<span class="material-symbols-outlined text-xs">terminal</span>
+                        Live_Event_Feed
+                    </h2>
+</div>
+<div class="flex-1 overflow-y-auto p-4 text-[10px] leading-relaxed tracking-wider space-y-2">
+<div class="text-gray-600">[14:10:02] <span class="text-blue-400">INFO</span> Initiating session kernel...</div>
+<div class="text-gray-600">[14:10:03] <span class="text-blue-400">INFO</span> Loading Jira plugin [v4.2]</div>
+<div class="text-gray-600">[14:11:45] <span class="text-green-400">OK</span> Connection established: 0x4F2A-P9</div>
+<div class="text-gray-600">[14:12:00] <span class="text-yellow-400">AUTH</span> User 'dev_alex' joined queue...</div>
+<div class="text-gray-600">[14:13:22] <span class="text-yellow-400">AUTH</span> User 'VOID_WALKER' joined queue...</div>
+<div class="text-gray-600">[14:13:45] <span class="text-blue-400">INFO</span> Admin updated source URL</div>
+<div class="text-gray-600">[14:14:01] <span class="text-yellow-400">AUTH</span> User 'CYBER_PHANTOM' joined queue...</div>
+<div class="text-gray-600">[14:15:10] <span class="text-green-400">OK</span> Dev 'NEXUS_7' identity verified</div>
+<div class="text-gray-600">[14:16:55] <span class="text-red-400">WARN</span> Late heartbeats detected from node_3</div>
+<div class="text-gray-600">[14:18:22] <span class="text-blue-400">INFO</span> Broadcast active to cluster 01</div>
+<div class="animate-pulse bg-primary/20 h-3 w-1 mt-4"></div>
+</div>
+<div class="p-4 bg-[#0E0E0E] border-t border-white/5">
+<div class="flex items-center gap-2 text-[10px] text-gray-500">
+<span class="text-primary font-bold">ALPHA_SYSTEM</span>
+<span class="flex-1 h-[1px] bg-white/5"></span>
+<span>0% Errors</span>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full h-10 z-50 bg-[#0E0E0E] flex justify-between items-center px-6 w-full border-t border-white/5">
+<div class="flex items-center gap-8">
+<span class="text-gray-500 font-mono text-[10px] tracking-widest uppercase">v2.4.0-STABLE</span>
+<div class="hidden md:flex gap-6">
+<a class="text-gray-500 hover:text-white transition-colors font-mono text-[10px] tracking-widest uppercase" href="#">[1-8] Vote</a>
+<a class="text-gray-500 hover:text-white transition-colors font-mono text-[10px] tracking-widest uppercase" href="#">[R] Reveal</a>
+<a class="text-gray-500 hover:text-white transition-colors font-mono text-[10px] tracking-widest uppercase" href="#">[N] Next</a>
+<a class="text-gray-500 hover:text-white transition-colors font-mono text-[10px] tracking-widest uppercase" href="#">[C] Clear</a>
+</div>
+</div>
+<div class="flex items-center gap-4 text-[#D3BBFF] font-mono text-[10px] tracking-widest uppercase">
+<span class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                SYSTEM_ONLINE
+            </span>
+<span class="text-gray-600">|</span>
+<span class="text-gray-400">LATENCY: 42MS</span>
+</div>
+</footer>
+</body></html>
