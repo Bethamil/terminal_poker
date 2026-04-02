@@ -252,8 +252,8 @@ export const LandingPage = () => {
               AUTHENTICATION_BYPASS
             </div>
             <p className="landing-note__body mt-2 max-w-3xl text-sm leading-7">
-              No accounts needed. Sessions are ephemeral and encrypted at rest. Data is purged 24h
-              after inactivity.
+              No accounts. No signup loops. Drop in with a name, lock the room with a passcode if
+              needed, and resume in the same browser.
             </p>
           </div>
         </section>
