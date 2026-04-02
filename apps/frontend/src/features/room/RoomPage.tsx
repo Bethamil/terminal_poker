@@ -415,6 +415,9 @@ export const RoomPage = () => {
   const hasConsensus = roundSummary?.consensus !== null;
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
+  const viewerVoteLabel = snapshot.viewer.selectedVote
+    ? `YOU VOTED ${snapshot.viewer.selectedVote}`
+    : "NO VOTE SUBMITTED";
   return (
     <div className="shell shell--room relative overflow-hidden">
       <AppHeader
@@ -557,7 +560,47 @@ export const RoomPage = () => {
                 </div>
               </div>
             ) : null}
-            <div className="deck-card__body">
+            <div className={`deck-card__body ${isVotingClosed ? "deck-card__body--closed" : ""}`.trim()}>
+              {isVotingClosed ? (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 z-[2]"
+                >
+                  <div
+                    className="absolute inset-[-18px] rounded-[42px] bg-[color:var(--surface-lowest)]/34 backdrop-blur-[18px]"
+                    style={{
+                      WebkitMaskImage:
+                        "radial-gradient(ellipse 78% 70% at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.96) 46%, rgba(0,0,0,0.72) 64%, rgba(0,0,0,0.28) 82%, transparent 100%)",
+                      maskImage:
+                        "radial-gradient(ellipse 78% 70% at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.96) 46%, rgba(0,0,0,0.72) 64%, rgba(0,0,0,0.28) 82%, transparent 100%)"
+                    }}
+                  />
+                  <div
+                    className="absolute inset-0 grid place-items-center p-6"
+                  >
+                    <div className="grid justify-items-center gap-3 text-center">
+                      <span
+                        className="rounded-full border px-[1.35rem] py-[0.9rem] font-['JetBrains_Mono'] text-[clamp(1.15rem,2.2vw,1.9rem)] font-bold uppercase tracking-[0.24em] shadow-[0_18px_50px_rgba(0,0,0,0.18)]"
+                        style={{
+                          borderColor: "var(--vote-tile-selected-border)",
+                          background: "color-mix(in srgb, var(--surface-lowest) 94%, transparent)",
+                          color: "var(--vote-tile-selected-text)",
+                          boxShadow:
+                            "0 0 0 1px color-mix(in srgb, var(--outline) 68%, transparent), 0 18px 50px rgba(0, 0, 0, 0.18)"
+                        }}
+                      >
+                        {viewerVoteLabel}
+                      </span>
+                      <span
+                        className="font-['JetBrains_Mono'] text-[0.78rem] uppercase tracking-[0.18em]"
+                        style={{ color: "var(--summary-soft)" }}
+                      >
+                        VOTING ENDED
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
               <div className="vote-grid">
                 {voteCardMeta.map((card) => {
                   const isSelected = snapshot.viewer.selectedVote === card.value;

@@ -1239,9 +1239,22 @@ select {
 }
 
 .deck-card__body {
+  position: relative;
   display: grid;
   align-content: start;
   gap: 1rem;
+}
+
+.deck-card__body--closed .vote-grid {
+  filter: blur(14px) saturate(0.74);
+  opacity: 0.2;
+  transform: scale(0.988);
+}
+
+.deck-card__body--closed .vote-tile {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--vote-tile-bg) 45%, transparent);
+  box-shadow: none;
 }
 
 .section-header.round-card__header {
