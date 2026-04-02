@@ -61,7 +61,7 @@ export const AppHeader = ({
           <div className="mobile-menu">
             {mobileMenu.renderContent(closeMobileMenu)}
             <div className="mobile-menu__theme">
-              <ThemeToggle />
+              <ThemeToggle size="menu" />
             </div>
           </div>
         </AppModal>

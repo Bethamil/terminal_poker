@@ -976,6 +976,12 @@ select {
     0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
+.theme-toggle--menu {
+  min-height: 3.25rem;
+  padding: 0.36rem 0.8rem 0.36rem 0.36rem;
+  font-size: 0.78rem;
+}
+
 .theme-toggle__switch {
   position: relative;
   width: 2.45rem;
@@ -985,6 +991,11 @@ select {
   background: linear-gradient(180deg, var(--surface-high), var(--surface-low));
   box-shadow: inset 0 0 0 1px var(--panel-bg);
   border-radius: 999px;
+}
+
+.theme-toggle--menu .theme-toggle__switch {
+  width: 3rem;
+  height: 1.55rem;
 }
 
 .theme-toggle__knob {
@@ -1001,8 +1012,19 @@ select {
   border-radius: 999px;
 }
 
+.theme-toggle--menu .theme-toggle__knob {
+  top: 0.14rem;
+  left: 0.14rem;
+  width: 1.12rem;
+  height: 1.12rem;
+}
+
 .theme-toggle--light .theme-toggle__knob {
   transform: translateX(1.18rem);
+}
+
+.theme-toggle--menu.theme-toggle--light .theme-toggle__knob {
+  transform: translateX(1.36rem);
 }
 
 .theme-toggle__mode {
