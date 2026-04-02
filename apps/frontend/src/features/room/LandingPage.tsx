@@ -150,11 +150,11 @@ export const LandingPage = () => {
       <main className="mx-auto grid w-full max-w-[1380px] gap-7">
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">
           <div className="min-w-0">
-            <h1 className="hero-title text-[clamp(3.6rem,9vw,8rem)] text-[#f2f0ff]">
+            <h1 className="hero-title landing-hero-title text-[clamp(3.6rem,9vw,8rem)]">
               SCRUM_POKER_ROOT
             </h1>
-            <div className="mt-4 inline-flex items-center gap-3 font-['JetBrains_Mono'] text-xs uppercase tracking-[0.18em] text-[#9486bb]/85">
-              <span className="h-2 w-2 rounded-full bg-[#aa8cff]" aria-hidden="true" />
+            <div className="landing-hero-status mt-4 inline-flex items-center gap-3 font-['JetBrains_Mono'] text-xs uppercase tracking-[0.18em]">
+              <span className="landing-hero-status__dot h-2 w-2 rounded-full" aria-hidden="true" />
               <span>REALTIME_SESSION_READY // NO_ACCOUNT_REQUIRED</span>
             </div>
           </div>
@@ -166,7 +166,7 @@ export const LandingPage = () => {
                 <div className="grid gap-2">
                   {recentNodes.map((room) => (
                     <button
-                      className="flex items-center justify-between gap-3 border-b border-white/5 pb-2 text-left font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.12em] text-[#a79ebd] transition hover:text-[#f0e9ff]"
+                      className="landing-node-link flex items-center justify-between gap-3 border-b pb-2 text-left font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.12em] transition"
                       key={room.roomCode}
                       onClick={() => openPreviousRoom(room.roomCode)}
                       type="button"
@@ -177,7 +177,7 @@ export const LandingPage = () => {
                   ))}
                 </div>
               ) : (
-                <p className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em] text-[#6f6987]">
+                <p className="landing-node-empty font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.14em]">
                   No cached sessions yet.
                 </p>
               )}
@@ -185,21 +185,21 @@ export const LandingPage = () => {
           </aside>
         </section>
 
-        <section className="card relative overflow-hidden border-white/5 bg-[#09090b]/88 px-5 py-6 shadow-[0_40px_120px_rgba(0,0,0,0.4)] lg:px-8 lg:py-8">
+        <section className="landing-window card relative overflow-hidden px-5 py-6 lg:px-8 lg:py-8">
           <div className="mb-8 flex items-center gap-4">
             <div className="flex gap-2" aria-hidden="true">
-              <span className="h-3 w-3 rounded-full bg-[#8f6b72]" />
-              <span className="h-3 w-3 rounded-full bg-[#8b78c7]" />
-              <span className="h-3 w-3 rounded-full bg-[#6f6987]" />
+              <span className="landing-window__dot landing-window__dot--red h-3 w-3 rounded-full" />
+              <span className="landing-window__dot landing-window__dot--purple h-3 w-3 rounded-full" />
+              <span className="landing-window__dot landing-window__dot--muted h-3 w-3 rounded-full" />
             </div>
             <div className="h-px flex-1 bg-white/6" />
-            <span className="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.18em] text-[#6f6987]">
+            <span className="landing-window__meta font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.18em]">
               SESSION_V2.4.0
             </span>
           </div>
 
-          <div className="mb-8 flex items-start gap-4 font-['JetBrains_Mono'] text-base tracking-[0.18em] text-[#b8afcc] lg:text-lg">
-            <span className="text-[#c7b4ff]">&gt;</span>
+          <div className="landing-window__command mb-8 flex items-start gap-4 font-['JetBrains_Mono'] text-base tracking-[0.18em] lg:text-lg">
+            <span className="landing-window__prompt">&gt;</span>
             <p className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
               user@poker:~$ create_session --jira="
               {createForm.jiraBaseUrl || "https://jira.example.com"}"
@@ -208,7 +208,7 @@ export const LandingPage = () => {
 
           <div className="grid gap-4 xl:grid-cols-2">
             <form
-              className="grid gap-4 rounded-[14px] border border-[#15b97b]/20 bg-[#0d1110] p-4 lg:p-5"
+              className="landing-form landing-form--create grid gap-4 rounded-[14px] border p-4 lg:p-5"
               onSubmit={handleCreate}
             >
               <div className="section-header">
@@ -271,7 +271,7 @@ export const LandingPage = () => {
             </form>
 
             <form
-              className="grid gap-4 rounded-[14px] border border-[#4b7cff]/20 bg-[#0d1015] p-4 lg:p-5"
+              className="landing-form landing-form--join grid gap-4 rounded-[14px] border p-4 lg:p-5"
               onSubmit={handleJoin}
             >
               <div className="section-header">
@@ -349,11 +349,11 @@ export const LandingPage = () => {
             </form>
           </div>
 
-          <div className="mt-6 border-l border-[#a98fff]/50 bg-white/[0.03] px-4 py-3">
-            <div className="font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.18em] text-[#cfbfff]">
+          <div className="landing-note mt-6 border-l px-4 py-3">
+            <div className="landing-note__title font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.18em]">
               AUTHENTICATION_BYPASS
             </div>
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-[#b3acbf]">
+            <p className="landing-note__body mt-2 max-w-3xl text-sm leading-7">
               No accounts needed. Sessions are ephemeral and encrypted at rest. Data is purged 24h
               after inactivity.
             </p>
