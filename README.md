@@ -5,9 +5,13 @@
 <h1 align="center">Terminal Poker</h1>
 
 <p align="center">
-  Fast scrum poker with a terminal edge.
+  Fast planning poker with a terminal edge.
   <br />
-  Create a room, share a code, vote in real time, reveal, move on.
+  Run estimation rounds without account friction.
+</p>
+
+<p align="center">
+  Real-time rooms, optional Jira sync, room passcodes, and zero-account joins.
 </p>
 
 <p align="center">
@@ -18,12 +22,37 @@
   <code>PostgreSQL</code>
 </p>
 
-## Why It's Good
+<p align="center">
+  <img src="docs/assets/readme-home.png" alt="Terminal Poker home screen" width="900" />
+</p>
 
-- No account flow. Join with a name and a room code.
+<p align="center">
+  Launch a room in seconds and run planning poker without the usual setup friction.
+</p>
+
+## Why Terminal Poker
+
+- No accounts required. Join with a name and a room code.
 - Real-time voting, reveal, reset, and optional room passcodes.
-- Jira-friendly room setup and ticket tracking.
+- Jira-friendly room setup and optional ticket sync.
 - Resume recent rooms in the same browser.
+
+## In Action
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/assets/readme-host-round.png" alt="Host view while a round is in progress" />
+      <br />
+      Sync the current ticket, reveal the votes, and move straight into the next estimate.
+    </td>
+    <td width="50%">
+      <img src="docs/assets/readme-reveal-result.png" alt="Revealed planning poker result" />
+      <br />
+      Reveal the result instantly and keep the outcome clear, focused, and easy to discuss.
+    </td>
+  </tr>
+</table>
 
 ## Quick Start
 
