@@ -512,7 +512,7 @@ export const RoomPage = () => {
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
   const activeParticipantCount = countOnlineParticipants(snapshot.participants);
   const viewerVoteLabel = snapshot.viewer.selectedVote
-    ? `YOU VOTED ${snapshot.viewer.selectedVote}`
+    ? String(snapshot.viewer.selectedVote)
     : "NO VOTE SUBMITTED";
   return (
     <div className="shell shell--room relative overflow-hidden">
@@ -758,23 +758,23 @@ export const RoomPage = () => {
                         "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.58) 24%, rgba(0,0,0,0.16) 52%, transparent 82%)"
                     }}
                   />
-                  <div className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3 sm:justify-end sm:px-4 sm:pt-4">
+                  <div className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3 sm:px-4 sm:pt-4">
                     <div
-                      className="inline-flex items-center gap-2 rounded-full border px-3 py-2 shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+                      className="inline-flex items-center gap-2.5 rounded-full border px-4 py-2.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
                       style={{
                         borderColor: "color-mix(in srgb, var(--outline) 78%, transparent)",
                         background: "color-mix(in srgb, var(--surface-lowest) 86%, transparent)"
                       }}
                     >
                       <span
-                        className="font-['JetBrains_Mono'] text-[0.62rem] uppercase tracking-[0.16em]"
+                        className="font-['JetBrains_Mono'] text-[0.68rem] uppercase tracking-[0.16em]"
                         style={{ color: "var(--summary-soft)" }}
                       >
                         {snapshot.viewer.selectedVote ? "YOUR VOTE" : "VOTING ENDED"}
                       </span>
                       {snapshot.viewer.selectedVote ? (
                         <span
-                          className="rounded-full border px-2.5 py-1 font-['JetBrains_Mono'] text-[0.8rem] font-bold uppercase tracking-[0.18em]"
+                          className="rounded-full border px-3 py-1.5 font-['JetBrains_Mono'] text-[0.95rem] font-bold uppercase tracking-[0.18em]"
                           style={{
                             borderColor: "var(--vote-tile-selected-border)",
                             background: "color-mix(in srgb, var(--surface-lowest) 94%, transparent)",
