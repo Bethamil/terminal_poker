@@ -5,7 +5,9 @@ import { StatusChip } from "./StatusChip";
 
 export const AppModal = ({
   actions,
+  bodyClassName = "",
   children,
+  dialogClassName = "",
   label,
   onClose,
   title,
@@ -13,7 +15,9 @@ export const AppModal = ({
   wide = false
 }: {
   actions?: ReactNode;
+  bodyClassName?: string;
   children: ReactNode;
+  dialogClassName?: string;
   label: string;
   onClose: () => void;
   title: string;
@@ -50,7 +54,7 @@ export const AppModal = ({
       <section
         aria-labelledby={titleId}
         aria-modal="true"
-        className={`card room-modal__dialog ${wide ? "room-modal__dialog--wide" : ""}`.trim()}
+        className={`card room-modal__dialog ${wide ? "room-modal__dialog--wide" : ""} ${dialogClassName}`.trim()}
         role="dialog"
       >
         <div className="section-header room-modal__header">
@@ -67,7 +71,7 @@ export const AppModal = ({
             Close
           </Button>
         </div>
-        <div className="room-modal__body">{children}</div>
+        <div className={`room-modal__body ${bodyClassName}`.trim()}>{children}</div>
         {actions ? <div className="room-modal__footer">{actions}</div> : null}
       </section>
     </div>

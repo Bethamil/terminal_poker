@@ -147,6 +147,8 @@ const formatVoteShortcutHint = (shortcuts: string[]) => {
     : `[${numericHint}] VOTE`;
 };
 
+type SettingsTab = "room" | "users";
+
 export const RoomPage = () => {
   const navigate = useNavigate();
   const { roomCode: roomCodeParam } = useParams();
@@ -158,6 +160,7 @@ export const RoomPage = () => {
   const [joinPasscode, setJoinPasscode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>("room");
   const [roomLinkStatus, setRoomLinkStatus] = useState<"idle" | "copied" | "error">("idle");
   const [isLeaving, setIsLeaving] = useState(false);
   const [ticketDraft, setTicketDraft] = useState("");
@@ -202,6 +205,12 @@ export const RoomPage = () => {
     setVotingDeckIdDraft(snapshot.room.votingDeckId);
     setNewPasscodeDraft("");
   }, [snapshot?.room.id, snapshot?.room.jiraBaseUrl, snapshot?.room.votingDeckId, snapshot?.room.hasJoinPasscode]);
+
+  useEffect(() => {
+    if (isSettingsOpen) {
+      setSettingsTab("room");
+    }
+  }, [isSettingsOpen]);
 
   useEffect(() => {
     if (!sessionEndedError) {
@@ -756,121 +765,179 @@ export const RoomPage = () => {
 
       {isModerator && isSettingsOpen ? (
         <AppModal
+          bodyClassName="overflow-hidden"
           label="SETTINGS"
           onClose={() => setIsSettingsOpen(false)}
           title="Room config"
           titleId="room-settings-title"
           wide
         >
-          <div className="grid gap-4 min-[721px]:grid-cols-2 max-[720px]:gap-[0.8rem]">
-            <section className="grid min-h-0 gap-4 rounded-[calc(var(--radius)-2px)] border border-[color:var(--outline)] bg-[color:var(--settings-section-bg)] p-4 max-[720px]:gap-[0.85rem] max-[720px]:p-[0.85rem]">
-              <div className="section-header">
-                <StatusChip>DEFAULTS</StatusChip>
-                <h3 className="m-0 font-['JetBrains_Mono'] text-[0.92rem] uppercase tracking-[0.08em]">Round setup</h3>
-              </div>
-              <div className="grid gap-4">
-                <Field
-                  label="JIRA URL"
-                  value={jiraBaseUrlDraft}
-                  onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
-                  placeholder="https://jira.example.com"
-                />
-                <SelectField
-                  label="DECK"
-                  value={votingDeckIdDraft}
-                  onChange={(event) =>
-                    setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
-                  }
-                  hint="Changing the deck starts a new round."
-                >
-                  {VOTING_DECK_OPTIONS.map((deck) => (
-                    <option key={deck.id} value={deck.id}>
-                      {deck.name}
-                    </option>
-                  ))}
-                </SelectField>
-                <Field
-                  hint={
-                    snapshot.room.hasJoinPasscode
-                      ? "Leave blank to keep the current passcode."
-                      : "Leave blank to keep the room open."
-                  }
-                  label="NEW PASSCODE"
-                  value={newPasscodeDraft}
-                  onChange={(event) => setNewPasscodeDraft(event.target.value)}
-                  placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
-                  type="password"
-                />
-              </div>
-              <div className="shortcut-strip justify-between rounded-[10px] border border-[color:var(--outline)] bg-[color:var(--panel-bg)] px-4 py-[0.8rem] max-[720px]:grid max-[720px]:grid-cols-2 max-[720px]:gap-[0.55rem] max-[720px]:px-[0.85rem] max-[720px]:py-[0.7rem]">
-                <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
-                <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
-              </div>
-              <div className="action-row max-[720px]:grid max-[720px]:grid-cols-1 max-[720px]:gap-[0.6rem]">
-                <Button className="max-[720px]:w-full" onClick={handleSaveRoomSettings} variant="secondary">
-                  SAVE
-                </Button>
-                {snapshot.room.hasJoinPasscode ? (
-                  <Button className="max-[720px]:w-full" onClick={() => saveRoomSettings("clear")} variant="ghost">
-                    CLEAR PASSCODE
-                  </Button>
-                ) : null}
-              </div>
-            </section>
-
-            <section className="grid min-h-0 gap-4 overflow-hidden rounded-[calc(var(--radius)-2px)] border border-[color:var(--outline)] bg-[color:var(--settings-section-bg)] p-4 [grid-template-rows:auto_auto_minmax(0,1fr)] max-[720px]:gap-[0.85rem] max-[720px]:overflow-visible max-[720px]:p-[0.85rem] max-[720px]:[grid-template-rows:auto_auto_auto]">
-              <div className="section-header">
-                <StatusChip tone="success">ACCESS</StatusChip>
-                <h3 className="m-0 font-['JetBrains_Mono'] text-[0.92rem] uppercase tracking-[0.08em]">Participants</h3>
-              </div>
-              <div className="border-l border-[color:var(--rail-accent)] bg-[color:color-mix(in_srgb,var(--chip-bg)_78%,transparent)] px-4 py-[0.85rem] font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.14em] text-[color:var(--rail-accent-text)] max-[720px]:px-[0.85rem] max-[720px]:py-[0.75rem] max-[720px]:text-[0.68rem] max-[720px]:tracking-[0.1em]">
-                ACTIVE ({activeParticipantCount}/{snapshot.participants.length})
-              </div>
-              <div className="grid min-h-0 content-start auto-rows-max gap-3 overflow-y-auto pr-[0.3rem] max-[720px]:gap-[0.65rem] max-[720px]:overflow-visible max-[720px]:pr-0">
-                {snapshot.participants.map((participant) => {
-                  const isViewer = participant.id === snapshot.viewer.participantId;
-                  const canKick = !isViewer && participant.role !== "moderator";
+          <div className="grid h-full min-h-0 gap-3 grid-rows-[auto_minmax(0,1fr)] min-[721px]:gap-4 min-[721px]:grid-cols-[minmax(12rem,14rem)_minmax(0,1fr)] min-[721px]:grid-rows-1">
+            <div className="grid content-start gap-3 min-[721px]:min-h-0">
+              <div
+                aria-label="Settings sections"
+                className="grid grid-cols-2 gap-2 min-[721px]:grid-cols-1"
+                role="tablist"
+              >
+                {[
+                  { id: "room", label: "ROOM", chip: "CONFIG" },
+                  { id: "users", label: "USERS", chip: `${snapshot.participants.length} ACTIVE` }
+                ].map((tab) => {
+                  const isActive = settingsTab === tab.id;
 
                   return (
-                    <div
-                      className={`grid min-h-[4.1rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-[0.7rem] rounded-[10px] border px-[0.85rem] py-[0.8rem] ${
-                        isViewer
-                          ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
-                          : "border-transparent bg-[color:var(--row-bg)]"
-                      } max-[720px]:gap-[0.65rem]`}
-                      key={participant.id}
+                    <button
+                      aria-controls={`room-settings-panel-${tab.id}`}
+                      aria-selected={isActive}
+                      className={`grid gap-1 rounded-[12px] border px-3 py-2.5 text-left transition min-[721px]:gap-2 min-[721px]:px-4 min-[721px]:py-3 ${
+                        isActive
+                          ? "border-[color:var(--button-secondary-border)] bg-[color:var(--button-secondary-bg)]"
+                          : "border-[color:var(--outline)] bg-[color:var(--panel-bg)]"
+                      }`}
+                      id={`room-settings-tab-${tab.id}`}
+                      key={tab.id}
+                      onClick={() => setSettingsTab(tab.id as SettingsTab)}
+                      role="tab"
+                      type="button"
                     >
-                      <div className={`presence-dot presence-dot--${participant.presence}`} />
-                      <div className="grid min-w-0 gap-[0.2rem]">
-                        <strong className="text-[0.92rem]">{participant.name}</strong>
-                        <span className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] text-[color:var(--muted)]">
-                          {participant.role === "moderator"
-                            ? isViewer
-                              ? "HOST / YOU"
-                              : "HOST"
-                            : participant.hasVoted
-                              ? "VOTED"
-                              : "WAITING"}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-end">
-                        {canKick ? (
-                          <Button
-                            disabled={pendingKickId === participant.id}
-                            onClick={() => handleKickParticipant(participant)}
-                            variant="danger"
-                          >
-                            {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
-                          </Button>
-                        ) : (
-                          <span className="mono-muted whitespace-nowrap">{isViewer ? "YOU" : "LOCKED"}</span>
-                        )}
-                      </div>
-                    </div>
+                      <span className="font-['JetBrains_Mono'] text-[0.62rem] uppercase tracking-[0.12em] text-[color:var(--muted)] min-[721px]:text-[0.68rem] min-[721px]:tracking-[0.14em]">
+                        {tab.chip}
+                      </span>
+                      <span className="font-['JetBrains_Mono'] text-[0.82rem] uppercase tracking-[0.08em] text-[color:var(--text)] min-[721px]:text-[0.88rem] min-[721px]:tracking-[0.1em]">
+                        {tab.label}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
-            </section>
+
+            </div>
+
+            {settingsTab === "room" ? (
+              <section
+                aria-labelledby="room-settings-tab-room"
+                className="grid min-h-0 content-start gap-4 overflow-y-auto rounded-[calc(var(--radius)-2px)] border border-[color:var(--outline)] bg-[color:var(--settings-section-bg)] p-4 pr-3 max-[720px]:gap-[0.85rem] max-[720px]:p-[0.85rem] max-[720px]:pr-[0.65rem]"
+                id="room-settings-panel-room"
+                role="tabpanel"
+              >
+                <div className="section-header">
+                  <StatusChip>ROOM</StatusChip>
+                  <h3 className="m-0 font-['JetBrains_Mono'] text-[0.92rem] uppercase tracking-[0.08em]">
+                    Round setup
+                  </h3>
+                </div>
+                <div className="grid gap-4">
+                  <Field
+                    label="JIRA URL"
+                    value={jiraBaseUrlDraft}
+                    onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
+                    placeholder="https://jira.example.com"
+                  />
+                  <SelectField
+                    label="DECK"
+                    value={votingDeckIdDraft}
+                    onChange={(event) =>
+                      setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
+                    }
+                    hint="Changing the deck starts a new round."
+                  >
+                    {VOTING_DECK_OPTIONS.map((deck) => (
+                      <option key={deck.id} value={deck.id}>
+                        {deck.name}
+                      </option>
+                    ))}
+                  </SelectField>
+                  <Field
+                    hint={
+                      snapshot.room.hasJoinPasscode
+                        ? "Leave blank to keep the current passcode."
+                        : "Leave blank to keep the room open."
+                    }
+                    label="NEW PASSCODE"
+                    value={newPasscodeDraft}
+                    onChange={(event) => setNewPasscodeDraft(event.target.value)}
+                    placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
+                    type="password"
+                  />
+                </div>
+                <div className="shortcut-strip justify-between rounded-[10px] border border-[color:var(--outline)] bg-[color:var(--panel-bg)] px-4 py-[0.8rem] max-[720px]:grid max-[720px]:grid-cols-2 max-[720px]:gap-[0.55rem] max-[720px]:px-[0.85rem] max-[720px]:py-[0.7rem]">
+                  <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
+                  <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
+                </div>
+                <div className="action-row max-[720px]:grid max-[720px]:grid-cols-1 max-[720px]:gap-[0.6rem]">
+                  <Button className="max-[720px]:w-full" onClick={handleSaveRoomSettings} variant="secondary">
+                    SAVE
+                  </Button>
+                  {snapshot.room.hasJoinPasscode ? (
+                    <Button className="max-[720px]:w-full" onClick={() => saveRoomSettings("clear")} variant="ghost">
+                      CLEAR PASSCODE
+                    </Button>
+                  ) : null}
+                </div>
+              </section>
+            ) : (
+              <section
+                aria-labelledby="room-settings-tab-users"
+                className="grid min-h-0 gap-4 overflow-hidden rounded-[calc(var(--radius)-2px)] border border-[color:var(--outline)] bg-[color:var(--settings-section-bg)] p-4 [grid-template-rows:auto_auto_minmax(0,1fr)] max-[720px]:gap-[0.85rem] max-[720px]:p-[0.85rem]"
+                id="room-settings-panel-users"
+                role="tabpanel"
+              >
+                <div className="section-header">
+                  <StatusChip tone="success">USERS</StatusChip>
+                  <h3 className="m-0 font-['JetBrains_Mono'] text-[0.92rem] uppercase tracking-[0.08em]">
+                    Participants
+                  </h3>
+                </div>
+                <div className="border-l border-[color:var(--rail-accent)] bg-[color:color-mix(in_srgb,var(--chip-bg)_78%,transparent)] px-4 py-[0.85rem] font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.14em] text-[color:var(--rail-accent-text)] max-[720px]:px-[0.85rem] max-[720px]:py-[0.75rem] max-[720px]:text-[0.68rem] max-[720px]:tracking-[0.1em]">
+                  ACTIVE ({activeParticipantCount}/{snapshot.participants.length})
+                </div>
+                <div className="grid min-h-0 content-start auto-rows-max gap-3 overflow-y-auto pr-[0.3rem] max-[720px]:gap-[0.65rem] max-[720px]:pb-1 max-[720px]:pr-[0.1rem]">
+                  {snapshot.participants.map((participant) => {
+                    const isViewer = participant.id === snapshot.viewer.participantId;
+                    const canKick = !isViewer && participant.role !== "moderator";
+
+                    return (
+                      <div
+                        className={`grid min-h-[4.1rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-[0.7rem] rounded-[10px] border px-[0.85rem] py-[0.8rem] max-[720px]:grid-cols-[auto_minmax(0,1fr)] max-[720px]:items-start max-[720px]:gap-x-[0.65rem] max-[720px]:gap-y-2 ${
+                          isViewer
+                            ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
+                            : "border-transparent bg-[color:var(--row-bg)]"
+                        }`}
+                        key={participant.id}
+                      >
+                        <div className={`presence-dot presence-dot--${participant.presence} max-[720px]:mt-[0.32rem]`} />
+                        <div className="grid min-w-0 gap-[0.2rem]">
+                          <strong className="text-[0.92rem]">{participant.name}</strong>
+                          <span className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                            {participant.role === "moderator"
+                              ? isViewer
+                                ? "HOST / YOU"
+                                : "HOST"
+                              : participant.hasVoted
+                                ? "VOTED"
+                                : "WAITING"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-end max-[720px]:col-start-2 max-[720px]:justify-start">
+                          {canKick ? (
+                            <Button
+                              className="max-[720px]:min-h-[2.7rem] max-[720px]:px-4"
+                              disabled={pendingKickId === participant.id}
+                              onClick={() => handleKickParticipant(participant)}
+                              variant="danger"
+                            >
+                              {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
+                            </Button>
+                          ) : (
+                            <span className="mono-muted whitespace-nowrap">{isViewer ? "YOU" : "LOCKED"}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
           </div>
         </AppModal>
       ) : null}
