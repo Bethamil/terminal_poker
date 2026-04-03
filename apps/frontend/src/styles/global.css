@@ -916,15 +916,26 @@ select {
 }
 
 .deck-card__body--closed .vote-grid {
-  filter: blur(6px) saturate(0.84);
-  opacity: 0.42;
   transform: scale(0.994);
 }
 
 .deck-card__body--closed .vote-tile {
+  opacity: 0.08;
   border-color: transparent;
-  background: color-mix(in srgb, var(--vote-tile-bg) 45%, transparent);
+  background: color-mix(in srgb, var(--vote-tile-bg) 28%, transparent);
   box-shadow: none;
+  filter: saturate(0.5);
+}
+
+.deck-card__body--closed .vote-tile--selected {
+  opacity: 1;
+  border-color: var(--vote-tile-selected-border);
+  background:
+    radial-gradient(circle at bottom center, rgba(124, 58, 237, 0.22), transparent 58%),
+    var(--vote-tile-selected-bg);
+  box-shadow: var(--vote-tile-selected-shadow);
+  filter: none;
+  transform: scale(1.02);
 }
 
 .shortcut-strip,
@@ -1023,6 +1034,7 @@ select {
 
 .vote-tile--locked {
   opacity: 0.72;
+  cursor: default;
 }
 
 .vote-tile--locked:hover {

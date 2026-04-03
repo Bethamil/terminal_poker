@@ -521,9 +521,6 @@ export const RoomPage = () => {
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
   const activeParticipantCount = countOnlineParticipants(snapshot.participants);
-  const viewerVoteLabel = snapshot.viewer.selectedVote
-    ? String(snapshot.viewer.selectedVote)
-    : "NO VOTE SUBMITTED";
   return (
     <div className="shell shell--room relative overflow-hidden">
       <AppHeader
@@ -757,53 +754,12 @@ export const RoomPage = () => {
               </div>
             ) : null}
             <div className={`deck-card__body ${isVotingClosed ? "deck-card__body--closed" : ""}`.trim()}>
-              {isVotingClosed ? (
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[2]">
-                  <div
-                    className="absolute inset-0 rounded-[28px] bg-[color:var(--surface-lowest)]/22 backdrop-blur-[6px]"
-                    style={{
-                      WebkitMaskImage:
-                        "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.58) 24%, rgba(0,0,0,0.16) 52%, transparent 82%)",
-                      maskImage:
-                        "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.58) 24%, rgba(0,0,0,0.16) 52%, transparent 82%)"
-                    }}
-                  />
-                  <div className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3 sm:px-4 sm:pt-4">
-                    <div
-                      className="inline-flex items-center gap-2.5 rounded-full border px-4 py-2.5 shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
-                      style={{
-                        borderColor: "color-mix(in srgb, var(--outline) 78%, transparent)",
-                        background: "color-mix(in srgb, var(--surface-lowest) 86%, transparent)"
-                      }}
-                    >
-                      <span
-                        className="font-['JetBrains_Mono'] text-[0.68rem] uppercase tracking-[0.16em]"
-                        style={{ color: "var(--summary-soft)" }}
-                      >
-                        {snapshot.viewer.selectedVote ? "YOUR VOTE" : "VOTING ENDED"}
-                      </span>
-                      {snapshot.viewer.selectedVote ? (
-                        <span
-                          className="rounded-full border px-3 py-1.5 font-['JetBrains_Mono'] text-[0.95rem] font-bold uppercase tracking-[0.18em]"
-                          style={{
-                            borderColor: "var(--vote-tile-selected-border)",
-                            background: "color-mix(in srgb, var(--surface-lowest) 94%, transparent)",
-                            color: "var(--vote-tile-selected-text)"
-                          }}
-                        >
-                          {viewerVoteLabel}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              ) : null}
               <div className="vote-grid">
                 {voteCardMeta.map((card) => {
                   const isSelected = snapshot.viewer.selectedVote === card.value;
                   return (
                     <button
-                      aria-disabled={isVotingClosed}
+                      disabled={isVotingClosed}
                       className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
                         isVotingClosed ? "vote-tile--locked" : ""
                       }`.trim()}
