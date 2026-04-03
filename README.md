@@ -95,7 +95,7 @@ cp .env.selfhost.example .env.selfhost
 docker compose --env-file .env.selfhost -f compose.selfhost.yml up -d
 ```
 
-On GitHub, the container image is published to GHCR as `ghcr.io/bethamil/terminal_poker`.
+On GitHub, release tags publish the container image to GHCR as `ghcr.io/bethamil/terminal_poker`.
 
 Open:
 
