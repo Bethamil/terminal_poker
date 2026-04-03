@@ -75,8 +75,8 @@ Open:
 
 ## Deployment
 
-- Docker self-hosting: [deploy/docker/README.md](deploy/docker/README.md)
-- Helm / Kubernetes example values: [deploy/helm/README.md](deploy/helm/README.md)
+- Docker self-hosting: [deploy/docker/](deploy/docker/)
+- Helm / Kubernetes example values: [deploy/helm/](deploy/helm/)
 
 Release tags publish the container image to GHCR as `ghcr.io/bethamil/terminal_poker`.
 
