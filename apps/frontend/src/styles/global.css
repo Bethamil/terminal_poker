@@ -958,6 +958,19 @@ select {
   width: fit-content;
 }
 
+.ticket-link--jira {
+  border: 1px solid color-mix(in srgb, var(--rail-accent) 42%, var(--outline));
+  color: var(--rail-accent-text);
+  background: color-mix(in srgb, var(--panel-bg) 72%, transparent);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.04);
+}
+
+.ticket-link--jira:hover {
+  background: color-mix(in srgb, var(--rail-accent) 10%, var(--panel-bg));
+  border-color: color-mix(in srgb, var(--rail-accent) 62%, var(--outline));
+  color: var(--rail-accent-text);
+}
+
 .ticket-link:hover {
   text-decoration: underline;
 }
