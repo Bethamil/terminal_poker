@@ -199,8 +199,8 @@ export const LandingPage = () => {
             </p>
           </div>
 
-          <div className="landing-action-grid">
-            <article className="landing-action-card landing-form landing-form--create">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <article className="landing-form landing-form--create grid h-full content-start gap-4 p-4 [grid-template-rows:auto_auto_minmax(0,1fr)_auto]">
               <div className="section-header">
                 <StatusChip tone="success">CREATE</StatusChip>
                 <h2>[CREATE_SESSION]</h2>
@@ -214,7 +214,7 @@ export const LandingPage = () => {
                 <span>DECK SELECTABLE</span>
               </div>
               <Button
-                className="landing-action-card__button"
+                className="mt-auto w-full lg:min-w-48 lg:w-fit"
                 onClick={() => setActiveDialog("create")}
                 style={{
                   background: "var(--action-create-bg)",
@@ -225,7 +225,7 @@ export const LandingPage = () => {
               </Button>
             </article>
 
-            <article className="landing-action-card landing-form landing-form--join">
+            <article className="landing-form landing-form--join grid h-full content-start gap-4 p-4 [grid-template-rows:auto_auto_minmax(0,1fr)_auto]">
               <div className="section-header">
                 <StatusChip>JOIN</StatusChip>
                 <h2>[JOIN_SESSION]</h2>
@@ -239,7 +239,7 @@ export const LandingPage = () => {
                 <span>PASSCODE IF NEEDED</span>
               </div>
               <Button
-                className="landing-action-card__button"
+                className="mt-auto w-full lg:min-w-48 lg:w-fit"
                 style={{
                   background: "var(--action-join-bg)",
                   color: "var(--action-join-text)"
@@ -300,7 +300,7 @@ export const LandingPage = () => {
           title="Create room"
           titleId="landing-create-title"
         >
-          <form className="landing-modal-form" onSubmit={handleCreate}>
+          <form className="grid gap-[0.9rem]" onSubmit={handleCreate}>
             <p className="hero-copy hero-copy--inline">
               Set up the room once, then share the invite link from inside the session.
             </p>
@@ -368,7 +368,7 @@ export const LandingPage = () => {
           title="Join room"
           titleId="landing-join-title"
         >
-          <form className="landing-modal-form" onSubmit={handleJoin}>
+          <form className="grid gap-[0.9rem]" onSubmit={handleJoin}>
             <p className="hero-copy hero-copy--inline">
               Enter the room code here. The room page will ask for your user name and a passcode only if required.
             </p>
@@ -394,22 +394,25 @@ export const LandingPage = () => {
             </Button>
           </form>
 
-          <div className="landing-modal-section">
+          <div className="mt-4 grid gap-[0.9rem] border-t border-[color:var(--outline)] pt-4">
             <span className="rail-kicker">RECENT</span>
             {previousRooms.length > 0 ? (
-              <div className="history-list">
+              <div className="grid gap-4">
                 {previousRooms.slice(0, 3).map((room) => {
                   const hasActiveSession = Boolean(sessionStorageStore.getParticipantToken(room.roomCode));
 
                   return (
-                    <div className="history-row" key={room.roomCode}>
-                      <div className="history-row__identity">
-                        <strong>{room.roomName}</strong>
-                        <span>
+                    <div
+                      className="grid items-center gap-3 rounded-[10px] border border-[color:var(--outline)] bg-[color:var(--panel-bg)] px-4 py-[0.95rem] sm:grid-cols-[minmax(0,1fr)_auto]"
+                      key={room.roomCode}
+                    >
+                      <div className="grid min-w-0 gap-[0.2rem]">
+                        <strong className="text-[0.95rem]">{room.roomName}</strong>
+                        <span className="font-['JetBrains_Mono'] text-[0.72rem] tracking-[0.08em] text-[color:var(--muted)]">
                           {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
                         </span>
                       </div>
-                      <div className="history-row__actions">
+                      <div className="flex flex-wrap items-center justify-start gap-[0.55rem] sm:justify-end">
                         <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
                           {hasActiveSession ? "RESUME" : "OPEN"}
                         </Button>
@@ -422,7 +425,9 @@ export const LandingPage = () => {
                 })}
               </div>
             ) : (
-              <div className="landing-history__empty">Rooms you visit will show up here.</div>
+              <div className="rounded-[10px] border border-dashed border-[color:var(--outline)] bg-[color:var(--panel-bg)] p-4 text-[0.9rem] leading-[1.5] text-[color:var(--text-soft)]">
+                Rooms you visit will show up here.
+              </div>
             )}
           </div>
         </AppModal>

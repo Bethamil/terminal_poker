@@ -762,11 +762,11 @@ export const RoomPage = () => {
           titleId="room-settings-title"
           wide
         >
-          <div className="settings-grid settings-grid--modal">
-            <section className="settings-section">
+          <div className="grid gap-4 min-[721px]:grid-cols-2 max-[720px]:gap-[0.8rem]">
+            <section className="grid min-h-0 gap-4 rounded-[calc(var(--radius)-2px)] border border-[color:var(--outline)] bg-[color:var(--settings-section-bg)] p-4 max-[720px]:gap-[0.85rem] max-[720px]:p-[0.85rem]">
               <div className="section-header">
                 <StatusChip>DEFAULTS</StatusChip>
-                <h3>Round setup</h3>
+                <h3 className="m-0 font-['JetBrains_Mono'] text-[0.92rem] uppercase tracking-[0.08em]">Round setup</h3>
               </div>
               <div className="grid gap-4">
                 <Field
@@ -802,7 +802,7 @@ export const RoomPage = () => {
                   type="password"
                 />
               </div>
-              <div className="shortcut-strip settings-strip justify-between max-[720px]:grid max-[720px]:grid-cols-2 max-[720px]:gap-[0.55rem]">
+              <div className="shortcut-strip justify-between rounded-[10px] border border-[color:var(--outline)] bg-[color:var(--panel-bg)] px-4 py-[0.8rem] max-[720px]:grid max-[720px]:grid-cols-2 max-[720px]:gap-[0.55rem] max-[720px]:px-[0.85rem] max-[720px]:py-[0.7rem]">
                 <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
                 <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
               </div>
@@ -818,30 +818,32 @@ export const RoomPage = () => {
               </div>
             </section>
 
-            <section className="settings-section settings-section--access">
+            <section className="grid min-h-0 gap-4 overflow-hidden rounded-[calc(var(--radius)-2px)] border border-[color:var(--outline)] bg-[color:var(--settings-section-bg)] p-4 [grid-template-rows:auto_auto_minmax(0,1fr)] max-[720px]:gap-[0.85rem] max-[720px]:overflow-visible max-[720px]:p-[0.85rem] max-[720px]:[grid-template-rows:auto_auto_auto]">
               <div className="section-header">
                 <StatusChip tone="success">ACCESS</StatusChip>
-                <h3>Participants</h3>
+                <h3 className="m-0 font-['JetBrains_Mono'] text-[0.92rem] uppercase tracking-[0.08em]">Participants</h3>
               </div>
-              <div className="settings-access-summary">
+              <div className="border-l border-[color:var(--rail-accent)] bg-[color:color-mix(in_srgb,var(--chip-bg)_78%,transparent)] px-4 py-[0.85rem] font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.14em] text-[color:var(--rail-accent-text)] max-[720px]:px-[0.85rem] max-[720px]:py-[0.75rem] max-[720px]:text-[0.68rem] max-[720px]:tracking-[0.1em]">
                 ACTIVE ({activeParticipantCount}/{snapshot.participants.length})
               </div>
-              <div className="settings-list settings-list--access">
+              <div className="grid min-h-0 content-start auto-rows-max gap-3 overflow-y-auto pr-[0.3rem] max-[720px]:gap-[0.65rem] max-[720px]:overflow-visible max-[720px]:pr-0">
                 {snapshot.participants.map((participant) => {
                   const isViewer = participant.id === snapshot.viewer.participantId;
                   const canKick = !isViewer && participant.role !== "moderator";
 
                   return (
                     <div
-                      className={`settings-user-row settings-user-row--access ${
-                        isViewer ? "settings-user-row--active" : ""
-                      }`}
+                      className={`grid min-h-[4.1rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-[0.7rem] rounded-[10px] border px-[0.85rem] py-[0.8rem] ${
+                        isViewer
+                          ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
+                          : "border-transparent bg-[color:var(--row-bg)]"
+                      } max-[720px]:gap-[0.65rem]`}
                       key={participant.id}
                     >
                       <div className={`presence-dot presence-dot--${participant.presence}`} />
-                      <div className="settings-user-row__identity">
-                        <strong>{participant.name}</strong>
-                        <span>
+                      <div className="grid min-w-0 gap-[0.2rem]">
+                        <strong className="text-[0.92rem]">{participant.name}</strong>
+                        <span className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] text-[color:var(--muted)]">
                           {participant.role === "moderator"
                             ? isViewer
                               ? "HOST / YOU"
