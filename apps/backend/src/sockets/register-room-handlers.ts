@@ -11,6 +11,12 @@ interface SocketData {
   participantToken?: string;
 }
 
+const clearSocketRoomState = (socket: { data: unknown }) => {
+  delete (socket.data as SocketData).roomCode;
+  delete (socket.data as SocketData).participantId;
+  delete (socket.data as SocketData).participantToken;
+};
+
 const getActiveParticipantIds = (
   sockets: Array<{ data: unknown }>
 ): ReadonlySet<string> =>
@@ -39,6 +45,7 @@ const emitRoomSnapshots = async (
     const participantExists = room.participants.some((participant) => participant.id === participantId);
 
     if (!participantExists) {
+      clearSocketRoomState(socket);
       socket.emit("room:error", {
         code: "INVALID_SESSION",
         message: "Participant session is invalid."
@@ -64,6 +71,7 @@ const disconnectParticipantSockets = async (
       return;
     }
 
+    clearSocketRoomState(socket);
     socket.emit("room:error", payload);
     socket.disconnect(true);
   });
@@ -77,6 +85,7 @@ const disconnectRoomSockets = async (
   const sockets = await io.in(roomCode).fetchSockets();
 
   sockets.forEach((socket) => {
+    clearSocketRoomState(socket);
     socket.emit("room:error", payload);
     socket.disconnect(true);
   });
@@ -251,6 +260,15 @@ export const registerRoomHandlers = (
       return;
     }
 
-    void emitRoomSnapshots(io, roomService, roomCode);
+    void emitRoomSnapshots(io, roomService, roomCode).catch((error) => {
+      const appError = asAppError(error);
+
+      if (appError.code === "ROOM_NOT_FOUND") {
+        return;
+      }
+
+      // eslint-disable-next-line no-console
+      console.error(error);
+    });
   });
 };
