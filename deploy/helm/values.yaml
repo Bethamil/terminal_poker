@@ -1,20 +1,26 @@
-replicaCount: 2
+replicaCount: 1
 
 image:
-  registry: docker.io
-  repository: your-registry/terminal-poker-backend
-  tag: "latest"
+  registry: ghcr.io
+  repository: bethamil/terminal_poker
+  tag: "0.1.0"
   pullPolicy: IfNotPresent
 
-command: ["node"]
-args: ["dist/server.js"]
+command: ["sh"]
+args:
+  - -lc
+  - >-
+    test -n "$DATABASE_URL" &&
+    cd /app &&
+    pnpm --filter @terminal-poker/backend exec prisma db push &&
+    node apps/backend/dist/server.js
 
 containerPorts:
   http: 4000
 
 ingress:
   enabled: true
-  hostname: api.poker.example.com
+  hostname: poker.example.com
   tls: true
   tlsIssuerName: letsencrypt-production
 
@@ -46,10 +52,14 @@ extraEnvVars:
   - name: ROOM_INACTIVITY_TTL_HOURS
     value: "24"
   - name: REDIS_MODE
-    value: "standalone"
-  - name: REDIS_URL
-    value: "redis://REPLACE_ME:6379"
-  # Switch REDIS_MODE to "sentinel" and provide these instead of REDIS_URL when using Redis Sentinel.
+    value: "none"
+  # Enable one of the Redis modes below when running multiple replicas.
+  # - name: REDIS_MODE
+  #   value: "standalone"
+  # - name: REDIS_URL
+  #   value: "redis://REPLACE_ME:6379"
+  # - name: REDIS_MODE
+  #   value: "sentinel"
   # - name: REDIS_SENTINEL_URL
   #   value: "redis://sentinel-1:26379,redis://sentinel-2:26379,redis://sentinel-3:26379"
   # - name: REDIS_SENTINEL_MASTER_NAME
