@@ -951,7 +951,6 @@ select {
   place-items: center;
   align-content: center;
   justify-items: center;
-  gap: 0.35rem;
   width: 100%;
   border: 1px solid var(--outline);
   border-radius: 16px;
@@ -989,15 +988,6 @@ select {
   color: var(--vote-tile-value);
 }
 
-.vote-tile__label {
-  color: var(--vote-tile-label);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  text-align: center;
-}
-
 .vote-tile--selected {
   background:
     radial-gradient(circle at bottom center, rgba(124, 58, 237, 0.22), transparent 58%),
@@ -1006,8 +996,7 @@ select {
   box-shadow: var(--vote-tile-selected-shadow);
 }
 
-.vote-tile--selected .vote-tile__value,
-.vote-tile--selected .vote-tile__label {
+.vote-tile--selected .vote-tile__value {
   color: var(--vote-tile-selected-text);
 }
 
@@ -1080,11 +1069,6 @@ select {
 
   .vote-tile__value {
     font-size: clamp(1.4rem, 3.1vw + 0.55rem, 1.95rem);
-  }
-
-  .vote-tile__label {
-    font-size: 0.54rem;
-    letter-spacing: 0.1em;
   }
 }
 
@@ -1281,10 +1265,5 @@ select {
 
   .vote-tile__value {
     font-size: clamp(1.2rem, 5vw + 0.4rem, 1.7rem);
-  }
-
-  .vote-tile__label {
-    font-size: 0.5rem;
-    letter-spacing: 0.08em;
   }
 }

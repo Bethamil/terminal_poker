@@ -805,7 +805,6 @@ export const RoomPage = () => {
                       type="button"
                     >
                       <strong className="vote-tile__value">{card.value}</strong>
-                      <span className="vote-tile__label">{card.label}</span>
                     </button>
                   );
                 })}
