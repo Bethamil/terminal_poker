@@ -616,14 +616,14 @@ export const RoomPage = () => {
               </StatusChip>
             </div>
             <div className="grid gap-2">
-              <div className="hero-card__ticket items-center justify-items-center gap-2">
+              <div className="hero-card__ticket items-center justify-items-center gap-3">
                 <span className="hero-card__label">CURRENT TICKET</span>
                 <h1 className="ticket-title text-[clamp(3.1rem,11vw,8rem)] max-[720px]:text-[clamp(2.6rem,10vw,4.6rem)]">
                   {snapshot.round.jiraTicketKey ?? "ROUND_OPEN"}
                 </h1>
                 {snapshot.round.jiraTicketUrl ? (
                   <a
-                    className="ticket-link inline-flex justify-self-center rounded-none border border-[#8c67ff]/50 px-5 py-3 text-[#d7c7ff] no-underline transition hover:bg-[#8c67ff]/10"
+                    className="ticket-link mt-3 inline-flex justify-self-center rounded-none border border-[#8c67ff]/50 px-5 py-3 text-[#d7c7ff] no-underline transition hover:bg-[#8c67ff]/10"
                     href={snapshot.round.jiraTicketUrl}
                     rel="noreferrer"
                     target="_blank"
