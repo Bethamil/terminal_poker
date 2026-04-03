@@ -1,0 +1,23 @@
+services:
+  app:
+    image: ${TERMINAL_POKER_IMAGE:-terminal-poker:single-app-test}
+    command:
+      - sh
+      - -lc
+      - test -n "$$DATABASE_URL" && cd /app && pnpm --filter @terminal-poker/backend exec prisma db push && node apps/backend/dist/server.js
+    environment:
+      PORT: 4000
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:8080}
+      DATABASE_URL: ${DATABASE_URL:-}
+      ROOM_INACTIVITY_TTL_HOURS: ${ROOM_INACTIVITY_TTL_HOURS:-24}
+      REDIS_MODE: ${REDIS_MODE:-none}
+      REDIS_URL: ${REDIS_URL:-}
+      REDIS_SENTINEL_URL: ${REDIS_SENTINEL_URL:-}
+      REDIS_SENTINEL_MASTER_NAME: ${REDIS_SENTINEL_MASTER_NAME:-}
+      REDIS_USERNAME: ${REDIS_USERNAME:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_SENTINEL_USERNAME: ${REDIS_SENTINEL_USERNAME:-}
+      REDIS_SENTINEL_PASSWORD: ${REDIS_SENTINEL_PASSWORD:-}
+    ports:
+      - "${APP_PORT:-8080}:4000"
+    restart: unless-stopped

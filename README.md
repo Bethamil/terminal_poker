@@ -32,7 +32,7 @@ Requirements:
 - `pnpm`
 - Docker
 
-Start Postgres:
+Start local infra:
 
 ```bash
 docker compose up -d postgres
@@ -72,6 +72,49 @@ Open:
 
 - Frontend: [http://localhost:5173](http://localhost:5173)
 - Backend: [http://localhost:4000](http://localhost:4000)
+
+## Compose Modes
+
+This repo now has two Docker Compose paths:
+
+- `docker-compose.yml`: local development infra only (`postgres`, optional `redis`)
+- `compose.selfhost.yml`: self-hosted app deployment using the single Docker image and external services
+- `compose.selfhost.bundled.yml`: optional override that adds a bundled PostgreSQL service
+
+For local development:
+
+```bash
+docker compose up -d postgres
+pnpm dev
+```
+
+For self-hosting with your own Postgres:
+
+```bash
+cp .env.selfhost.example .env.selfhost
+docker compose --env-file .env.selfhost -f compose.selfhost.yml up -d
+```
+
+Open:
+
+- App: [http://localhost:8080](http://localhost:8080)
+
+If you want to use a bundled Postgres service instead:
+
+```bash
+cp .env.selfhost.bundled.example .env.selfhost
+docker compose --env-file .env.selfhost -f compose.selfhost.yml -f compose.selfhost.bundled.yml up -d
+```
+
+In the bundled setup, PostgreSQL stays internal to the Compose network by default. The app connects to `postgres:5432`, but the database is not published on a host port.
+In this mode you only set `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`; Compose derives the internal `DATABASE_URL` automatically.
+
+If you want to use your own Redis too, update `.env.selfhost`:
+
+```env
+REDIS_MODE=standalone
+REDIS_URL=redis://your-redis-host:6379
+```
 
 ## Useful Commands
 

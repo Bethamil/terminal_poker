@@ -5,6 +5,8 @@ dist
 .env.local
 .env.*
 !.env.example
+!.env.selfhost.example
+!.env.selfhost.bundled.example
 !apps/**/.env.example
 .pnpm-store
 coverage
