@@ -768,48 +768,50 @@ export const RoomPage = () => {
                 <StatusChip>DEFAULTS</StatusChip>
                 <h3>Round setup</h3>
               </div>
-              <Field
-                label="JIRA URL"
-                value={jiraBaseUrlDraft}
-                onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
-                placeholder="https://jira.example.com"
-              />
-              <SelectField
-                label="DECK"
-                value={votingDeckIdDraft}
-                onChange={(event) =>
-                  setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
-                }
-                hint="Changing the deck starts a new round."
-              >
-                {VOTING_DECK_OPTIONS.map((deck) => (
-                  <option key={deck.id} value={deck.id}>
-                    {deck.name}
-                  </option>
-                ))}
-              </SelectField>
-              <Field
-                hint={
-                  snapshot.room.hasJoinPasscode
-                    ? "Leave blank to keep the current passcode."
-                    : "Leave blank to keep the room open."
-                }
-                label="NEW PASSCODE"
-                value={newPasscodeDraft}
-                onChange={(event) => setNewPasscodeDraft(event.target.value)}
-                placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
-                type="password"
-              />
-              <div className="shortcut-strip settings-strip">
+              <div className="grid gap-4">
+                <Field
+                  label="JIRA URL"
+                  value={jiraBaseUrlDraft}
+                  onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
+                  placeholder="https://jira.example.com"
+                />
+                <SelectField
+                  label="DECK"
+                  value={votingDeckIdDraft}
+                  onChange={(event) =>
+                    setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
+                  }
+                  hint="Changing the deck starts a new round."
+                >
+                  {VOTING_DECK_OPTIONS.map((deck) => (
+                    <option key={deck.id} value={deck.id}>
+                      {deck.name}
+                    </option>
+                  ))}
+                </SelectField>
+                <Field
+                  hint={
+                    snapshot.room.hasJoinPasscode
+                      ? "Leave blank to keep the current passcode."
+                      : "Leave blank to keep the room open."
+                  }
+                  label="NEW PASSCODE"
+                  value={newPasscodeDraft}
+                  onChange={(event) => setNewPasscodeDraft(event.target.value)}
+                  placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
+                  type="password"
+                />
+              </div>
+              <div className="shortcut-strip settings-strip justify-between max-[720px]:grid max-[720px]:grid-cols-2 max-[720px]:gap-[0.55rem]">
                 <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
                 <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
               </div>
-              <div className="action-row">
-                <Button onClick={handleSaveRoomSettings} variant="secondary">
+              <div className="action-row max-[720px]:grid max-[720px]:grid-cols-1 max-[720px]:gap-[0.6rem]">
+                <Button className="max-[720px]:w-full" onClick={handleSaveRoomSettings} variant="secondary">
                   SAVE
                 </Button>
                 {snapshot.room.hasJoinPasscode ? (
-                  <Button onClick={() => saveRoomSettings("clear")} variant="ghost">
+                  <Button className="max-[720px]:w-full" onClick={() => saveRoomSettings("clear")} variant="ghost">
                     CLEAR PASSCODE
                   </Button>
                 ) : null}
@@ -849,18 +851,19 @@ export const RoomPage = () => {
                               : "WAITING"}
                         </span>
                       </div>
-                      {canKick ? (
-                        <Button
-                          className="settings-user-row__action"
-                          disabled={pendingKickId === participant.id}
-                          onClick={() => handleKickParticipant(participant)}
-                          variant="danger"
-                        >
-                          {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
-                        </Button>
-                      ) : (
-                        <span className="mono-muted">{isViewer ? "YOU" : "LOCKED"}</span>
-                      )}
+                      <div className="flex items-center justify-end">
+                        {canKick ? (
+                          <Button
+                            disabled={pendingKickId === participant.id}
+                            onClick={() => handleKickParticipant(participant)}
+                            variant="danger"
+                          >
+                            {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
+                          </Button>
+                        ) : (
+                          <span className="mono-muted whitespace-nowrap">{isViewer ? "YOU" : "LOCKED"}</span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

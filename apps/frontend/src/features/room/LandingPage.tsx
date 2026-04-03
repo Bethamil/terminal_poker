@@ -137,7 +137,7 @@ export const LandingPage = () => {
 
   return (
     <div className="shell shell--landing relative overflow-hidden">
-      <AppHeader />
+      <AppHeader splitTopbar />
 
       <main className="mx-auto grid w-full max-w-[1380px] gap-7">
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">

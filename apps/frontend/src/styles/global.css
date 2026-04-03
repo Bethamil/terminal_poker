@@ -1498,10 +1498,6 @@ select {
   text-transform: uppercase;
 }
 
-.settings-user-row__action {
-  justify-self: end;
-}
-
 .vote-grid {
   display: flex;
   flex-wrap: wrap;
@@ -1716,28 +1712,29 @@ select {
     padding: 0.85rem 1rem;
   }
 
-  /* Homepage / simple header: one row (brand + actions), hide empty center slot */
-  .topbar:has(.topbar__center:empty):not(.topbar--mobile-menu-enabled) {
+  .topbar--split {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
   }
 
-  .topbar:has(.topbar__center:empty):not(.topbar--mobile-menu-enabled) .topbar__center {
+  .topbar--split .topbar__center {
     display: none;
   }
 
-  .topbar:has(.topbar__center:empty):not(.topbar--mobile-menu-enabled) .topbar__actions {
-    width: auto;
-    justify-self: end;
-  }
-
-  .topbar:has(.topbar__center:empty):not(.topbar--mobile-menu-enabled) .theme-toggle {
-    width: auto;
+  .topbar--split > .brand {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .topbar--mobile-menu-enabled {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .topbar--mobile-menu-enabled > .brand {
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .topbar__center,
@@ -1765,6 +1762,18 @@ select {
     width: auto;
   }
 
+  .topbar--mobile-menu-enabled .brand__aside {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .topbar--mobile-menu-enabled .topbar__live-indicator {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .room-modal {
     padding: 0.8rem;
     align-items: end;
@@ -1774,11 +1783,36 @@ select {
   .room-modal__dialog--wide {
     width: 100%;
     max-height: min(calc(100vh - 1.6rem), 100%);
+    gap: 0.85rem;
+    padding: 1rem;
   }
 
   .room-modal__header,
   .room-modal__footer {
     display: grid;
+  }
+
+  .room-modal__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding-right: 0;
+  }
+
+  .room-modal__heading {
+    min-width: 0;
+    gap: 0.45rem;
+  }
+
+  .room-modal__close {
+    position: static;
+    justify-self: end;
+    min-height: 2.75rem;
+    padding: 0.72rem 0.9rem;
+  }
+
+  .room-modal__body {
+    padding-right: 0;
   }
 
   .topbar__center {
@@ -1823,9 +1857,72 @@ select {
     justify-content: space-between;
   }
 
+  .topbar--split .topbar__actions {
+    width: auto;
+    max-width: 100%;
+    justify-self: end;
+    flex-shrink: 0;
+  }
+
+  .topbar--split .topbar__theme-slot .theme-toggle {
+    width: auto;
+    max-width: 100%;
+    justify-content: flex-start;
+    flex-shrink: 0;
+  }
+
+  .topbar .brand__text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .settings-grid,
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .settings-grid--modal {
+    min-height: 0;
+    height: auto;
+    gap: 0.8rem;
+  }
+
+  .settings-section {
+    gap: 0.85rem;
+    padding: 0.85rem;
+  }
+
+  .settings-section--access {
+    overflow: visible;
+    grid-template-rows: auto auto auto;
+  }
+
+  .settings-strip {
+    padding: 0.7rem 0.85rem;
+  }
+
+  .settings-access-summary {
+    padding: 0.75rem 0.85rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+  }
+
+  .settings-list--access {
+    overflow: visible;
+    gap: 0.65rem;
+    padding-right: 0;
+  }
+
+  .settings-user-row--access {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .settings-user-row--access > .presence-dot {
+    margin-top: 0;
   }
 
   .landing-actions {
