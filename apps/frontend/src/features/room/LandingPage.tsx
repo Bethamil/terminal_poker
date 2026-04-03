@@ -163,13 +163,17 @@ export const LandingPage = () => {
                 <div className="grid gap-2">
                   {recentNodes.map((room) => (
                     <button
-                      className="landing-node-link flex items-center justify-between gap-3 border-b pb-2 text-left font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.12em] transition"
+                      className="landing-node-link grid gap-x-3 gap-y-1 border-b pb-2 text-left font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.12em] transition lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center"
                       key={room.roomCode}
                       onClick={() => openPreviousRoom(room.roomCode)}
                       type="button"
                     >
-                      <span>{room.roomName.replace(/\s+/g, "_").toUpperCase()}</span>
-                      <strong>ID: {room.roomCode}</strong>
+                      <span className="min-w-0 break-words leading-snug">
+                        {room.roomName.replace(/\s+/g, "_").toUpperCase()}
+                      </span>
+                      <strong className="justify-self-start leading-snug xl:justify-self-end">
+                        ID: {room.roomCode}
+                      </strong>
                     </button>
                   ))}
                 </div>
