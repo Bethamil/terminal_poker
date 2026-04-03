@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/terminal_poker?schema=public
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm prisma:generate
+
+      - name: Typecheck workspace
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build workspace
+        run: pnpm build
+
+      - name: Docker build smoke test
+        run: docker build -t terminal-poker:ci-smoke .
