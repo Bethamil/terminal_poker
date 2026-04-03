@@ -121,6 +121,53 @@ const ParticipantRail = ({
   );
 };
 
+const MobileParticipantStrip = ({
+  currentParticipantId,
+  participants,
+  roundStatus
+}: {
+  currentParticipantId: string;
+  participants: ParticipantSnapshot[];
+  roundStatus: "active" | "revealed";
+}) => {
+  return (
+    <div className="-mx-[var(--shell-pad)] flex gap-2 overflow-x-auto px-[var(--shell-pad)] pb-1 lg:hidden">
+      {participants.map((participant) => {
+        const isCurrent = participant.id === currentParticipantId;
+        const voteState =
+          roundStatus === "revealed"
+            ? participant.revealedVote ?? "·"
+            : participant.hasVoted
+              ? "●"
+              : "·";
+
+        return (
+          <div
+            className={`grid min-w-[8.2rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-[999px] border px-3 py-2 ${
+              isCurrent
+                ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
+                : "border-[color:var(--outline)] bg-[color:var(--panel-bg)]"
+            }`}
+            key={participant.id}
+          >
+            <div className={`presence-dot presence-dot--${participant.presence}`} />
+            <strong className="truncate text-[0.8rem]">{participant.name}</strong>
+            <div
+              className={`text-right font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] ${
+                roundStatus === "revealed" && participant.revealedVote
+                  ? "font-['Space_Grotesk'] text-[1rem] tracking-[-0.04em] text-[color:var(--text)]"
+                  : "text-[color:var(--muted)]"
+              }`}
+            >
+              {voteState}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const formatAverage = (average: number | null) => {
   if (average === null) {
     return "n/a";
@@ -539,18 +586,20 @@ export const RoomPage = () => {
       />
 
       <main className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <ParticipantRail
-          currentParticipantId={snapshot.viewer.participantId}
-          onInvite={() => void copyRoomLink()}
-          roundStatus={snapshot.round.status}
-          roomCode={snapshot.room.code}
-          roomLinkStatus={roomLinkStatus}
-          roomName={snapshot.room.name}
-          participants={snapshot.participants}
-        />
+        <div className="hidden lg:grid">
+          <ParticipantRail
+            currentParticipantId={snapshot.viewer.participantId}
+            onInvite={() => void copyRoomLink()}
+            roundStatus={snapshot.round.status}
+            roomCode={snapshot.room.code}
+            roomLinkStatus={roomLinkStatus}
+            roomName={snapshot.room.name}
+            participants={snapshot.participants}
+          />
+        </div>
 
         <section className="order-1 grid gap-4 lg:order-2">
-          <div className="grid gap-3 px-2 py-2 text-center lg:px-6 lg:py-4">
+          <div className="grid gap-3 px-2 py-2 text-center max-[720px]:gap-2 max-[720px]:px-1 max-[720px]:py-1 lg:px-6 lg:py-4">
             <div className="inline-flex justify-center">
               <StatusChip tone={snapshot.round.status === "revealed" ? "success" : "accent"}>
                 {snapshot.round.status === "revealed" ? "REVEALED" : "IN PROGRESS"}
@@ -559,7 +608,7 @@ export const RoomPage = () => {
             <div className="grid gap-2">
               <div className="hero-card__ticket items-center justify-items-center gap-2">
                 <span className="hero-card__label">CURRENT TICKET</span>
-                <h1 className="ticket-title text-[clamp(3.8rem,10vw,8rem)]">
+                <h1 className="ticket-title text-[clamp(3.1rem,11vw,8rem)] max-[720px]:text-[clamp(2.6rem,10vw,4.6rem)]">
                   {snapshot.round.jiraTicketKey ?? "ROUND_OPEN"}
                 </h1>
                 {snapshot.round.jiraTicketUrl ? (
@@ -575,7 +624,7 @@ export const RoomPage = () => {
               </div>
             </div>
 
-            <div className="mx-auto w-full max-w-[44rem]">
+            <div className={`mx-auto w-full max-w-[44rem] ${hasRoundSummary ? "" : "hidden md:block"}`}>
               <div
                 className={`grid min-h-[6.4rem] items-center gap-4 rounded-[24px] border px-5 py-4 text-left md:grid-cols-[minmax(0,1fr)_auto_auto] ${
                   hasRoundSummary ? "shadow-[0_24px_70px_rgba(0,0,0,0.12)]" : ""
@@ -647,6 +696,11 @@ export const RoomPage = () => {
               </div>
               <div className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</div>
             </div>
+            <MobileParticipantStrip
+              currentParticipantId={snapshot.viewer.participantId}
+              participants={snapshot.participants}
+              roundStatus={snapshot.round.status}
+            />
             {isModerator ? (
               <div className="flex flex-wrap items-stretch gap-3 border-b border-white/6 pb-3">
                 <div className="flex min-w-[18rem] flex-[1_1_30rem] items-stretch gap-2">
