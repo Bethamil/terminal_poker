@@ -35,11 +35,11 @@ const bootstrap = async () => {
     registerRoomHandlers(io, socket, roomService);
   });
 
-  httpServer.listen(env.PORT, () => {
+  httpServer.listen(env.PORT, "0.0.0.0", () => {
     // eslint-disable-next-line no-console
     console.log(`socket adapter mode: ${env.REDIS_MODE}`);
     // eslint-disable-next-line no-console
-    console.log(`backend listening on http://localhost:${env.PORT}`);
+    console.log(`backend listening on http://0.0.0.0:${env.PORT}`);
   });
 };
 

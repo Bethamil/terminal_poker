@@ -54,11 +54,10 @@ ROOM_INACTIVITY_TTL_HOURS=24
 REDIS_MODE=none
 ```
 
-Create `apps/frontend/.env`:
+Optional: create `apps/frontend/.env` if your backend is not running on `http://localhost:4000`:
 
 ```env
-VITE_API_BASE_URL="http://localhost:4000"
-VITE_SOCKET_URL="http://localhost:4000"
+VITE_DEV_BACKEND_URL="http://localhost:4000"
 ```
 
 Prepare the database and start the app:
