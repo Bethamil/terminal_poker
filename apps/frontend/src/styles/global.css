@@ -1273,9 +1273,6 @@ select {
     font-size: clamp(1.45rem, 9.25vw, 3.1rem);
   }
 
-  .ticket-link {
-    justify-self: start;
-  }
 }
 
 @media (max-width: 520px) {

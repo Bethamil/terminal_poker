@@ -613,7 +613,7 @@ export const RoomPage = () => {
                 </h1>
                 {snapshot.round.jiraTicketUrl ? (
                   <a
-                    className="ticket-link inline-flex rounded-none border border-[#8c67ff]/50 px-5 py-3 text-[#d7c7ff] no-underline transition hover:bg-[#8c67ff]/10"
+                    className="ticket-link inline-flex justify-self-center rounded-none border border-[#8c67ff]/50 px-5 py-3 text-[#d7c7ff] no-underline transition hover:bg-[#8c67ff]/10"
                     href={snapshot.round.jiraTicketUrl}
                     rel="noreferrer"
                     target="_blank"
