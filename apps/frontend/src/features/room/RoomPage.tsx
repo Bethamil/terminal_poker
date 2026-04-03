@@ -789,9 +789,9 @@ export const RoomPage = () => {
                     <button
                       aria-controls={`room-settings-panel-${tab.id}`}
                       aria-selected={isActive}
-                      className={`grid gap-1 rounded-[12px] border px-3 py-2.5 text-left transition min-[721px]:gap-2 min-[721px]:px-4 min-[721px]:py-3 ${
+                      className={`grid cursor-pointer gap-1 rounded-[12px] border px-3 py-2.5 text-left transition-[transform,border-color,background-color,box-shadow] duration-150 hover:-translate-y-[1px] hover:border-[color:var(--button-secondary-border)] hover:bg-[color:var(--panel-strong-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--button-secondary-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--card-bg)] active:translate-y-0 min-[721px]:gap-2 min-[721px]:px-4 min-[721px]:py-3 ${
                         isActive
-                          ? "border-[color:var(--button-secondary-border)] bg-[color:var(--button-secondary-bg)]"
+                          ? "border-[color:var(--button-secondary-border)] bg-[color:var(--button-secondary-bg)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                           : "border-[color:var(--outline)] bg-[color:var(--panel-bg)]"
                       }`}
                       id={`room-settings-tab-${tab.id}`}
