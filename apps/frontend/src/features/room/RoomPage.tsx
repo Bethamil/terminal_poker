@@ -751,41 +751,42 @@ export const RoomPage = () => {
             ) : null}
             <div className={`deck-card__body ${isVotingClosed ? "deck-card__body--closed" : ""}`.trim()}>
               {isVotingClosed ? (
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 z-[2]"
-                >
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[2]">
                   <div
-                    className="absolute inset-[-18px] rounded-[42px] bg-[color:var(--surface-lowest)]/34 backdrop-blur-[18px]"
+                    className="absolute inset-0 rounded-[28px] bg-[color:var(--surface-lowest)]/22 backdrop-blur-[6px]"
                     style={{
                       WebkitMaskImage:
-                        "radial-gradient(ellipse 78% 70% at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.96) 46%, rgba(0,0,0,0.72) 64%, rgba(0,0,0,0.28) 82%, transparent 100%)",
+                        "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.58) 24%, rgba(0,0,0,0.16) 52%, transparent 82%)",
                       maskImage:
-                        "radial-gradient(ellipse 78% 70% at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.96) 46%, rgba(0,0,0,0.72) 64%, rgba(0,0,0,0.28) 82%, transparent 100%)"
+                        "linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.58) 24%, rgba(0,0,0,0.16) 52%, transparent 82%)"
                     }}
                   />
-                  <div
-                    className="absolute inset-0 grid place-items-center p-6"
-                  >
-                    <div className="grid justify-items-center gap-3 text-center">
+                  <div className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3 sm:justify-end sm:px-4 sm:pt-4">
+                    <div
+                      className="inline-flex items-center gap-2 rounded-full border px-3 py-2 shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+                      style={{
+                        borderColor: "color-mix(in srgb, var(--outline) 78%, transparent)",
+                        background: "color-mix(in srgb, var(--surface-lowest) 86%, transparent)"
+                      }}
+                    >
                       <span
-                        className="rounded-full border px-[1.35rem] py-[0.9rem] font-['JetBrains_Mono'] text-[clamp(1.15rem,2.2vw,1.9rem)] font-bold uppercase tracking-[0.24em] shadow-[0_18px_50px_rgba(0,0,0,0.18)]"
-                        style={{
-                          borderColor: "var(--vote-tile-selected-border)",
-                          background: "color-mix(in srgb, var(--surface-lowest) 94%, transparent)",
-                          color: "var(--vote-tile-selected-text)",
-                          boxShadow:
-                            "0 0 0 1px color-mix(in srgb, var(--outline) 68%, transparent), 0 18px 50px rgba(0, 0, 0, 0.18)"
-                        }}
-                      >
-                        {viewerVoteLabel}
-                      </span>
-                      <span
-                        className="font-['JetBrains_Mono'] text-[0.78rem] uppercase tracking-[0.18em]"
+                        className="font-['JetBrains_Mono'] text-[0.62rem] uppercase tracking-[0.16em]"
                         style={{ color: "var(--summary-soft)" }}
                       >
-                        VOTING ENDED
+                        {snapshot.viewer.selectedVote ? "YOUR VOTE" : "VOTING ENDED"}
                       </span>
+                      {snapshot.viewer.selectedVote ? (
+                        <span
+                          className="rounded-full border px-2.5 py-1 font-['JetBrains_Mono'] text-[0.8rem] font-bold uppercase tracking-[0.18em]"
+                          style={{
+                            borderColor: "var(--vote-tile-selected-border)",
+                            background: "color-mix(in srgb, var(--surface-lowest) 94%, transparent)",
+                            color: "var(--vote-tile-selected-text)"
+                          }}
+                        >
+                          {viewerVoteLabel}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>
