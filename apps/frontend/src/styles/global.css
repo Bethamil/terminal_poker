@@ -656,8 +656,10 @@ select {
   transition:
     transform 140ms ease,
     opacity 140ms ease,
+    color 140ms ease,
     background 140ms ease,
-    border-color 140ms ease;
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .button:hover {
@@ -681,15 +683,34 @@ select {
 }
 
 .button--secondary {
-  background: var(--button-secondary-bg);
-  color: var(--primary);
-  border: 1px solid var(--button-secondary-border);
+  background: color-mix(in srgb, var(--button-secondary-bg) 88%, var(--surface-high) 12%);
+  color: color-mix(in srgb, var(--primary) 88%, var(--text) 12%);
+  border: 1px solid color-mix(in srgb, var(--button-secondary-border) 78%, var(--primary) 22%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--button-secondary-border) 26%, transparent),
+    0 10px 24px rgba(0, 0, 0, 0.05);
+  font-weight: 700;
+}
+
+.button--secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--button-secondary-bg) 78%, var(--surface-highest) 22%);
+  border-color: color-mix(in srgb, var(--primary) 44%, var(--button-secondary-border));
 }
 
 .button--ghost {
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text-soft);
-  border: 1px solid var(--outline);
+  background: color-mix(in srgb, var(--surface-high) 72%, transparent);
+  color: color-mix(in srgb, var(--text) 78%, var(--text-soft));
+  border: 1px solid color-mix(in srgb, var(--outline) 70%, var(--primary) 30%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--outline) 22%, transparent),
+    0 10px 24px rgba(0, 0, 0, 0.06);
+  font-weight: 700;
+}
+
+.button--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--surface-highest) 74%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 44%, var(--outline));
+  color: color-mix(in srgb, var(--text) 88%, var(--text-soft));
 }
 
 .button--danger {
