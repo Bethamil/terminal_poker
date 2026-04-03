@@ -16,7 +16,13 @@ import { AppError } from "../http/errors";
 import { RoomRepository } from "../repositories/room-repository";
 import type { RoomAggregate } from "./room-snapshot";
 import { buildRoomSnapshot } from "./room-snapshot";
-import { generateRoomCode, hashSecret, createParticipantToken, verifySecret } from "./security";
+import {
+  createParticipantToken,
+  generateRoomCode,
+  hashPasscode,
+  hashSessionToken,
+  verifyPasscode
+} from "./security";
 import type { IssueLinkProvider } from "./jira-provider";
 
 const sanitizeName = (name: string): string => name.trim().replace(/\s+/g, " ");
@@ -62,18 +68,22 @@ export class RoomService {
     return sanitized;
   }
 
-  private async getAuthorizedRoom(roomCode: string, participantToken: string): Promise<{
+  private async getAuthorizedRoom(
+    roomCode: string,
+    participantToken: string,
+    client: PrismaClient | Prisma.TransactionClient = this.prisma
+  ): Promise<{
     room: RoomAggregate;
     participantId: string;
     role: ParticipantRole;
   }> {
-    const room = await this.repository().getRoomAggregateByCode(roomCode.toUpperCase());
+    const room = await this.repository(client).getRoomAggregateByCode(roomCode.toUpperCase());
 
     if (!room) {
       throw new AppError(404, "ROOM_NOT_FOUND", "Room not found.");
     }
 
-    const tokenHash = hashSecret(participantToken);
+    const tokenHash = hashSessionToken(participantToken);
     const participant = room.participants.find((entry) => entry.sessionTokenHash === tokenHash);
 
     if (!participant) {
@@ -92,10 +102,10 @@ export class RoomService {
     const roomName = this.validateRoomName(input.roomName);
     const jiraBaseUrl = normalizeJiraBaseUrl(input.jiraBaseUrl);
     const votingDeckId = input.votingDeckId ?? DEFAULT_VOTING_DECK_ID;
-    const joinPasscodeHash = input.joinPasscode?.trim() ? hashSecret(input.joinPasscode.trim()) : null;
+    const joinPasscodeHash = input.joinPasscode?.trim() ? hashPasscode(input.joinPasscode.trim()) : null;
     const roomCode = await this.generateUniqueCode();
     const participantToken = createParticipantToken();
-    const participantTokenHash = hashSecret(participantToken);
+    const participantTokenHash = hashSessionToken(participantToken);
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
@@ -131,7 +141,7 @@ export class RoomService {
     const roomCode = roomCodeInput.toUpperCase();
     const name = this.validateName(input.name);
     const participantToken = createParticipantToken();
-    const participantTokenHash = hashSecret(participantToken);
+    const participantTokenHash = hashSessionToken(participantToken);
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
@@ -149,7 +159,7 @@ export class RoomService {
         throw new AppError(409, "NAME_TAKEN", "That name is already in use in this room.");
       }
 
-      if (!verifySecret(input.joinPasscode?.trim(), room.joinPasscodeHash)) {
+      if (!verifyPasscode(input.joinPasscode?.trim(), room.joinPasscodeHash)) {
         throw new AppError(403, "INVALID_PASSCODE", "Join passcode is incorrect.");
       }
 
@@ -203,23 +213,23 @@ export class RoomService {
   }
 
   async castVote(roomCode: string, participantToken: string, value: VoteValue): Promise<void> {
-    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
-    const round = authorized.room.rounds[0];
-    const votingDeck = getVotingDeck(resolveVotingDeckId(authorized.room.votingDeckId));
-
-    if (!votingDeck.includes(value)) {
-      throw new AppError(400, "INVALID_VOTE", "Vote value is invalid for this room's deck.");
-    }
-
-    if (!round) {
-      throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
-    }
-
-    if (round.status !== "ACTIVE") {
-      throw new AppError(409, "ROUND_REVEALED", "Votes are already revealed.");
-    }
-
     await this.prisma.$transaction(async (transaction) => {
+      const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+      const round = authorized.room.rounds[0];
+      const votingDeck = getVotingDeck(resolveVotingDeckId(authorized.room.votingDeckId));
+
+      if (!votingDeck.includes(value)) {
+        throw new AppError(400, "INVALID_VOTE", "Vote value is invalid for this room's deck.");
+      }
+
+      if (!round) {
+        throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
+      }
+
+      if (round.status !== "ACTIVE") {
+        throw new AppError(409, "ROUND_REVEALED", "Votes are already revealed.");
+      }
+
       const repo = this.repository(transaction);
       await repo.upsertVote(round.id, authorized.participantId, value);
       await repo.touchRoomActivity(authorized.room.id);
@@ -227,20 +237,21 @@ export class RoomService {
   }
 
   async setRoundTicket(roomCode: string, participantToken: string, jiraTicketKey: string | null): Promise<void> {
-    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
-
-    if (authorized.role !== ParticipantRole.MODERATOR) {
-      throw new AppError(403, "FORBIDDEN", "Only moderators can update the Jira ticket.");
-    }
-
-    const round = authorized.room.rounds[0];
-    if (!round) {
-      throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
-    }
-
     await this.prisma.$transaction(async (transaction) => {
+      const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+
+      if (authorized.role !== ParticipantRole.MODERATOR) {
+        throw new AppError(403, "FORBIDDEN", "Only moderators can update the Jira ticket.");
+      }
+
+      const round = authorized.room.rounds[0];
+      if (!round) {
+        throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
+      }
+
       const repo = this.repository(transaction);
       await repo.updateRoundTicket(round.id, jiraTicketKey?.trim() || null);
+      await repo.touchRoomActivity(authorized.room.id);
     });
   }
 
@@ -249,23 +260,22 @@ export class RoomService {
     participantToken: string,
     input: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
   ): Promise<void> {
-    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
-
-    if (authorized.role !== ParticipantRole.MODERATOR) {
-      throw new AppError(403, "FORBIDDEN", "Only moderators can update room settings.");
-    }
-
-    const jiraBaseUrl = normalizeJiraBaseUrl(input.jiraBaseUrl);
-    const joinPasscode = input.joinPasscode?.trim() || null;
-    const joinPasscodeHash = this.resolveJoinPasscodeHash(
-      authorized.room.joinPasscodeHash,
-      input.joinPasscodeMode,
-      joinPasscode
-    );
-    const nextVotingDeckId = input.votingDeckId;
-    const votingDeckChanged = authorized.room.votingDeckId !== nextVotingDeckId;
-
     await this.prisma.$transaction(async (transaction) => {
+      const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+
+      if (authorized.role !== ParticipantRole.MODERATOR) {
+        throw new AppError(403, "FORBIDDEN", "Only moderators can update room settings.");
+      }
+
+      const jiraBaseUrl = normalizeJiraBaseUrl(input.jiraBaseUrl);
+      const joinPasscode = input.joinPasscode?.trim() || null;
+      const joinPasscodeHash = this.resolveJoinPasscodeHash(
+        authorized.room.joinPasscodeHash,
+        input.joinPasscodeMode,
+        joinPasscode
+      );
+      const nextVotingDeckId = input.votingDeckId;
+      const votingDeckChanged = authorized.room.votingDeckId !== nextVotingDeckId;
       const repo = this.repository(transaction);
       await repo.updateRoomSettings({
         roomId: authorized.room.id,
@@ -279,6 +289,8 @@ export class RoomService {
           roomId: authorized.room.id
         });
       }
+
+      await repo.touchRoomActivity(authorized.room.id);
     });
   }
 
@@ -310,6 +322,7 @@ export class RoomService {
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
       await repo.removeParticipant(targetParticipantId);
+      await repo.touchRoomActivity(authorized.room.id);
     });
 
     return {
@@ -338,6 +351,7 @@ export class RoomService {
       }
 
       await repo.removeParticipant(authorized.participantId);
+      await repo.touchRoomActivity(authorized.room.id);
     });
 
     return {
@@ -364,53 +378,55 @@ export class RoomService {
       throw new AppError(400, "INVALID_PASSCODE", "Join passcode cannot be empty.");
     }
 
-    return hashSecret(joinPasscode);
+    return hashPasscode(joinPasscode);
   }
 
   async revealRound(roomCode: string, participantToken: string): Promise<void> {
-    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
-
-    if (authorized.role !== ParticipantRole.MODERATOR) {
-      throw new AppError(403, "FORBIDDEN", "Only moderators can reveal a round.");
-    }
-
-    const round = authorized.room.rounds[0];
-    if (!round) {
-      throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
-    }
-
     await this.prisma.$transaction(async (transaction) => {
+      const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+
+      if (authorized.role !== ParticipantRole.MODERATOR) {
+        throw new AppError(403, "FORBIDDEN", "Only moderators can reveal a round.");
+      }
+
+      const round = authorized.room.rounds[0];
+      if (!round) {
+        throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
+      }
+
       const repo = this.repository(transaction);
       await repo.revealRound(round.id);
+      await repo.touchRoomActivity(authorized.room.id);
     });
   }
 
   async unrevealRound(roomCode: string, participantToken: string): Promise<void> {
-    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
-
-    if (authorized.role !== ParticipantRole.MODERATOR) {
-      throw new AppError(403, "FORBIDDEN", "Only moderators can unreveal a round.");
-    }
-
-    const round = authorized.room.rounds[0];
-    if (!round) {
-      throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
-    }
-
     await this.prisma.$transaction(async (transaction) => {
+      const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+
+      if (authorized.role !== ParticipantRole.MODERATOR) {
+        throw new AppError(403, "FORBIDDEN", "Only moderators can unreveal a round.");
+      }
+
+      const round = authorized.room.rounds[0];
+      if (!round) {
+        throw new AppError(500, "ROUND_NOT_FOUND", "No active round exists.");
+      }
+
       const repo = this.repository(transaction);
       await repo.unrevealRound(round.id);
+      await repo.touchRoomActivity(authorized.room.id);
     });
   }
 
   async resetRound(roomCode: string, participantToken: string): Promise<void> {
-    const authorized = await this.getAuthorizedRoom(roomCode, participantToken);
-
-    if (authorized.role !== ParticipantRole.MODERATOR) {
-      throw new AppError(403, "FORBIDDEN", "Only moderators can reset a round.");
-    }
-
     await this.prisma.$transaction(async (transaction) => {
+      const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+
+      if (authorized.role !== ParticipantRole.MODERATOR) {
+        throw new AppError(403, "FORBIDDEN", "Only moderators can reset a round.");
+      }
+
       const repo = this.repository(transaction);
       await repo.touchRoomActivity(authorized.room.id);
       await repo.createRound({

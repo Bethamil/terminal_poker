@@ -129,7 +129,12 @@ Rooms store a `lastActivityAt` timestamp. It is updated on:
 
 - participant join
 - vote cast
+- room settings update
+- Jira ticket update
+- round reveal / unreveal
 - round reset
+- participant kick
+- participant leave
 
 Rooms are removed by running the cleanup command:
 

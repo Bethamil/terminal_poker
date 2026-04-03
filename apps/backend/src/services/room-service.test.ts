@@ -2,7 +2,7 @@ import { ParticipantRole, RoundStatus, type PrismaClient } from "@prisma/client"
 import { describe, expect, it } from "vitest";
 
 import { AppError } from "../http/errors";
-import { hashSecret } from "./security";
+import { hashPasscode, hashSessionToken, verifyPasscode } from "./security";
 import { RoomService } from "./room-service";
 import type { RoomAggregate } from "./room-snapshot";
 
@@ -13,7 +13,7 @@ const createRoomAggregate = (): RoomAggregate =>
     name: "Planning Alpha",
     jiraBaseUrl: "https://jira.old.example.com",
     votingDeckId: "modified-fibonacci",
-    joinPasscodeHash: hashSecret("secret"),
+    joinPasscodeHash: hashPasscode("secret"),
     lastActivityAt: new Date("2026-01-01T10:00:00.000Z"),
     createdAt: new Date("2026-01-01T10:00:00.000Z"),
     updatedAt: new Date("2026-01-01T10:00:00.000Z"),
@@ -23,7 +23,7 @@ const createRoomAggregate = (): RoomAggregate =>
         roomId: "room_1",
         name: "Alice",
         role: ParticipantRole.MODERATOR,
-        sessionTokenHash: hashSecret("moderator-token"),
+        sessionTokenHash: hashSessionToken("moderator-token"),
         createdAt: new Date("2026-01-01T10:00:00.000Z"),
         updatedAt: new Date("2026-01-01T10:00:00.000Z")
       },
@@ -32,7 +32,7 @@ const createRoomAggregate = (): RoomAggregate =>
         roomId: "room_1",
         name: "Bob",
         role: ParticipantRole.PARTICIPANT,
-        sessionTokenHash: hashSecret("participant-token"),
+        sessionTokenHash: hashSessionToken("participant-token"),
         createdAt: new Date("2026-01-01T10:00:00.000Z"),
         updatedAt: new Date("2026-01-01T10:00:00.000Z")
       }
@@ -228,7 +228,7 @@ describe("RoomService moderator actions", () => {
 
     expect(room.jiraBaseUrl).toBe("https://jira.next.example.com");
     expect(room.votingDeckId).toBe("powers-of-two");
-    expect(room.joinPasscodeHash).toBe(hashSecret("secret"));
+    expect(verifyPasscode("secret", room.joinPasscodeHash)).toBe(true);
     expect(room.rounds).toHaveLength(2);
     expect(room.rounds[0].votes).toEqual([]);
   });
@@ -302,6 +302,46 @@ describe("RoomService moderator actions", () => {
     const afterVote = room.lastActivityAt;
     await service.resetRound("AB123", "moderator-token");
     expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(afterVote.getTime());
+  });
+
+  it("touches room activity for moderator mutations and participant removal", async () => {
+    const room = createRoomAggregate();
+    const service = createService(room);
+
+    const beforeSettings = room.lastActivityAt;
+    await service.updateRoomSettings("AB123", "moderator-token", {
+      jiraBaseUrl: "https://jira.next.example.com",
+      votingDeckId: "modified-fibonacci",
+      joinPasscode: null,
+      joinPasscodeMode: "keep"
+    });
+    expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(beforeSettings.getTime());
+
+    const afterSettings = room.lastActivityAt;
+    await service.setRoundTicket("AB123", "moderator-token", "PROJ-2");
+    expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(afterSettings.getTime());
+
+    const afterTicket = room.lastActivityAt;
+    await service.revealRound("AB123", "moderator-token");
+    expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(afterTicket.getTime());
+
+    const afterReveal = room.lastActivityAt;
+    await service.unrevealRound("AB123", "moderator-token");
+    expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(afterReveal.getTime());
+
+    const afterUnreveal = room.lastActivityAt;
+    await service.kickParticipant("AB123", "moderator-token", "part_1");
+    expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(afterUnreveal.getTime());
+  });
+
+  it("touches room activity when a participant leaves", async () => {
+    const room = createRoomAggregate();
+    const service = createService(room);
+    const beforeLeave = room.lastActivityAt;
+
+    await service.leaveRoom("AB123", "participant-token");
+
+    expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(beforeLeave.getTime());
   });
 
   it("unreveals the current round without creating a new one", async () => {
