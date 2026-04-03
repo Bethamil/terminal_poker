@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -161,6 +161,7 @@ export const RoomPage = () => {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("room");
+  const [isSettingsSaved, setIsSettingsSaved] = useState(false);
   const [roomLinkStatus, setRoomLinkStatus] = useState<"idle" | "copied" | "error">("idle");
   const [isLeaving, setIsLeaving] = useState(false);
   const [ticketDraft, setTicketDraft] = useState("");
@@ -168,6 +169,7 @@ export const RoomPage = () => {
   const [votingDeckIdDraft, setVotingDeckIdDraft] = useState<UpdateRoomSettingsPayload["votingDeckId"]>("modified-fibonacci");
   const [newPasscodeDraft, setNewPasscodeDraft] = useState("");
   const [pendingKickId, setPendingKickId] = useState<string | null>(null);
+  const settingsSavedTimeoutRef = useRef<number | null>(null);
   const {
     castVote,
     error,
@@ -211,6 +213,15 @@ export const RoomPage = () => {
       setSettingsTab("room");
     }
   }, [isSettingsOpen]);
+
+  useEffect(
+    () => () => {
+      if (settingsSavedTimeoutRef.current !== null) {
+        window.clearTimeout(settingsSavedTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (!sessionEndedError) {
@@ -313,6 +324,16 @@ export const RoomPage = () => {
       joinPasscode: joinPasscodeMode === "set" ? trimmedPasscode : null,
       joinPasscodeMode
     });
+
+    if (settingsSavedTimeoutRef.current !== null) {
+      window.clearTimeout(settingsSavedTimeoutRef.current);
+    }
+
+    setIsSettingsSaved(true);
+    settingsSavedTimeoutRef.current = window.setTimeout(() => {
+      setIsSettingsSaved(false);
+      settingsSavedTimeoutRef.current = null;
+    }, 1800);
   };
 
   const handleSaveRoomSettings = () => {
@@ -866,7 +887,7 @@ export const RoomPage = () => {
                 </div>
                 <div className="action-row max-[720px]:grid max-[720px]:grid-cols-1 max-[720px]:gap-[0.6rem]">
                   <Button className="max-[720px]:w-full" onClick={handleSaveRoomSettings} variant="secondary">
-                    SAVE
+                    {isSettingsSaved ? "SAVED" : "SAVE"}
                   </Button>
                   {snapshot.room.hasJoinPasscode ? (
                     <Button className="max-[720px]:w-full" onClick={() => saveRoomSettings("clear")} variant="ghost">
