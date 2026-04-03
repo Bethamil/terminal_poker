@@ -700,6 +700,10 @@ select {
 
 .landing-hero-title {
   color: var(--landing-hero-title);
+  font-size: clamp(1.75rem, min(9.5vw, 10.5vh), 7rem);
+  line-height: 0.98;
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 .landing-hero-status {
@@ -1712,6 +1716,25 @@ select {
     padding: 0.85rem 1rem;
   }
 
+  /* Homepage / simple header: one row (brand + actions), hide empty center slot */
+  .topbar:has(.topbar__center:empty):not(.topbar--mobile-menu-enabled) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .topbar:has(.topbar__center:empty):not(.topbar--mobile-menu-enabled) .topbar__center {
+    display: none;
+  }
+
+  .topbar:has(.topbar__center:empty):not(.topbar--mobile-menu-enabled) .topbar__actions {
+    width: auto;
+    justify-self: end;
+  }
+
+  .topbar:has(.topbar__center:empty):not(.topbar--mobile-menu-enabled) .theme-toggle {
+    width: auto;
+  }
+
   .topbar--mobile-menu-enabled {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
@@ -1817,9 +1840,12 @@ select {
     justify-content: stretch;
   }
 
-  .ticket-title,
-  .hero-title {
+  .ticket-title {
     font-size: clamp(2.4rem, 12vw, 4.2rem);
+  }
+
+  .landing-hero-title {
+    font-size: clamp(1.45rem, 9.25vw, 3.1rem);
   }
 
   .hero-card {

@@ -142,12 +142,17 @@ export const LandingPage = () => {
       <main className="mx-auto grid w-full max-w-[1380px] gap-7">
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">
           <div className="min-w-0">
-            <h1 className="hero-title landing-hero-title text-[clamp(3.6rem,9vw,8rem)]">
-              SCRUM_POKER_ROOT
+            <h1 className="hero-title landing-hero-title">
+              {"SCRUM_POKER_ROOT".split("_").join("_\u200b")}
             </h1>
-            <div className="landing-hero-status mt-4 inline-flex items-center gap-3 font-['JetBrains_Mono'] text-xs uppercase tracking-[0.18em]">
-              <span className="landing-hero-status__dot h-2 w-2 rounded-full" aria-hidden="true" />
-              <span>REALTIME_SESSION_READY // NO_ACCOUNT_REQUIRED</span>
+            <div className="landing-hero-status mt-4 flex min-w-0 flex-nowrap items-start gap-3 font-['JetBrains_Mono'] text-xs uppercase tracking-[0.18em]">
+              <span
+                aria-hidden="true"
+                className="landing-hero-status__dot mt-[0.35em] h-2 w-2 shrink-0 rounded-full"
+              />
+              <span className="min-w-0 break-words">
+                REALTIME_SESSION_READY // NO_ACCOUNT_REQUIRED
+              </span>
             </div>
           </div>
 
