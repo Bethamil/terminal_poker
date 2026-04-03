@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import {
   VOTING_DECK_OPTIONS,
@@ -121,6 +121,53 @@ const ParticipantRail = ({
   );
 };
 
+const MobileParticipantStrip = ({
+  currentParticipantId,
+  participants,
+  roundStatus
+}: {
+  currentParticipantId: string;
+  participants: ParticipantSnapshot[];
+  roundStatus: "active" | "revealed";
+}) => {
+  return (
+    <div className="-mx-[var(--shell-pad)] flex gap-2 overflow-x-auto px-[var(--shell-pad)] pb-1 lg:hidden">
+      {participants.map((participant) => {
+        const isCurrent = participant.id === currentParticipantId;
+        const voteState =
+          roundStatus === "revealed"
+            ? participant.revealedVote ?? "·"
+            : participant.hasVoted
+              ? "●"
+              : "·";
+
+        return (
+          <div
+            className={`grid min-w-[8.2rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-[999px] border px-3 py-2 ${
+              isCurrent
+                ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
+                : "border-[color:var(--outline)] bg-[color:var(--panel-bg)]"
+            }`}
+            key={participant.id}
+          >
+            <div className={`presence-dot presence-dot--${participant.presence}`} />
+            <strong className="truncate text-[0.8rem]">{participant.name}</strong>
+            <div
+              className={`text-right font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] ${
+                roundStatus === "revealed" && participant.revealedVote
+                  ? "font-['Space_Grotesk'] text-[1rem] tracking-[-0.04em] text-[color:var(--text)]"
+                  : "text-[color:var(--muted)]"
+              }`}
+            >
+              {voteState}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const formatAverage = (average: number | null) => {
   if (average === null) {
     return "n/a";
@@ -147,6 +194,8 @@ const formatVoteShortcutHint = (shortcuts: string[]) => {
     : `[${numericHint}] VOTE`;
 };
 
+type SettingsTab = "room" | "users";
+
 export const RoomPage = () => {
   const navigate = useNavigate();
   const { roomCode: roomCodeParam } = useParams();
@@ -158,6 +207,8 @@ export const RoomPage = () => {
   const [joinPasscode, setJoinPasscode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>("room");
+  const [isSettingsSaved, setIsSettingsSaved] = useState(false);
   const [roomLinkStatus, setRoomLinkStatus] = useState<"idle" | "copied" | "error">("idle");
   const [isLeaving, setIsLeaving] = useState(false);
   const [ticketDraft, setTicketDraft] = useState("");
@@ -165,6 +216,8 @@ export const RoomPage = () => {
   const [votingDeckIdDraft, setVotingDeckIdDraft] = useState<UpdateRoomSettingsPayload["votingDeckId"]>("modified-fibonacci");
   const [newPasscodeDraft, setNewPasscodeDraft] = useState("");
   const [pendingKickId, setPendingKickId] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const settingsSavedTimeoutRef = useRef<number | null>(null);
   const {
     castVote,
     error,
@@ -202,6 +255,22 @@ export const RoomPage = () => {
     setVotingDeckIdDraft(snapshot.room.votingDeckId);
     setNewPasscodeDraft("");
   }, [snapshot?.room.id, snapshot?.room.jiraBaseUrl, snapshot?.room.votingDeckId, snapshot?.room.hasJoinPasscode]);
+
+  useEffect(() => {
+    if (isSettingsOpen) {
+      setSettingsTab("room");
+      setSettingsError(null);
+    }
+  }, [isSettingsOpen]);
+
+  useEffect(
+    () => () => {
+      if (settingsSavedTimeoutRef.current !== null) {
+        window.clearTimeout(settingsSavedTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (!sessionEndedError) {
@@ -293,22 +362,41 @@ export const RoomPage = () => {
     }
   };
 
-  const saveRoomSettings = (
+  const saveRoomSettings = async (
     joinPasscodeMode: UpdateRoomSettingsPayload["joinPasscodeMode"] = "keep"
   ) => {
     const trimmedPasscode = newPasscodeDraft.trim();
 
-    updateRoomSettings({
-      jiraBaseUrl: jiraBaseUrlDraft.trim() || null,
-      votingDeckId: votingDeckIdDraft,
-      joinPasscode: joinPasscodeMode === "set" ? trimmedPasscode : null,
-      joinPasscodeMode
-    });
+    setSettingsError(null);
+
+    try {
+      await updateRoomSettings({
+        jiraBaseUrl: jiraBaseUrlDraft.trim() || null,
+        votingDeckId: votingDeckIdDraft,
+        joinPasscode: joinPasscodeMode === "set" ? trimmedPasscode : null,
+        joinPasscodeMode
+      });
+
+      if (settingsSavedTimeoutRef.current !== null) {
+        window.clearTimeout(settingsSavedTimeoutRef.current);
+      }
+
+      setIsSettingsSaved(true);
+      settingsSavedTimeoutRef.current = window.setTimeout(() => {
+        setIsSettingsSaved(false);
+        settingsSavedTimeoutRef.current = null;
+      }, 1800);
+    } catch (requestError) {
+      setIsSettingsSaved(false);
+      setSettingsError(
+        requestError instanceof ApiError ? requestError.message : "Unable to save room settings."
+      );
+    }
   };
 
   const handleSaveRoomSettings = () => {
     const joinPasscodeMode = newPasscodeDraft.trim() ? "set" : "keep";
-    saveRoomSettings(joinPasscodeMode);
+    void saveRoomSettings(joinPasscodeMode);
   };
 
   const handleKickParticipant = (participant: ParticipantSnapshot) => {
@@ -361,8 +449,7 @@ export const RoomPage = () => {
   };
 
   if (!roomCode) {
-    navigate("/");
-    return null;
+    return <Navigate replace to="/" />;
   }
 
   if (!participantToken) {
@@ -419,14 +506,21 @@ export const RoomPage = () => {
   const roundSummary = snapshot.round.summary;
   const hasRoundSummary = Boolean(roundSummary);
   const formattedAverage = formatAverage(roundSummary?.average ?? null);
-  const consensusLabel = roundSummary?.consensus ?? "split";
-  const hasConsensus = roundSummary?.consensus !== null;
+  const topVoteLabel = roundSummary?.consensus ?? "SPLIT";
+  const hasTopVote = roundSummary?.consensus !== null;
+  const revealedValuesInOrder = snapshot.votingDeck.filter(
+    (value) => value !== "?" && (roundSummary?.counts[value] ?? 0) > 0
+  );
+  const hasUnknownVotes = (roundSummary?.counts["?"] ?? 0) > 0;
+  const rangeLabel =
+    revealedValuesInOrder.length > 1
+      ? `${revealedValuesInOrder[0]}-${revealedValuesInOrder[revealedValuesInOrder.length - 1]}`
+      : revealedValuesInOrder[0] ?? (hasUnknownVotes ? "?" : "—");
+  const summaryLabel = hasTopVote ? "TOP VOTE" : "RESULT";
+  const summaryPrimaryValue = hasTopVote ? topVoteLabel : "SPLIT";
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
   const activeParticipantCount = countOnlineParticipants(snapshot.participants);
-  const viewerVoteLabel = snapshot.viewer.selectedVote
-    ? `YOU VOTED ${snapshot.viewer.selectedVote}`
-    : "NO VOTE SUBMITTED";
   return (
     <div className="shell shell--room relative overflow-hidden">
       <AppHeader
@@ -509,32 +603,34 @@ export const RoomPage = () => {
       />
 
       <main className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <ParticipantRail
-          currentParticipantId={snapshot.viewer.participantId}
-          onInvite={() => void copyRoomLink()}
-          roundStatus={snapshot.round.status}
-          roomCode={snapshot.room.code}
-          roomLinkStatus={roomLinkStatus}
-          roomName={snapshot.room.name}
-          participants={snapshot.participants}
-        />
+        <div className="hidden lg:grid">
+          <ParticipantRail
+            currentParticipantId={snapshot.viewer.participantId}
+            onInvite={() => void copyRoomLink()}
+            roundStatus={snapshot.round.status}
+            roomCode={snapshot.room.code}
+            roomLinkStatus={roomLinkStatus}
+            roomName={snapshot.room.name}
+            participants={snapshot.participants}
+          />
+        </div>
 
         <section className="order-1 grid gap-4 lg:order-2">
-          <div className="grid gap-3 px-2 py-2 text-center lg:px-6 lg:py-4">
+          <div className="grid gap-3 px-2 py-2 text-center max-[720px]:gap-2 max-[720px]:px-1 max-[720px]:py-1 lg:px-6 lg:py-4">
             <div className="inline-flex justify-center">
               <StatusChip tone={snapshot.round.status === "revealed" ? "success" : "accent"}>
                 {snapshot.round.status === "revealed" ? "REVEALED" : "IN PROGRESS"}
               </StatusChip>
             </div>
             <div className="grid gap-2">
-              <div className="hero-card__ticket items-center justify-items-center gap-2">
+              <div className="hero-card__ticket items-center justify-items-center gap-3">
                 <span className="hero-card__label">CURRENT TICKET</span>
-                <h1 className="ticket-title text-[clamp(3.8rem,10vw,8rem)]">
+                <h1 className="ticket-title text-[clamp(3.1rem,11vw,8rem)] max-[720px]:text-[clamp(2.6rem,10vw,4.6rem)]">
                   {snapshot.round.jiraTicketKey ?? "ROUND_OPEN"}
                 </h1>
                 {snapshot.round.jiraTicketUrl ? (
                   <a
-                    className="ticket-link inline-flex rounded-none border border-[#8c67ff]/50 px-5 py-3 text-[#d7c7ff] no-underline transition hover:bg-[#8c67ff]/10"
+                    className="ticket-link ticket-link--jira mt-3 inline-flex justify-self-center rounded-none px-5 py-3 no-underline transition"
                     href={snapshot.round.jiraTicketUrl}
                     rel="noreferrer"
                     target="_blank"
@@ -545,66 +641,53 @@ export const RoomPage = () => {
               </div>
             </div>
 
-            <div className="mx-auto w-full max-w-[44rem]">
-              <div
-                className={`grid min-h-[6.4rem] items-center gap-4 rounded-[24px] border px-5 py-4 text-left md:grid-cols-[minmax(0,1fr)_auto_auto] ${
-                  hasRoundSummary ? "shadow-[0_24px_70px_rgba(0,0,0,0.12)]" : ""
-                }`.trim()}
-                style={{
-                  background: hasRoundSummary
-                    ? "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 90%, var(--surface-high) 10%), color-mix(in srgb, var(--card-bg) 96%, transparent))"
-                    : "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 68%, transparent), color-mix(in srgb, var(--card-bg) 74%, transparent))",
-                  borderColor: hasRoundSummary
-                    ? "var(--outline)"
-                    : "color-mix(in srgb, var(--outline) 56%, transparent)",
-                  opacity: hasRoundSummary ? 1 : 0.78
-                }}
-              >
-                <div className="grid gap-1">
-                  <span className="hero-card__label">STATISTICAL OUTPUT</span>
-                  <strong
-                    className="font-['JetBrains_Mono'] text-[clamp(1.35rem,2.9vw,2.2rem)] uppercase tracking-[0.06em]"
-                    style={{ color: hasRoundSummary ? "var(--text)" : "var(--text-soft)" }}
-                  >
-                    {hasRoundSummary ? "SUMMARY_REPORT" : "SUMMARY_LOCKED"}
-                  </strong>
-                  <span
-                    className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.14em]"
-                    style={{ color: "var(--muted)" }}
-                  >
-                    {hasRoundSummary ? "Reveal complete" : ""}
-                  </span>
-                </div>
-
+            {hasRoundSummary ? (
+              <div className="mx-auto w-full max-w-[44rem]">
                 <div
-                  className="grid min-w-[7rem] gap-1 border-t pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0"
-                  style={{ borderColor: "var(--outline)" }}
+                  className="grid gap-4 rounded-[24px] border px-4 py-4 text-left shadow-[0_24px_70px_rgba(0,0,0,0.12)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-6 md:px-5"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 90%, var(--surface-high) 10%), color-mix(in srgb, var(--card-bg) 96%, transparent))",
+                    borderColor: "var(--outline)"
+                  }}
                 >
-                  <span className="hero-card__label">AVERAGE</span>
-                  <strong
-                    className="font-['Space_Grotesk'] text-[clamp(2rem,4vw,3rem)] leading-none tracking-[-0.06em]"
-                    style={{ color: hasRoundSummary ? "var(--primary)" : "var(--muted)" }}
-                  >
-                    {hasRoundSummary ? formattedAverage : "—"}
-                  </strong>
-                </div>
+                  <div className="grid gap-1.5">
+                    <span className="hero-card__label">{summaryLabel}</span>
+                    <strong
+                      className="font-['Space_Grotesk'] text-[clamp(2.6rem,5vw,4.5rem)] leading-[0.88] tracking-[-0.08em] uppercase"
+                      style={{ color: hasTopVote ? "var(--primary)" : "var(--text)" }}
+                    >
+                      {summaryPrimaryValue}
+                    </strong>
+                  </div>
 
-                <div
-                  className="grid min-w-[7rem] gap-1 border-t pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0"
-                  style={{ borderColor: "var(--outline)" }}
-                >
-                  <span className="hero-card__label">CONSENSUS</span>
-                  <strong
-                    className="font-['Space_Grotesk'] text-[clamp(2rem,4vw,3rem)] leading-none tracking-[-0.06em] uppercase"
-                    style={{
-                      color: hasRoundSummary && hasConsensus ? "var(--vote-tile-selected-text)" : "var(--muted)"
-                    }}
+                  <div
+                    className="grid grid-cols-3 gap-4 border-t pt-4 md:min-w-[19rem] md:border-l md:border-t-0 md:pl-6 md:pt-0"
+                    style={{ borderColor: "color-mix(in srgb, var(--outline) 76%, transparent)" }}
                   >
-                    {hasRoundSummary ? consensusLabel : "—"}
-                  </strong>
+                    {[
+                      { label: "AVG", value: formattedAverage, accent: true },
+                      { label: "RANGE", value: rangeLabel, accent: false },
+                      { label: "VOTES", value: String(votedCount), accent: false }
+                    ].map((stat) => (
+                      <div
+                        className="grid content-start gap-1 border-l pl-4 first:border-l-0 first:pl-0"
+                        key={stat.label}
+                        style={{ borderColor: "color-mix(in srgb, var(--outline) 76%, transparent)" }}
+                      >
+                        <span className="hero-card__label">{stat.label}</span>
+                        <strong
+                          className="font-['Space_Grotesk'] text-[clamp(1.3rem,2.6vw,2rem)] leading-none tracking-[-0.06em] uppercase"
+                          style={{ color: stat.accent ? "var(--primary)" : "var(--text)" }}
+                        >
+                          {stat.value}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </div>
 
           <section
@@ -617,6 +700,11 @@ export const RoomPage = () => {
               </div>
               <div className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</div>
             </div>
+            <MobileParticipantStrip
+              currentParticipantId={snapshot.viewer.participantId}
+              participants={snapshot.participants}
+              roundStatus={snapshot.round.status}
+            />
             {isModerator ? (
               <div className="flex flex-wrap items-stretch gap-3 border-b border-white/6 pb-3">
                 <div className="flex min-w-[18rem] flex-[1_1_30rem] items-stretch gap-2">
@@ -666,52 +754,12 @@ export const RoomPage = () => {
               </div>
             ) : null}
             <div className={`deck-card__body ${isVotingClosed ? "deck-card__body--closed" : ""}`.trim()}>
-              {isVotingClosed ? (
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 z-[2]"
-                >
-                  <div
-                    className="absolute inset-[-18px] rounded-[42px] bg-[color:var(--surface-lowest)]/34 backdrop-blur-[18px]"
-                    style={{
-                      WebkitMaskImage:
-                        "radial-gradient(ellipse 78% 70% at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.96) 46%, rgba(0,0,0,0.72) 64%, rgba(0,0,0,0.28) 82%, transparent 100%)",
-                      maskImage:
-                        "radial-gradient(ellipse 78% 70% at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.96) 46%, rgba(0,0,0,0.72) 64%, rgba(0,0,0,0.28) 82%, transparent 100%)"
-                    }}
-                  />
-                  <div
-                    className="absolute inset-0 grid place-items-center p-6"
-                  >
-                    <div className="grid justify-items-center gap-3 text-center">
-                      <span
-                        className="rounded-full border px-[1.35rem] py-[0.9rem] font-['JetBrains_Mono'] text-[clamp(1.15rem,2.2vw,1.9rem)] font-bold uppercase tracking-[0.24em] shadow-[0_18px_50px_rgba(0,0,0,0.18)]"
-                        style={{
-                          borderColor: "var(--vote-tile-selected-border)",
-                          background: "color-mix(in srgb, var(--surface-lowest) 94%, transparent)",
-                          color: "var(--vote-tile-selected-text)",
-                          boxShadow:
-                            "0 0 0 1px color-mix(in srgb, var(--outline) 68%, transparent), 0 18px 50px rgba(0, 0, 0, 0.18)"
-                        }}
-                      >
-                        {viewerVoteLabel}
-                      </span>
-                      <span
-                        className="font-['JetBrains_Mono'] text-[0.78rem] uppercase tracking-[0.18em]"
-                        style={{ color: "var(--summary-soft)" }}
-                      >
-                        VOTING ENDED
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
               <div className="vote-grid">
                 {voteCardMeta.map((card) => {
                   const isSelected = snapshot.viewer.selectedVote === card.value;
                   return (
                     <button
-                      aria-disabled={isVotingClosed}
+                      disabled={isVotingClosed}
                       className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
                         isVotingClosed ? "vote-tile--locked" : ""
                       }`.trim()}
@@ -720,7 +768,6 @@ export const RoomPage = () => {
                       type="button"
                     >
                       <strong className="vote-tile__value">{card.value}</strong>
-                      <span className="vote-tile__label">{card.label}</span>
                     </button>
                   );
                 })}
@@ -756,116 +803,180 @@ export const RoomPage = () => {
 
       {isModerator && isSettingsOpen ? (
         <AppModal
+          bodyClassName="overflow-hidden"
           label="SETTINGS"
           onClose={() => setIsSettingsOpen(false)}
           title="Room config"
           titleId="room-settings-title"
           wide
         >
-          <div className="settings-grid settings-grid--modal">
-            <section className="settings-section">
-              <div className="section-header">
-                <StatusChip>DEFAULTS</StatusChip>
-                <h3>Round setup</h3>
-              </div>
-              <Field
-                label="JIRA URL"
-                value={jiraBaseUrlDraft}
-                onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
-                placeholder="https://jira.example.com"
-              />
-              <SelectField
-                label="DECK"
-                value={votingDeckIdDraft}
-                onChange={(event) =>
-                  setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
-                }
-                hint="Changing the deck starts a new round."
+          <div className="grid h-full min-h-0 gap-3 grid-rows-[auto_minmax(0,1fr)] min-[721px]:gap-4 min-[721px]:grid-cols-[minmax(12rem,14rem)_minmax(0,1fr)] min-[721px]:grid-rows-1">
+            <div className="grid content-start gap-3 min-[721px]:min-h-0">
+              <div
+                aria-label="Settings sections"
+                className="grid grid-cols-2 gap-2 min-[721px]:grid-cols-1"
+                role="tablist"
               >
-                {VOTING_DECK_OPTIONS.map((deck) => (
-                  <option key={deck.id} value={deck.id}>
-                    {deck.name}
-                  </option>
-                ))}
-              </SelectField>
-              <Field
-                hint={
-                  snapshot.room.hasJoinPasscode
-                    ? "Leave blank to keep the current passcode."
-                    : "Leave blank to keep the room open."
-                }
-                label="NEW PASSCODE"
-                value={newPasscodeDraft}
-                onChange={(event) => setNewPasscodeDraft(event.target.value)}
-                placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
-                type="password"
-              />
-              <div className="shortcut-strip settings-strip">
-                <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
-                <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
-              </div>
-              <div className="action-row">
-                <Button onClick={handleSaveRoomSettings} variant="secondary">
-                  SAVE
-                </Button>
-                {snapshot.room.hasJoinPasscode ? (
-                  <Button onClick={() => saveRoomSettings("clear")} variant="ghost">
-                    CLEAR PASSCODE
-                  </Button>
-                ) : null}
-              </div>
-            </section>
-
-            <section className="settings-section settings-section--access">
-              <div className="section-header">
-                <StatusChip tone="success">ACCESS</StatusChip>
-                <h3>Participants</h3>
-              </div>
-              <div className="settings-access-summary">
-                ACTIVE ({activeParticipantCount}/{snapshot.participants.length})
-              </div>
-              <div className="settings-list settings-list--access">
-                {snapshot.participants.map((participant) => {
-                  const isViewer = participant.id === snapshot.viewer.participantId;
-                  const canKick = !isViewer && participant.role !== "moderator";
+                {[
+                  { id: "room", label: "ROOM", chip: "CONFIG" },
+                  { id: "users", label: "USERS", chip: `${snapshot.participants.length} ACTIVE` }
+                ].map((tab) => {
+                  const isActive = settingsTab === tab.id;
 
                   return (
-                    <div
-                      className={`settings-user-row settings-user-row--access ${
-                        isViewer ? "settings-user-row--active" : ""
+                    <button
+                      aria-controls={`room-settings-panel-${tab.id}`}
+                      aria-selected={isActive}
+                      className={`grid cursor-pointer gap-1 rounded-[12px] border px-3 py-2.5 text-left transition-[transform,border-color,background-color,box-shadow] duration-150 hover:-translate-y-[1px] hover:border-[color:var(--button-secondary-border)] hover:bg-[color:var(--panel-strong-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--button-secondary-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--card-bg)] active:translate-y-0 min-[721px]:gap-2 min-[721px]:px-4 min-[721px]:py-3 ${
+                        isActive
+                          ? "border-[color:var(--button-secondary-border)] bg-[color:var(--button-secondary-bg)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                          : "border-[color:var(--outline)] bg-[color:var(--panel-bg)]"
                       }`}
-                      key={participant.id}
+                      id={`room-settings-tab-${tab.id}`}
+                      key={tab.id}
+                      onClick={() => setSettingsTab(tab.id as SettingsTab)}
+                      role="tab"
+                      type="button"
                     >
-                      <div className={`presence-dot presence-dot--${participant.presence}`} />
-                      <div className="settings-user-row__identity">
-                        <strong>{participant.name}</strong>
-                        <span>
-                          {participant.role === "moderator"
-                            ? isViewer
-                              ? "HOST / YOU"
-                              : "HOST"
-                            : participant.hasVoted
-                              ? "VOTED"
-                              : "WAITING"}
-                        </span>
-                      </div>
-                      {canKick ? (
-                        <Button
-                          className="settings-user-row__action"
-                          disabled={pendingKickId === participant.id}
-                          onClick={() => handleKickParticipant(participant)}
-                          variant="danger"
-                        >
-                          {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
-                        </Button>
-                      ) : (
-                        <span className="mono-muted">{isViewer ? "YOU" : "LOCKED"}</span>
-                      )}
-                    </div>
+                      <span className="font-['JetBrains_Mono'] text-[0.62rem] uppercase tracking-[0.12em] text-[color:var(--muted)] min-[721px]:text-[0.68rem] min-[721px]:tracking-[0.14em]">
+                        {tab.chip}
+                      </span>
+                      <span className="font-['JetBrains_Mono'] text-[0.82rem] uppercase tracking-[0.08em] text-[color:var(--text)] min-[721px]:text-[0.88rem] min-[721px]:tracking-[0.1em]">
+                        {tab.label}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
-            </section>
+
+            </div>
+
+            {settingsTab === "room" ? (
+              <section
+                aria-labelledby="room-settings-tab-room"
+                className="grid min-h-0 content-start gap-4 overflow-y-auto rounded-[calc(var(--radius)-2px)] border border-[color:var(--outline)] bg-[color:var(--settings-section-bg)] p-4 pr-3 max-[720px]:gap-[0.85rem] max-[720px]:p-[0.85rem] max-[720px]:pr-[0.65rem]"
+                id="room-settings-panel-room"
+                role="tabpanel"
+              >
+                <div className="section-header">
+                  <StatusChip>ROOM</StatusChip>
+                  <h3 className="m-0 font-['JetBrains_Mono'] text-[0.92rem] uppercase tracking-[0.08em]">
+                    Round setup
+                  </h3>
+                </div>
+                <div className="grid gap-4">
+                  <Field
+                    label="JIRA URL"
+                    value={jiraBaseUrlDraft}
+                    onChange={(event) => setJiraBaseUrlDraft(event.target.value)}
+                    placeholder="https://jira.example.com"
+                  />
+                  <SelectField
+                    label="DECK"
+                    value={votingDeckIdDraft}
+                    onChange={(event) =>
+                      setVotingDeckIdDraft(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
+                    }
+                    hint="Changing the deck starts a new round."
+                  >
+                    {VOTING_DECK_OPTIONS.map((deck) => (
+                      <option key={deck.id} value={deck.id}>
+                        {deck.name}
+                      </option>
+                    ))}
+                  </SelectField>
+                  <Field
+                    hint={
+                      snapshot.room.hasJoinPasscode
+                        ? "Leave blank to keep the current passcode."
+                        : "Leave blank to keep the room open."
+                    }
+                    label="NEW PASSCODE"
+                    value={newPasscodeDraft}
+                    onChange={(event) => setNewPasscodeDraft(event.target.value)}
+                    placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
+                    type="password"
+                  />
+                </div>
+                <div className="shortcut-strip justify-between rounded-[10px] border border-[color:var(--outline)] bg-[color:var(--panel-bg)] px-4 py-[0.8rem] max-[720px]:grid max-[720px]:grid-cols-2 max-[720px]:gap-[0.55rem] max-[720px]:px-[0.85rem] max-[720px]:py-[0.7rem]">
+                  <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
+                  <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
+                </div>
+                <div className="action-row max-[720px]:grid max-[720px]:grid-cols-1 max-[720px]:gap-[0.6rem]">
+                  <Button className="max-[720px]:w-full" onClick={handleSaveRoomSettings} variant="secondary">
+                    {isSettingsSaved ? "SAVED" : "SAVE"}
+                  </Button>
+                  {snapshot.room.hasJoinPasscode ? (
+                    <Button className="max-[720px]:w-full" onClick={() => void saveRoomSettings("clear")} variant="ghost">
+                      CLEAR PASSCODE
+                    </Button>
+                  ) : null}
+                </div>
+                {settingsError ? <div className="notice notice--error">{settingsError}</div> : null}
+              </section>
+            ) : (
+              <section
+                aria-labelledby="room-settings-tab-users"
+                className="grid min-h-0 gap-4 overflow-hidden rounded-[calc(var(--radius)-2px)] border border-[color:var(--outline)] bg-[color:var(--settings-section-bg)] p-4 [grid-template-rows:auto_auto_minmax(0,1fr)] max-[720px]:gap-[0.85rem] max-[720px]:p-[0.85rem]"
+                id="room-settings-panel-users"
+                role="tabpanel"
+              >
+                <div className="section-header">
+                  <StatusChip tone="success">USERS</StatusChip>
+                  <h3 className="m-0 font-['JetBrains_Mono'] text-[0.92rem] uppercase tracking-[0.08em]">
+                    Participants
+                  </h3>
+                </div>
+                <div className="border-l border-[color:var(--rail-accent)] bg-[color:color-mix(in_srgb,var(--chip-bg)_78%,transparent)] px-4 py-[0.85rem] font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.14em] text-[color:var(--rail-accent-text)] max-[720px]:px-[0.85rem] max-[720px]:py-[0.75rem] max-[720px]:text-[0.68rem] max-[720px]:tracking-[0.1em]">
+                  ACTIVE ({activeParticipantCount}/{snapshot.participants.length})
+                </div>
+                <div className="grid min-h-0 content-start auto-rows-max gap-3 overflow-y-auto pr-[0.3rem] max-[720px]:gap-[0.65rem] max-[720px]:pb-1 max-[720px]:pr-[0.1rem]">
+                  {snapshot.participants.map((participant) => {
+                    const isViewer = participant.id === snapshot.viewer.participantId;
+                    const canKick = !isViewer && participant.role !== "moderator";
+
+                    return (
+                      <div
+                        className={`grid min-h-[4.1rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-[0.7rem] rounded-[10px] border px-[0.85rem] py-[0.8rem] max-[720px]:grid-cols-[auto_minmax(0,1fr)] max-[720px]:items-start max-[720px]:gap-x-[0.65rem] max-[720px]:gap-y-2 ${
+                          isViewer
+                            ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
+                            : "border-transparent bg-[color:var(--row-bg)]"
+                        }`}
+                        key={participant.id}
+                      >
+                        <div className={`presence-dot presence-dot--${participant.presence} max-[720px]:mt-[0.32rem]`} />
+                        <div className="grid min-w-0 gap-[0.2rem]">
+                          <strong className="text-[0.92rem]">{participant.name}</strong>
+                          <span className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                            {participant.role === "moderator"
+                              ? isViewer
+                                ? "HOST / YOU"
+                                : "HOST"
+                              : participant.hasVoted
+                                ? "VOTED"
+                                : "WAITING"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-end max-[720px]:col-start-2 max-[720px]:justify-start">
+                          {canKick ? (
+                            <Button
+                              className="max-[720px]:min-h-[2.7rem] max-[720px]:px-4"
+                              disabled={pendingKickId === participant.id}
+                              onClick={() => handleKickParticipant(participant)}
+                              variant="danger"
+                            >
+                              {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
+                            </Button>
+                          ) : (
+                            <span className="mono-muted whitespace-nowrap">{isViewer ? "YOU" : "LOCKED"}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
           </div>
         </AppModal>
       ) : null}

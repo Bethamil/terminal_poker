@@ -26,7 +26,7 @@ interface UseRoomConnectionResult {
   updateTicket: (jiraTicketKey: string | null) => void;
   updateRoomSettings: (
     payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
-  ) => void;
+  ) => Promise<void>;
   kickParticipant: (participantId: string) => void;
 }
 
@@ -211,19 +211,49 @@ export const useRoomConnection = (
 
   const emitRoomSettingsUpdate = (
     payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
-  ) => {
-    const socket = socketRef.current;
+  ) =>
+    new Promise<void>((resolve, reject) => {
+      const socket = socketRef.current;
 
-    if (!socket || !participantToken) {
-      return;
-    }
+      if (!socket || !participantToken) {
+        reject(new Error("Room connection is not ready."));
+        return;
+      }
 
-    socket.emit("room:updateSettings", {
-      roomCode: roomCode.toUpperCase(),
-      participantToken,
-      ...payload
+      let finished = false;
+      const timeoutId = window.setTimeout(() => {
+        if (finished) {
+          return;
+        }
+
+        finished = true;
+        reject(new ApiError(408, "REQUEST_TIMEOUT", "Unable to save room settings right now."));
+      }, 4000);
+
+      socket.emit(
+        "room:updateSettings",
+        {
+          roomCode: roomCode.toUpperCase(),
+          participantToken,
+          ...payload
+        },
+        (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => {
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+          window.clearTimeout(timeoutId);
+
+          if (!result.ok) {
+            reject(new ApiError(400, result.error.code, result.error.message));
+            return;
+          }
+
+          resolve();
+        }
+      );
     });
-  };
 
   const emitKickParticipant = (participantId: string) => {
     const socket = socketRef.current;

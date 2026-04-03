@@ -9,10 +9,13 @@ export const AppHeader = ({
   actions,
   brandAside,
   children,
-  mobileMenu
+  mobileMenu,
+  splitTopbar
 }: PropsWithChildren<{
   actions?: ReactNode;
   brandAside?: ReactNode;
+  /** Mobile: two-column row (brand + actions), hide empty center — avoids :empty / :has quirks */
+  splitTopbar?: boolean;
   mobileMenu?: {
     label: string;
     title: string;
@@ -25,7 +28,15 @@ export const AppHeader = ({
 
   return (
     <>
-      <header className={`topbar ${mobileMenu ? "topbar--mobile-menu-enabled" : ""}`.trim()}>
+      <header
+        className={[
+          "topbar",
+          mobileMenu ? "topbar--mobile-menu-enabled" : "",
+          splitTopbar ? "topbar--split" : ""
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <Link aria-label="Go to homepage" className="brand" to="/">
           <span className="brand__mark">&gt;_</span>
           <span className="brand__text">TERMINAL_POKER</span>

@@ -137,17 +137,22 @@ export const LandingPage = () => {
 
   return (
     <div className="shell shell--landing relative overflow-hidden">
-      <AppHeader />
+      <AppHeader splitTopbar />
 
       <main className="mx-auto grid w-full max-w-[1380px] gap-7">
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">
           <div className="min-w-0">
-            <h1 className="hero-title landing-hero-title text-[clamp(3.6rem,9vw,8rem)]">
-              SCRUM_POKER_ROOT
+            <h1 className="hero-title landing-hero-title">
+              {"SCRUM_POKER_ROOT".split("_").join("_\u200b")}
             </h1>
-            <div className="landing-hero-status mt-4 inline-flex items-center gap-3 font-['JetBrains_Mono'] text-xs uppercase tracking-[0.18em]">
-              <span className="landing-hero-status__dot h-2 w-2 rounded-full" aria-hidden="true" />
-              <span>REALTIME_SESSION_READY // NO_ACCOUNT_REQUIRED</span>
+            <div className="landing-hero-status mt-4 flex min-w-0 flex-nowrap items-start gap-3 font-['JetBrains_Mono'] text-xs uppercase tracking-[0.18em]">
+              <span
+                aria-hidden="true"
+                className="landing-hero-status__dot mt-[0.35em] h-2 w-2 shrink-0 rounded-full"
+              />
+              <span className="min-w-0 break-words">
+                REALTIME_SESSION_READY // NO_ACCOUNT_REQUIRED
+              </span>
             </div>
           </div>
 
@@ -158,13 +163,17 @@ export const LandingPage = () => {
                 <div className="grid gap-2">
                   {recentNodes.map((room) => (
                     <button
-                      className="landing-node-link flex items-center justify-between gap-3 border-b pb-2 text-left font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.12em] transition"
+                      className="landing-node-link grid gap-x-3 gap-y-1 border-b pb-2 text-left font-['JetBrains_Mono'] text-[11px] uppercase tracking-[0.12em] transition lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center"
                       key={room.roomCode}
                       onClick={() => openPreviousRoom(room.roomCode)}
                       type="button"
                     >
-                      <span>{room.roomName.replace(/\s+/g, "_").toUpperCase()}</span>
-                      <strong>ID: {room.roomCode}</strong>
+                      <span className="min-w-0 break-words leading-snug">
+                        {room.roomName.replace(/\s+/g, "_").toUpperCase()}
+                      </span>
+                      <strong className="justify-self-start leading-snug xl:justify-self-end">
+                        ID: {room.roomCode}
+                      </strong>
                     </button>
                   ))}
                 </div>
@@ -194,8 +203,8 @@ export const LandingPage = () => {
             </p>
           </div>
 
-          <div className="landing-action-grid">
-            <article className="landing-action-card landing-form landing-form--create">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <article className="landing-form landing-form--create grid h-full content-start gap-4 p-4 [grid-template-rows:auto_auto_minmax(0,1fr)_auto]">
               <div className="section-header">
                 <StatusChip tone="success">CREATE</StatusChip>
                 <h2>[CREATE_SESSION]</h2>
@@ -209,7 +218,7 @@ export const LandingPage = () => {
                 <span>DECK SELECTABLE</span>
               </div>
               <Button
-                className="landing-action-card__button"
+                className="mt-auto w-full lg:min-w-48 lg:w-fit"
                 onClick={() => setActiveDialog("create")}
                 style={{
                   background: "var(--action-create-bg)",
@@ -220,7 +229,7 @@ export const LandingPage = () => {
               </Button>
             </article>
 
-            <article className="landing-action-card landing-form landing-form--join">
+            <article className="landing-form landing-form--join grid h-full content-start gap-4 p-4 [grid-template-rows:auto_auto_minmax(0,1fr)_auto]">
               <div className="section-header">
                 <StatusChip>JOIN</StatusChip>
                 <h2>[JOIN_SESSION]</h2>
@@ -234,7 +243,7 @@ export const LandingPage = () => {
                 <span>PASSCODE IF NEEDED</span>
               </div>
               <Button
-                className="landing-action-card__button"
+                className="mt-auto w-full lg:min-w-48 lg:w-fit"
                 style={{
                   background: "var(--action-join-bg)",
                   color: "var(--action-join-text)"
@@ -295,7 +304,7 @@ export const LandingPage = () => {
           title="Create room"
           titleId="landing-create-title"
         >
-          <form className="landing-modal-form" onSubmit={handleCreate}>
+          <form className="grid gap-[0.9rem]" onSubmit={handleCreate}>
             <p className="hero-copy hero-copy--inline">
               Set up the room once, then share the invite link from inside the session.
             </p>
@@ -363,7 +372,7 @@ export const LandingPage = () => {
           title="Join room"
           titleId="landing-join-title"
         >
-          <form className="landing-modal-form" onSubmit={handleJoin}>
+          <form className="grid gap-[0.9rem]" onSubmit={handleJoin}>
             <p className="hero-copy hero-copy--inline">
               Enter the room code here. The room page will ask for your user name and a passcode only if required.
             </p>
@@ -389,22 +398,25 @@ export const LandingPage = () => {
             </Button>
           </form>
 
-          <div className="landing-modal-section">
+          <div className="mt-4 grid gap-[0.9rem] border-t border-[color:var(--outline)] pt-4">
             <span className="rail-kicker">RECENT</span>
             {previousRooms.length > 0 ? (
-              <div className="history-list">
+              <div className="grid gap-4">
                 {previousRooms.slice(0, 3).map((room) => {
                   const hasActiveSession = Boolean(sessionStorageStore.getParticipantToken(room.roomCode));
 
                   return (
-                    <div className="history-row" key={room.roomCode}>
-                      <div className="history-row__identity">
-                        <strong>{room.roomName}</strong>
-                        <span>
+                    <div
+                      className="grid items-center gap-3 rounded-[10px] border border-[color:var(--outline)] bg-[color:var(--panel-bg)] px-4 py-[0.95rem] sm:grid-cols-[minmax(0,1fr)_auto]"
+                      key={room.roomCode}
+                    >
+                      <div className="grid min-w-0 gap-[0.2rem]">
+                        <strong className="text-[0.95rem]">{room.roomName}</strong>
+                        <span className="font-['JetBrains_Mono'] text-[0.72rem] tracking-[0.08em] text-[color:var(--muted)]">
                           {room.roomCode} · {formatLastVisited(room.lastVisitedAt)}
                         </span>
                       </div>
-                      <div className="history-row__actions">
+                      <div className="flex flex-wrap items-center justify-start gap-[0.55rem] sm:justify-end">
                         <Button onClick={() => openPreviousRoom(room.roomCode)} variant="secondary">
                           {hasActiveSession ? "RESUME" : "OPEN"}
                         </Button>
@@ -417,7 +429,9 @@ export const LandingPage = () => {
                 })}
               </div>
             ) : (
-              <div className="landing-history__empty">Rooms you visit will show up here.</div>
+              <div className="rounded-[10px] border border-dashed border-[color:var(--outline)] bg-[color:var(--panel-bg)] p-4 text-[0.9rem] leading-[1.5] text-[color:var(--text-soft)]">
+                Rooms you visit will show up here.
+              </div>
             )}
           </div>
         </AppModal>

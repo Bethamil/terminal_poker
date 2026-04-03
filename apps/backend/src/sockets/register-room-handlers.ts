@@ -163,13 +163,21 @@ export const registerRoomHandlers = (
     }
   });
 
-  socket.on("room:updateSettings", async (payload) => {
+  socket.on("room:updateSettings", async (payload, ack) => {
     try {
       const session = getSocketSession(socket, payload.roomCode);
       await roomService.updateRoomSettings(session.roomCode, session.participantToken, payload);
+      ack?.({ ok: true });
       await emitRoomSnapshots(io, roomService, session.roomCode);
     } catch (error) {
-      emitSocketError(socket, error);
+      const appError = asAppError(error);
+      ack?.({
+        ok: false,
+        error: {
+          code: appError.code,
+          message: appError.message
+        }
+      });
     }
   });
 
