@@ -159,6 +159,8 @@ export class RoomService {
         role: ParticipantRole.PARTICIPANT,
         sessionTokenHash: participantTokenHash
       });
+
+      await repo.touchRoomActivity(room.id);
     });
 
     const snapshotResponse = await this.getRoomState(roomCode, participantToken);
@@ -220,6 +222,7 @@ export class RoomService {
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
       await repo.upsertVote(round.id, authorized.participantId, value);
+      await repo.touchRoomActivity(authorized.room.id);
     });
   }
 
@@ -409,6 +412,7 @@ export class RoomService {
 
     await this.prisma.$transaction(async (transaction) => {
       const repo = this.repository(transaction);
+      await repo.touchRoomActivity(authorized.room.id);
       await repo.createRound({
         roomId: authorized.room.id
       });

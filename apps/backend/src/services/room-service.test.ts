@@ -14,6 +14,7 @@ const createRoomAggregate = (): RoomAggregate =>
     jiraBaseUrl: "https://jira.old.example.com",
     votingDeckId: "modified-fibonacci",
     joinPasscodeHash: hashSecret("secret"),
+    lastActivityAt: new Date("2026-01-01T10:00:00.000Z"),
     createdAt: new Date("2026-01-01T10:00:00.000Z"),
     updatedAt: new Date("2026-01-01T10:00:00.000Z"),
     participants: [
@@ -64,7 +65,12 @@ const createFakePrisma = (room: RoomAggregate): PrismaClient => {
       update: async ({
         data
       }: {
-        data: { jiraBaseUrl?: string | null; votingDeckId?: string; joinPasscodeHash?: string | null };
+        data: {
+          jiraBaseUrl?: string | null;
+          votingDeckId?: string;
+          joinPasscodeHash?: string | null;
+          lastActivityAt?: Date;
+        };
       }) => {
         if ("jiraBaseUrl" in data) {
           room.jiraBaseUrl = data.jiraBaseUrl ?? null;
@@ -78,10 +84,32 @@ const createFakePrisma = (room: RoomAggregate): PrismaClient => {
           room.joinPasscodeHash = data.joinPasscodeHash ?? null;
         }
 
+        if ("lastActivityAt" in data && data.lastActivityAt) {
+          room.lastActivityAt = data.lastActivityAt;
+        }
+
         return room;
       }
     },
     participant: {
+      create: async ({
+        data
+      }: {
+        data: { roomId: string; name: string; role: ParticipantRole; sessionTokenHash: string };
+      }) => {
+        const participant = {
+          id: `part_${room.participants.length + 1}`,
+          roomId: data.roomId,
+          name: data.name,
+          role: data.role,
+          sessionTokenHash: data.sessionTokenHash,
+          createdAt: new Date("2026-01-01T10:05:00.000Z"),
+          updatedAt: new Date("2026-01-01T10:05:00.000Z")
+        };
+
+        room.participants.push(participant as RoomAggregate["participants"][number]);
+        return participant;
+      },
       delete: async ({ where }: { where: { id: string } }) => {
         const participantIndex = room.participants.findIndex((entry) => entry.id === where.id);
 
@@ -136,6 +164,43 @@ const createFakePrisma = (room: RoomAggregate): PrismaClient => {
         }
 
         return round;
+      }
+    },
+    vote: {
+      upsert: async ({
+        where,
+        create,
+        update
+      }: {
+        where: { roundId_participantId: { roundId: string; participantId: string } };
+        create: { roundId: string; participantId: string; value: string };
+        update: { value: string };
+      }) => {
+        const round = room.rounds.find((entry) => entry.id === where.roundId_participantId.roundId);
+
+        if (!round) {
+          throw new Error("Round not found.");
+        }
+
+        const vote = round.votes.find((entry) => entry.participantId === where.roundId_participantId.participantId);
+
+        if (vote) {
+          vote.value = update.value;
+          vote.updatedAt = new Date("2026-01-01T10:08:00.000Z");
+          return vote;
+        }
+
+        const nextVote = {
+          id: `vote_${round.votes.length + 1}`,
+          roundId: create.roundId,
+          participantId: create.participantId,
+          value: create.value,
+          createdAt: new Date("2026-01-01T10:08:00.000Z"),
+          updatedAt: new Date("2026-01-01T10:08:00.000Z")
+        };
+
+        round.votes.push(nextVote);
+        return nextVote;
       }
     },
     $transaction: async (callback: (transactionClient: PrismaClient) => Promise<unknown>) =>
@@ -220,6 +285,23 @@ describe("RoomService moderator actions", () => {
     await expect(service.castVote("AB123", "participant-token", "5")).rejects.toMatchObject({
       code: "INVALID_VOTE"
     } satisfies Partial<AppError>);
+  });
+
+  it("touches room activity when a participant joins, votes, and resets", async () => {
+    const room = createRoomAggregate();
+    const service = createService(room);
+    const beforeJoin = room.lastActivityAt;
+
+    await service.joinRoom("AB123", { name: "Charlie", joinPasscode: "secret" });
+    expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(beforeJoin.getTime());
+
+    const afterJoin = room.lastActivityAt;
+    await service.castVote("AB123", "participant-token", "5");
+    expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(afterJoin.getTime());
+
+    const afterVote = room.lastActivityAt;
+    await service.resetRound("AB123", "moderator-token");
+    expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(afterVote.getTime());
   });
 
   it("unreveals the current round without creating a new one", async () => {

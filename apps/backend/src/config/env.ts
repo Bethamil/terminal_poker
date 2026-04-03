@@ -17,6 +17,7 @@ const envSchema = z
     PORT: z.coerce.number().default(4000),
     CLIENT_ORIGIN: z.string().url().default("http://localhost:5173"),
     DATABASE_URL: z.string().min(1),
+    ROOM_INACTIVITY_TTL_HOURS: z.coerce.number().int().positive().default(24),
     REDIS_MODE: z.enum(["none", "standalone", "sentinel"]).default("none"),
     REDIS_URL: optionalUrl,
     REDIS_SENTINEL_URL: optionalNonEmptyString,

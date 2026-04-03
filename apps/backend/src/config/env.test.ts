@@ -11,6 +11,7 @@ describe("parseEnv", () => {
   it("defaults Redis to none when no Redis config is present", () => {
     const parsed = parseEnv(baseEnv);
 
+    expect(parsed.ROOM_INACTIVITY_TTL_HOURS).toBe(24);
     expect(parsed.REDIS_MODE).toBe("none");
     expect(parsed.REDIS_URL).toBeUndefined();
   });

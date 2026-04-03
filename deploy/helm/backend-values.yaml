@@ -43,6 +43,8 @@ extraEnvVars:
     value: "https://poker.example.com"
   - name: DATABASE_URL
     value: "postgresql://REPLACE_ME"
+  - name: ROOM_INACTIVITY_TTL_HOURS
+    value: "24"
   - name: REDIS_MODE
     value: "standalone"
   - name: REDIS_URL

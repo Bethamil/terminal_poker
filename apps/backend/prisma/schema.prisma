@@ -14,10 +14,13 @@ model Room {
   jiraBaseUrl      String?
   votingDeckId     String        @default("modified-fibonacci") @db.VarChar(32)
   joinPasscodeHash String?
+  lastActivityAt   DateTime      @default(now())
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   participants     Participant[]
   rounds           Round[]
+
+  @@index([lastActivityAt])
 }
 
 model Participant {

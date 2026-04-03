@@ -50,6 +50,7 @@ Create `apps/backend/.env`:
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/terminal_poker?schema=public"
 CLIENT_ORIGIN="http://localhost:5173"
 PORT=4000
+ROOM_INACTIVITY_TTL_HOURS=24
 REDIS_MODE=none
 ```
 
@@ -80,6 +81,7 @@ pnpm dev
 pnpm build
 pnpm test
 pnpm typecheck
+pnpm --filter @terminal-poker/backend cleanup:expired-rooms
 pnpm db:clear
 pnpm db:reset
 ```
@@ -120,6 +122,24 @@ REDIS_MODE=sentinel
 REDIS_SENTINEL_URL="redis://sentinel-1:26379,redis://sentinel-2:26379,redis://sentinel-3:26379"
 REDIS_SENTINEL_MASTER_NAME="mymaster"
 ```
+
+## Room Cleanup
+
+Rooms store a `lastActivityAt` timestamp. It is updated on:
+
+- participant join
+- vote cast
+- round reset
+
+Rooms are removed by running the cleanup command:
+
+```bash
+pnpm --filter @terminal-poker/backend cleanup:expired-rooms
+```
+
+The inactivity threshold is controlled by `ROOM_INACTIVITY_TTL_HOURS` in `apps/backend/.env`. For example, `ROOM_INACTIVITY_TTL_HOURS=24` removes rooms that have been inactive for more than 24 hours.
+
+For production, run this command from a cron job or Kubernetes `CronJob`.
 
 ## Repo Layout
 

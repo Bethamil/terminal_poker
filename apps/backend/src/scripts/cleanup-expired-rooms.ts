@@ -1,0 +1,24 @@
+import { env } from "../config/env";
+import { prisma } from "../prisma/client";
+import { RoomRepository } from "../repositories/room-repository";
+
+const run = async () => {
+  const cutoff = new Date(Date.now() - env.ROOM_INACTIVITY_TTL_HOURS * 60 * 60 * 1000);
+  const repository = new RoomRepository(prisma);
+  const result = await repository.removeExpiredRooms(cutoff);
+
+  // eslint-disable-next-line no-console
+  console.log(
+    `cleanup-expired-rooms removed ${result.count} rooms inactive since before ${cutoff.toISOString()}`
+  );
+};
+
+run()
+  .catch(async (error) => {
+    // eslint-disable-next-line no-console
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

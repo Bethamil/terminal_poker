@@ -46,6 +46,23 @@ export class RoomRepository {
     });
   }
 
+  async touchRoomActivity(roomId: string, lastActivityAt: Date = new Date()) {
+    return this.db.room.update({
+      where: { id: roomId },
+      data: { lastActivityAt }
+    });
+  }
+
+  async removeExpiredRooms(cutoff: Date) {
+    return this.db.room.deleteMany({
+      where: {
+        lastActivityAt: {
+          lt: cutoff
+        }
+      }
+    });
+  }
+
   async getRoomAggregateByCode(code: string) {
     return this.db.room.findUnique({
       where: { code },
