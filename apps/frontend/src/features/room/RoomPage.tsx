@@ -496,8 +496,18 @@ export const RoomPage = () => {
   const roundSummary = snapshot.round.summary;
   const hasRoundSummary = Boolean(roundSummary);
   const formattedAverage = formatAverage(roundSummary?.average ?? null);
-  const consensusLabel = roundSummary?.consensus ?? "split";
-  const hasConsensus = roundSummary?.consensus !== null;
+  const topVoteLabel = roundSummary?.consensus ?? "SPLIT";
+  const hasTopVote = roundSummary?.consensus !== null;
+  const revealedValuesInOrder = snapshot.votingDeck.filter(
+    (value) => value !== "?" && (roundSummary?.counts[value] ?? 0) > 0
+  );
+  const hasUnknownVotes = (roundSummary?.counts["?"] ?? 0) > 0;
+  const rangeLabel =
+    revealedValuesInOrder.length > 1
+      ? `${revealedValuesInOrder[0]}-${revealedValuesInOrder[revealedValuesInOrder.length - 1]}`
+      : revealedValuesInOrder[0] ?? (hasUnknownVotes ? "?" : "—");
+  const summaryLabel = hasTopVote ? "TOP VOTE" : "RESULT";
+  const summaryPrimaryValue = hasTopVote ? topVoteLabel : "SPLIT";
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
   const activeParticipantCount = countOnlineParticipants(snapshot.participants);
@@ -624,66 +634,53 @@ export const RoomPage = () => {
               </div>
             </div>
 
-            <div className={`mx-auto w-full max-w-[44rem] ${hasRoundSummary ? "" : "hidden md:block"}`}>
-              <div
-                className={`grid min-h-[6.4rem] items-center gap-4 rounded-[24px] border px-5 py-4 text-left md:grid-cols-[minmax(0,1fr)_auto_auto] ${
-                  hasRoundSummary ? "shadow-[0_24px_70px_rgba(0,0,0,0.12)]" : ""
-                }`.trim()}
-                style={{
-                  background: hasRoundSummary
-                    ? "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 90%, var(--surface-high) 10%), color-mix(in srgb, var(--card-bg) 96%, transparent))"
-                    : "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 68%, transparent), color-mix(in srgb, var(--card-bg) 74%, transparent))",
-                  borderColor: hasRoundSummary
-                    ? "var(--outline)"
-                    : "color-mix(in srgb, var(--outline) 56%, transparent)",
-                  opacity: hasRoundSummary ? 1 : 0.78
-                }}
-              >
-                <div className="grid gap-1">
-                  <span className="hero-card__label">STATISTICAL OUTPUT</span>
-                  <strong
-                    className="font-['JetBrains_Mono'] text-[clamp(1.35rem,2.9vw,2.2rem)] uppercase tracking-[0.06em]"
-                    style={{ color: hasRoundSummary ? "var(--text)" : "var(--text-soft)" }}
-                  >
-                    {hasRoundSummary ? "SUMMARY_REPORT" : "SUMMARY_LOCKED"}
-                  </strong>
-                  <span
-                    className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.14em]"
-                    style={{ color: "var(--muted)" }}
-                  >
-                    {hasRoundSummary ? "Reveal complete" : ""}
-                  </span>
-                </div>
-
+            {hasRoundSummary ? (
+              <div className="mx-auto w-full max-w-[44rem]">
                 <div
-                  className="grid min-w-[7rem] gap-1 border-t pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0"
-                  style={{ borderColor: "var(--outline)" }}
+                  className="grid gap-4 rounded-[24px] border px-4 py-4 text-left shadow-[0_24px_70px_rgba(0,0,0,0.12)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-6 md:px-5"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 90%, var(--surface-high) 10%), color-mix(in srgb, var(--card-bg) 96%, transparent))",
+                    borderColor: "var(--outline)"
+                  }}
                 >
-                  <span className="hero-card__label">AVERAGE</span>
-                  <strong
-                    className="font-['Space_Grotesk'] text-[clamp(2rem,4vw,3rem)] leading-none tracking-[-0.06em]"
-                    style={{ color: hasRoundSummary ? "var(--primary)" : "var(--muted)" }}
-                  >
-                    {hasRoundSummary ? formattedAverage : "—"}
-                  </strong>
-                </div>
+                  <div className="grid gap-1.5">
+                    <span className="hero-card__label">{summaryLabel}</span>
+                    <strong
+                      className="font-['Space_Grotesk'] text-[clamp(2.6rem,5vw,4.5rem)] leading-[0.88] tracking-[-0.08em] uppercase"
+                      style={{ color: hasTopVote ? "var(--primary)" : "var(--text)" }}
+                    >
+                      {summaryPrimaryValue}
+                    </strong>
+                  </div>
 
-                <div
-                  className="grid min-w-[7rem] gap-1 border-t pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0"
-                  style={{ borderColor: "var(--outline)" }}
-                >
-                  <span className="hero-card__label">CONSENSUS</span>
-                  <strong
-                    className="font-['Space_Grotesk'] text-[clamp(2rem,4vw,3rem)] leading-none tracking-[-0.06em] uppercase"
-                    style={{
-                      color: hasRoundSummary && hasConsensus ? "var(--vote-tile-selected-text)" : "var(--muted)"
-                    }}
+                  <div
+                    className="grid grid-cols-3 gap-4 border-t pt-4 md:min-w-[19rem] md:border-l md:border-t-0 md:pl-6 md:pt-0"
+                    style={{ borderColor: "color-mix(in srgb, var(--outline) 76%, transparent)" }}
                   >
-                    {hasRoundSummary ? consensusLabel : "—"}
-                  </strong>
+                    {[
+                      { label: "AVG", value: formattedAverage, accent: true },
+                      { label: "RANGE", value: rangeLabel, accent: false },
+                      { label: "VOTES", value: String(votedCount), accent: false }
+                    ].map((stat) => (
+                      <div
+                        className="grid content-start gap-1 border-l pl-4 first:border-l-0 first:pl-0"
+                        key={stat.label}
+                        style={{ borderColor: "color-mix(in srgb, var(--outline) 76%, transparent)" }}
+                      >
+                        <span className="hero-card__label">{stat.label}</span>
+                        <strong
+                          className="font-['Space_Grotesk'] text-[clamp(1.3rem,2.6vw,2rem)] leading-none tracking-[-0.06em] uppercase"
+                          style={{ color: stat.accent ? "var(--primary)" : "var(--text)" }}
+                        >
+                          {stat.value}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </div>
 
           <section
