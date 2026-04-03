@@ -14,6 +14,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/terminal_poker?schema=public
 
 jobs:
   build-test-and-publish:
