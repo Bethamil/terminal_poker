@@ -7,6 +7,8 @@ dist
 !.env.example
 !.env.selfhost.example
 !.env.selfhost.bundled.example
+!deploy/docker/.env.example
+!deploy/docker/.env.bundled.example
 !apps/**/.env.example
 .pnpm-store
 coverage
