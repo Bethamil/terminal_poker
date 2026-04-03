@@ -1,6 +1,6 @@
 # Helm Deployment
 
-This values file targets the `generic-webapp` Helm chart, following the `helm-generic-webapp-project-implementation` skill constraints:
+This values file is an example configuration for deploying Terminal Poker as a single app container on Kubernetes:
 
 - `values.yaml` deploys the single Terminal Poker app image
 - The app serves the frontend, REST API, and Socket.IO endpoint from one container
