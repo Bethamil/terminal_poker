@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import {
   VOTING_DECK_OPTIONS,
@@ -216,6 +216,7 @@ export const RoomPage = () => {
   const [votingDeckIdDraft, setVotingDeckIdDraft] = useState<UpdateRoomSettingsPayload["votingDeckId"]>("modified-fibonacci");
   const [newPasscodeDraft, setNewPasscodeDraft] = useState("");
   const [pendingKickId, setPendingKickId] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const settingsSavedTimeoutRef = useRef<number | null>(null);
   const {
     castVote,
@@ -258,6 +259,7 @@ export const RoomPage = () => {
   useEffect(() => {
     if (isSettingsOpen) {
       setSettingsTab("room");
+      setSettingsError(null);
     }
   }, [isSettingsOpen]);
 
@@ -360,32 +362,41 @@ export const RoomPage = () => {
     }
   };
 
-  const saveRoomSettings = (
+  const saveRoomSettings = async (
     joinPasscodeMode: UpdateRoomSettingsPayload["joinPasscodeMode"] = "keep"
   ) => {
     const trimmedPasscode = newPasscodeDraft.trim();
 
-    updateRoomSettings({
-      jiraBaseUrl: jiraBaseUrlDraft.trim() || null,
-      votingDeckId: votingDeckIdDraft,
-      joinPasscode: joinPasscodeMode === "set" ? trimmedPasscode : null,
-      joinPasscodeMode
-    });
+    setSettingsError(null);
 
-    if (settingsSavedTimeoutRef.current !== null) {
-      window.clearTimeout(settingsSavedTimeoutRef.current);
-    }
+    try {
+      await updateRoomSettings({
+        jiraBaseUrl: jiraBaseUrlDraft.trim() || null,
+        votingDeckId: votingDeckIdDraft,
+        joinPasscode: joinPasscodeMode === "set" ? trimmedPasscode : null,
+        joinPasscodeMode
+      });
 
-    setIsSettingsSaved(true);
-    settingsSavedTimeoutRef.current = window.setTimeout(() => {
+      if (settingsSavedTimeoutRef.current !== null) {
+        window.clearTimeout(settingsSavedTimeoutRef.current);
+      }
+
+      setIsSettingsSaved(true);
+      settingsSavedTimeoutRef.current = window.setTimeout(() => {
+        setIsSettingsSaved(false);
+        settingsSavedTimeoutRef.current = null;
+      }, 1800);
+    } catch (requestError) {
       setIsSettingsSaved(false);
-      settingsSavedTimeoutRef.current = null;
-    }, 1800);
+      setSettingsError(
+        requestError instanceof ApiError ? requestError.message : "Unable to save room settings."
+      );
+    }
   };
 
   const handleSaveRoomSettings = () => {
     const joinPasscodeMode = newPasscodeDraft.trim() ? "set" : "keep";
-    saveRoomSettings(joinPasscodeMode);
+    void saveRoomSettings(joinPasscodeMode);
   };
 
   const handleKickParticipant = (participant: ParticipantSnapshot) => {
@@ -438,8 +449,7 @@ export const RoomPage = () => {
   };
 
   if (!roomCode) {
-    navigate("/");
-    return null;
+    return <Navigate replace to="/" />;
   }
 
   if (!participantToken) {
@@ -941,11 +951,12 @@ export const RoomPage = () => {
                     {isSettingsSaved ? "SAVED" : "SAVE"}
                   </Button>
                   {snapshot.room.hasJoinPasscode ? (
-                    <Button className="max-[720px]:w-full" onClick={() => saveRoomSettings("clear")} variant="ghost">
+                    <Button className="max-[720px]:w-full" onClick={() => void saveRoomSettings("clear")} variant="ghost">
                       CLEAR PASSCODE
                     </Button>
                   ) : null}
                 </div>
+                {settingsError ? <div className="notice notice--error">{settingsError}</div> : null}
               </section>
             ) : (
               <section

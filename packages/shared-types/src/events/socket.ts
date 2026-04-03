@@ -71,7 +71,10 @@ export interface ClientToServerEvents {
     payload: LeaveRoomPayload,
     ack?: (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => void
   ) => void;
-  "room:updateSettings": (payload: UpdateRoomSettingsPayload) => void;
+  "room:updateSettings": (
+    payload: UpdateRoomSettingsPayload,
+    ack?: (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => void
+  ) => void;
   "room:kickParticipant": (payload: KickParticipantPayload) => void;
   "vote:cast": (payload: CastVotePayload) => void;
   "round:setTicket": (payload: SetTicketPayload) => void;
