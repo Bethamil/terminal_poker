@@ -212,8 +212,8 @@ export class RoomService {
     return { participantId: authorized.participantId };
   }
 
-  async castVote(roomCode: string, participantToken: string, value: VoteValue): Promise<void> {
-    await this.prisma.$transaction(async (transaction) => {
+  async castVote(roomCode: string, participantToken: string, value: VoteValue): Promise<{ isFirstVote: boolean }> {
+    return this.prisma.$transaction(async (transaction) => {
       const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
       const round = authorized.room.rounds[0];
       const votingDeck = getVotingDeck(resolveVotingDeckId(authorized.room.votingDeckId));
@@ -230,9 +230,13 @@ export class RoomService {
         throw new AppError(409, "ROUND_REVEALED", "Votes are already revealed.");
       }
 
+      const isFirstVote = !round.votes.some((v) => v.participantId === authorized.participantId);
+
       const repo = this.repository(transaction);
       await repo.upsertVote(round.id, authorized.participantId, value);
       await repo.touchRoomActivity(authorized.room.id);
+
+      return { isFirstVote };
     });
   }
 
