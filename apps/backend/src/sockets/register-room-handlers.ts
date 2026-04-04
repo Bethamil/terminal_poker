@@ -250,7 +250,6 @@ export const registerRoomHandlers = (
         participantId: session.participantId,
         hasVoted: true
       });
-      await emitRoomSnapshots(io, roomService, session.roomCode);
     } catch (error) {
       emitSocketError(socket, error);
     }

@@ -5,6 +5,7 @@ import {
   type RoomErrorPayload,
   type RoomSnapshot,
   type UpdateRoomSettingsPayload,
+  type VoteStatusPayload,
   type VoteValue
 } from "@terminal-poker/shared-types";
 
@@ -78,6 +79,18 @@ export const useRoomConnection = (
 
         socket.on("round:updated", (nextSnapshot: RoomSnapshot) => {
           setSnapshot(nextSnapshot);
+        });
+
+        socket.on("vote:status", (payload: VoteStatusPayload) => {
+          setSnapshot((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              participants: prev.participants.map((p) =>
+                p.id === payload.participantId ? { ...p, hasVoted: payload.hasVoted } : p
+              )
+            };
+          });
         });
 
         socket.on("room:error", (payload: RoomErrorPayload) => {
@@ -174,6 +187,14 @@ export const useRoomConnection = (
     }
 
     setIsVoteBlocked(false);
+
+    setSnapshot((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        viewer: { ...prev.viewer, selectedVote: value }
+      };
+    });
 
     socket.emit("vote:cast", {
       roomCode: roomCode.toUpperCase(),
