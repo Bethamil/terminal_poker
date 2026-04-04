@@ -32,10 +32,12 @@ Basic guidance for working in this repo.
   - `Field`
   - `SelectField`
   - `StatusChip`
-- Keep visual changes aligned with the `DESIGN` reference in `/DESIGN`.
 - Prefer to use Tailwind CSS for layout and styling, rather than custom CSS classes.
 - Use `global.css` for theme tokens, shared utility classes, and cross-page layout rules.
 - Avoid hardcoded dark/light colors in JSX when a CSS variable already exists or should exist.
+- Keep the terminal-inspired visual language, but prioritize clarity over gimmicks.
+- Favor low-friction, developer-friendly flows: fast create/join, readable voting states, and strong keyboard support where it already exists.
+- Prefer calm, high-contrast layouts with clear hierarchy; use decorative effects sparingly, and only when they support clarity.
 
 ## Editing Guidance
 
@@ -51,4 +53,3 @@ Basic guidance for working in this repo.
   - `pnpm --filter @terminal-poker/frontend build`
 - If shared logic changes, also run:
   - `pnpm typecheck`
-
