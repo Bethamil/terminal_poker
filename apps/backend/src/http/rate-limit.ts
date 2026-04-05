@@ -5,7 +5,7 @@ const rateLimitResponse = {
   message: "Too many requests. Please try again later."
 };
 
-// Room creation: 5 requests per minute per IP.
+// Room creation: 10 requests per minute per IP.
 // This is the most sensitive endpoint — creating rooms is infrequent
 // and doesn't suffer from shared-network false positives.
 export const createRoomLimiter = rateLimit({
