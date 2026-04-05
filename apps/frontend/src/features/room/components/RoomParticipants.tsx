@@ -2,7 +2,7 @@ import type { ParticipantSnapshot } from "@terminal-poker/shared-types";
 import { COFFEE_VOTE_VALUE } from "@terminal-poker/shared-types";
 
 import { Button } from "../../../components/Button";
-import { CoffeeVote } from "../../../components/CoffeeVote";
+import { CoffeeVote } from "../../../components/icons";
 import { countOnlineParticipants } from "../roomViewUtils";
 
 export interface RoomParticipantStatusProps {

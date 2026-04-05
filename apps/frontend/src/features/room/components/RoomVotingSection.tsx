@@ -1,8 +1,8 @@
 import { COFFEE_VOTE_VALUE, getVoteCardMeta, getVotingDeckName, type RoomSnapshot, type VoteValue } from "@terminal-poker/shared-types";
 
 import { Button } from "../../../components/Button";
-import { CoffeeVote } from "../../../components/CoffeeVote";
 import { Field } from "../../../components/Field";
+import { NextRoundIcon, RevealToggleIcon, CoffeeVote } from "../../../components/icons";
 import { StatusChip } from "../../../components/StatusChip";
 import { MobileParticipantStrip } from "./RoomParticipants";
 
@@ -35,6 +35,12 @@ export const RoomVotingSection = ({
 }: RoomVotingSectionProps) => {
   const isVotingClosed = snapshot.round.status === "revealed";
   const voteCardMeta = getVoteCardMeta(snapshot.room.votingDeckId);
+  const revealButtonLabel = isVotingClosed ? "UNREVEAL" : "REVEAL";
+  const iconActionButtonStyle = {
+    height: "4.15rem",
+    width: "4.15rem",
+    padding: 0
+  } as const;
 
   return (
     <section
@@ -53,17 +59,19 @@ export const RoomVotingSection = ({
         roundStatus={snapshot.round.status}
       />
       {isModerator ? (
-        <div className="flex flex-wrap items-stretch gap-3 border-b border-white/6 pb-3">
-          <div className="flex min-w-[18rem] flex-[1_1_30rem] items-stretch gap-2">
+        <div className="flex flex-nowrap items-stretch gap-2 border-b border-white/6 pb-3 sm:flex-wrap sm:gap-3">
+          <div className="flex min-w-0 flex-[1_1_auto] items-stretch gap-2 sm:min-w-[18rem] sm:flex-[1_1_30rem]">
             <div className="min-w-0 flex-1">
               <Field
                 aria-label="Ticket"
+                className="h-[4.15rem]"
                 value={ticketDraft}
                 onChange={(event) => onTicketDraftChange(event.target.value.toUpperCase())}
                 placeholder="PROJ-123"
               />
             </div>
             <Button
+              className="shrink-0"
               disabled={areRealtimeActionsDisabled || !hasTicketChanged}
               onClick={onUpdateTicket}
               style={{ minHeight: "3rem", padding: "0.7rem 0.9rem" }}
@@ -72,32 +80,39 @@ export const RoomVotingSection = ({
               SYNC
             </Button>
           </div>
-          <div className="flex items-stretch gap-3">
+          <div className="flex shrink-0 items-stretch gap-2 sm:gap-3">
             <span
               aria-hidden="true"
               className="hidden w-px lg:block"
               style={{ background: "var(--shell-footer-border)" }}
             />
             <Button
+              className="shrink-0 rounded-[18px]"
               disabled={areRealtimeActionsDisabled}
               onClick={onRevealToggle}
               style={{
                 background: "var(--action-accent-bg)",
                 color: "var(--action-accent-text)",
-                minHeight: "3rem",
-                padding: "0.7rem 1rem"
+                ...iconActionButtonStyle
               }}
               variant="primary"
             >
-              {snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL"}
+              <span className="inline-flex items-center justify-center leading-none">
+                <RevealToggleIcon isRevealed={isVotingClosed} />
+                <span className="sr-only">{revealButtonLabel}</span>
+              </span>
             </Button>
             <Button
+              className="shrink-0 rounded-[18px]"
               disabled={areRealtimeActionsDisabled}
               onClick={onResetRound}
-              style={{ minHeight: "3rem", padding: "0.7rem 0.9rem" }}
+              style={iconActionButtonStyle}
               variant="ghost"
             >
-              NEXT
+              <span className="inline-flex items-center justify-center leading-none">
+                <NextRoundIcon className="font-['JetBrains_Mono'] text-[1.7rem] font-bold leading-none tracking-[-0.18em]" />
+                <span className="sr-only">NEXT</span>
+              </span>
             </Button>
           </div>
         </div>

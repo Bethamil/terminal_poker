@@ -5,7 +5,7 @@ import {
   type RoomSnapshot
 } from "@terminal-poker/shared-types";
 
-import { CoffeeVote } from "../../../components/CoffeeVote";
+import { CoffeeVote } from "../../../components/icons";
 import { StatusChip } from "../../../components/StatusChip";
 import { formatAverage } from "../roomViewUtils";
 
