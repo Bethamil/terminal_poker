@@ -439,8 +439,6 @@ export class RoomService {
         throw new AppError(403, "FORBIDDEN", "Only moderators can reset a round.");
       }
 
-      console.log("authorized.room.rounds", authorized.room.rounds);
-
       if (!this.canCreateNextRound(authorized.room.rounds[0])) {
         return;
       }
