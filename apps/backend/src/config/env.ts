@@ -25,7 +25,8 @@ const envSchema = z
     REDIS_USERNAME: optionalNonEmptyString,
     REDIS_PASSWORD: optionalNonEmptyString,
     REDIS_SENTINEL_USERNAME: optionalNonEmptyString,
-    REDIS_SENTINEL_PASSWORD: optionalNonEmptyString
+    REDIS_SENTINEL_PASSWORD: optionalNonEmptyString,
+    TRUST_PROXY: z.coerce.boolean().default(false)
   })
   .superRefine((value, ctx) => {
     if (value.REDIS_MODE === "standalone" && !value.REDIS_URL) {
