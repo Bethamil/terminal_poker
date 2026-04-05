@@ -3,7 +3,7 @@ import { z } from "zod";
 import { VOTING_DECK_IDS } from "@terminal-poker/shared-types";
 
 import type { RoomService } from "../services/room-service";
-import { createRoomLimiter, joinRoomLimiter, roomStateLimiter } from "./rate-limit";
+import { createRoomLimiter } from "./rate-limit";
 
 const createRoomSchema = z.object({
   name: z.string(),
@@ -44,7 +44,7 @@ export const createApiRouter = (roomService: RoomService): ExpressRouter => {
     }
   });
 
-  router.post("/api/rooms/:code/join", joinRoomLimiter, async (request, response, next) => {
+  router.post("/api/rooms/:code/join", async (request, response, next) => {
     try {
       const payload = joinRoomSchema.parse(request.body);
       const result = await roomService.joinRoom(request.params.code, payload);
@@ -73,7 +73,7 @@ export const createApiRouter = (roomService: RoomService): ExpressRouter => {
     }
   });
 
-  router.get("/api/rooms/:code/state", roomStateLimiter, async (request, response, next) => {
+  router.get("/api/rooms/:code/state", async (request, response, next) => {
     try {
       const participantToken = request.header("x-participant-token");
 
