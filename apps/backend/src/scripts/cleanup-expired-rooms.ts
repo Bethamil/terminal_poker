@@ -1,6 +1,9 @@
-import { env } from "../config/env";
-import { prisma } from "../prisma/client";
+import { getEnv } from "../config/env";
+import { createPrismaClient } from "../prisma/client";
 import { RoomRepository } from "../repositories/room-repository";
+
+const env = getEnv();
+const prisma = createPrismaClient(env);
 
 const run = async () => {
   const cutoff = new Date(Date.now() - env.ROOM_INACTIVITY_TTL_HOURS * 60 * 60 * 1000);

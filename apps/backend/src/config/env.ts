@@ -59,4 +59,4 @@ export type Env = z.infer<typeof envSchema>;
 
 export const parseEnv = (input: NodeJS.ProcessEnv): Env => envSchema.parse(input);
 
-export const env = parseEnv(process.env);
+export const getEnv = (): Env => parseEnv(process.env);

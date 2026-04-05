@@ -5,18 +5,20 @@ import { Server } from "socket.io";
 import { ClientToServerEvents, ServerToClientEvents } from "@terminal-poker/shared-types";
 
 import { createApp } from "./app";
-import { env } from "./config/env";
-import { prisma } from "./prisma/client";
+import { getEnv } from "./config/env";
+import { createPrismaClient } from "./prisma/client";
 import { closeSocketIoRedisClients, createSocketIoRedisClients } from "./redis/socket-adapter";
 import { registerRoomHandlers } from "./sockets/register-room-handlers";
 import { JiraRoomLinkProvider } from "./services/jira-provider";
 import { RoomService } from "./services/room-service";
 
+const env = getEnv();
+const prisma = createPrismaClient(env);
 let redisClients: Awaited<ReturnType<typeof createSocketIoRedisClients>> = null;
 
 const bootstrap = async () => {
   const roomService = new RoomService(prisma, new JiraRoomLinkProvider());
-  const app = createApp(roomService);
+  const app = createApp(roomService, env);
   const httpServer = createServer(app);
   const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
     cors: {
@@ -26,7 +28,7 @@ const bootstrap = async () => {
   });
 
   redisClients = await createSocketIoRedisClients(env);
-  
+
   if (redisClients) {
     io.adapter(createAdapter(redisClients.pubClient, redisClients.subClient));
   }

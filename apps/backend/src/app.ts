@@ -4,7 +4,7 @@ import path from "node:path";
 import cors from "cors";
 import express, { type Express } from "express";
 
-import { env } from "./config/env";
+import type { Env } from "./config/env";
 import { asAppError } from "./http/errors";
 import { createApiRouter } from "./http/routes";
 import type { RoomService } from "./services/room-service";
@@ -20,7 +20,7 @@ const isBackendRoute = (pathname: string) =>
   pathname === "/socket.io" ||
   pathname.startsWith("/socket.io/");
 
-export const createApp = (roomService: RoomService): Express => {
+export const createApp = (roomService: RoomService, env: Env): Express => {
   const app = express();
 
   app.use(
