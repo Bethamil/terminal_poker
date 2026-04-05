@@ -3,7 +3,7 @@ import { z } from "zod";
 import { VOTING_DECK_IDS } from "@terminal-poker/shared-types";
 
 import type { RoomService } from "../services/room-service";
-import { createRateLimiter } from "./rate-limit";
+import { createRoomLimiter, joinRoomLimiter, roomStateLimiter } from "./rate-limit";
 
 const createRoomSchema = z.object({
   name: z.string(),
@@ -17,14 +17,6 @@ const joinRoomSchema = z.object({
   name: z.string(),
   joinPasscode: z.string().optional().nullable()
 });
-
-// Room creation: 5 requests burst, refills 1/sec (≈60/min sustained)
-const createRoomLimiter = createRateLimiter({ maxTokens: 5, refillRate: 1, pruneAfter: 300_000 });
-
-// Join / state: 10 requests burst, refills 2/sec — slightly more generous
-// but tight enough to block room-code enumeration
-const joinRoomLimiter = createRateLimiter({ maxTokens: 10, refillRate: 2, pruneAfter: 300_000 });
-const roomStateLimiter = createRateLimiter({ maxTokens: 10, refillRate: 2, pruneAfter: 300_000 });
 
 export const createApiRouter = (roomService: RoomService): ExpressRouter => {
   const router = Router();
