@@ -213,6 +213,27 @@ const formatVoteShortcutHint = (shortcuts: string[]) => {
 
 type SettingsTab = "room" | "users";
 
+const settingsTabs: Array<{ id: SettingsTab; label: string; chip: string | ((participantCount: number) => string) }> = [
+  { id: "room", label: "ROOM", chip: "CONFIG" },
+  { id: "users", label: "USERS", chip: (participantCount) => `${participantCount} ACTIVE` }
+];
+
+const RoomLoadingState = () => (
+  <div className="shell shell--room">
+    <div className="grid min-h-[60vh] place-items-center">
+      <div className="grid justify-items-center gap-4 text-center">
+        <div
+          aria-hidden="true"
+          className="h-10 w-10 animate-spin rounded-full border-2 border-[color:var(--outline)] border-t-[color:var(--primary)]"
+        />
+        <h1 className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.18em] text-[color:var(--text)]">
+          Loading room...
+        </h1>
+      </div>
+    </div>
+  </div>
+);
+
 export const RoomPage = () => {
   const navigate = useNavigate();
   const { roomCode: roomCodeParam } = useParams();
@@ -504,26 +525,17 @@ export const RoomPage = () => {
     );
   }
 
-  if (isLoading || !snapshot || !isRealtimeReady) {
-    return (
-      <div className="shell shell--room">
-        <div className="grid min-h-[60vh] place-items-center">
-          <div className="grid justify-items-center gap-4 text-center">
-            <div
-              aria-hidden="true"
-              className="h-10 w-10 animate-spin rounded-full border-2 border-[color:var(--outline)] border-t-[color:var(--primary)]"
-            />
-            <h1 className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.18em] text-[color:var(--text)]">
-              Loading room...
-            </h1>
-          </div>
-        </div>
-      </div>
-    );
+  if (isLoading || !snapshot) {
+    return <RoomLoadingState />;
   }
 
   const isModerator = snapshot.viewer.role === "moderator";
   const isVotingClosed = snapshot.round.status === "revealed";
+  const areRealtimeActionsDisabled = !isRealtimeReady;
+  const connectionStatusLabel = isRealtimeReady ? "LIVE" : "SYNC";
+  const leaveButtonLabel = isLeaving ? "LEAVING..." : isModerator ? "LEAVE & DELETE" : "LEAVE ROOM";
+  const roundStatusTone = snapshot.round.status === "revealed" ? "success" : "accent";
+  const roundStatusLabel = snapshot.round.status === "revealed" ? "REVEALED" : "IN PROGRESS";
   const normalizedTicketDraft = ticketDraft.trim().toUpperCase();
   const hasTicketChanged = normalizedTicketDraft !== (snapshot.round.jiraTicketKey ?? "");
   const roundSummary = snapshot.round.summary;
@@ -554,7 +566,7 @@ export const RoomPage = () => {
       <AppHeader
         brandAside={
           <span className={`topbar__live-indicator ${isRealtimeReady ? "topbar__live-indicator--live" : ""}`.trim()}>
-            {isRealtimeReady ? "LIVE" : "SYNC"}
+            {connectionStatusLabel}
           </span>
         }
         actions={
@@ -572,11 +584,11 @@ export const RoomPage = () => {
             ) : null}
             <Button
               className="room-topbar__action"
-              disabled={isLeaving}
+              disabled={areRealtimeActionsDisabled || isLeaving}
               onClick={handleLeaveRoom}
               variant={isModerator ? "danger" : "ghost"}
             >
-              {isLeaving ? "LEAVING..." : isModerator ? "LEAVE & DELETE" : "LEAVE ROOM"}
+              {leaveButtonLabel}
             </Button>
           </>
         }
@@ -588,7 +600,7 @@ export const RoomPage = () => {
               <div className="mobile-menu__meta shortcut-strip">
                 <span>ID {snapshot.room.code}</span>
                 <span>{activeParticipantCount}/{snapshot.participants.length} ACTIVE</span>
-                <span>{isRealtimeReady ? "LIVE" : "SYNC"}</span>
+                <span>{connectionStatusLabel}</span>
               </div>
               <div className="mobile-menu__actions">
                 <Button
@@ -620,9 +632,10 @@ export const RoomPage = () => {
                     closeMenu();
                     void handleLeaveRoom();
                   }}
+                  disabled={areRealtimeActionsDisabled || isLeaving}
                   variant={isModerator ? "danger" : "ghost"}
                 >
-                  {isLeaving ? "LEAVING..." : isModerator ? "LEAVE & DELETE" : "LEAVE ROOM"}
+                  {leaveButtonLabel}
                 </Button>
               </div>
             </>
@@ -646,9 +659,7 @@ export const RoomPage = () => {
         <section className="order-1 grid gap-4 lg:order-2">
           <div className="grid gap-3 px-2 py-2 text-center max-[720px]:gap-2 max-[720px]:px-1 max-[720px]:py-1 lg:px-6 lg:py-4">
             <div className="inline-flex justify-center">
-              <StatusChip tone={snapshot.round.status === "revealed" ? "success" : "accent"}>
-                {snapshot.round.status === "revealed" ? "REVEALED" : "IN PROGRESS"}
-              </StatusChip>
+              <StatusChip tone={roundStatusTone}>{roundStatusLabel}</StatusChip>
             </div>
             <div className="grid gap-2">
               <div className="hero-card__ticket items-center justify-items-center gap-3">
@@ -745,7 +756,7 @@ export const RoomPage = () => {
                     />
                   </div>
                   <Button
-                    disabled={!hasTicketChanged}
+                    disabled={areRealtimeActionsDisabled || !hasTicketChanged}
                     onClick={() => updateTicket(normalizedTicketDraft || null)}
                     style={{ minHeight: "3rem", padding: "0.7rem 0.9rem" }}
                     variant="secondary"
@@ -760,6 +771,7 @@ export const RoomPage = () => {
                     style={{ background: "var(--shell-footer-border)" }}
                   />
                   <Button
+                    disabled={areRealtimeActionsDisabled}
                     onClick={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
                     style={{
                       background: "var(--action-accent-bg)",
@@ -772,6 +784,7 @@ export const RoomPage = () => {
                     {snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL"}
                   </Button>
                   <Button
+                    disabled={areRealtimeActionsDisabled}
                     onClick={resetRound}
                     style={{ minHeight: "3rem", padding: "0.7rem 0.9rem" }}
                     variant="ghost"
@@ -789,7 +802,7 @@ export const RoomPage = () => {
                   return (
                     <button
                       aria-label={isCoffeeCard ? card.label : undefined}
-                      disabled={isVotingClosed}
+                      disabled={areRealtimeActionsDisabled || isVotingClosed}
                       className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
                         isCoffeeCard ? "vote-tile--coffee" : ""
                       } ${
@@ -850,11 +863,9 @@ export const RoomPage = () => {
                 className="grid grid-cols-2 gap-2 min-[721px]:grid-cols-1"
                 role="tablist"
               >
-                {[
-                  { id: "room", label: "ROOM", chip: "CONFIG" },
-                  { id: "users", label: "USERS", chip: `${snapshot.participants.length} ACTIVE` }
-                ].map((tab) => {
+                {settingsTabs.map((tab) => {
                   const isActive = settingsTab === tab.id;
+                  const chip = typeof tab.chip === "function" ? tab.chip(snapshot.participants.length) : tab.chip;
 
                   return (
                     <button
@@ -872,7 +883,7 @@ export const RoomPage = () => {
                       type="button"
                     >
                       <span className="font-['JetBrains_Mono'] text-[0.62rem] uppercase tracking-[0.12em] text-[color:var(--muted)] min-[721px]:text-[0.68rem] min-[721px]:tracking-[0.14em]">
-                        {tab.chip}
+                        {chip}
                       </span>
                       <span className="font-['JetBrains_Mono'] text-[0.82rem] uppercase tracking-[0.08em] text-[color:var(--text)] min-[721px]:text-[0.88rem] min-[721px]:tracking-[0.1em]">
                         {tab.label}
@@ -938,6 +949,7 @@ export const RoomPage = () => {
                 <div className="action-row max-[720px]:grid max-[720px]:grid-cols-1 max-[720px]:gap-[0.6rem]">
                   <Button
                     className="max-[720px]:w-full"
+                    disabled={areRealtimeActionsDisabled}
                     onClick={handleSaveRoomSettings}
                     variant="secondary"
                   >
@@ -946,6 +958,7 @@ export const RoomPage = () => {
                   {snapshot.room.hasJoinPasscode ? (
                     <Button
                       className="max-[720px]:w-full"
+                      disabled={areRealtimeActionsDisabled}
                       onClick={() => void saveRoomSettings("clear")}
                       variant="ghost"
                     >
@@ -1002,7 +1015,7 @@ export const RoomPage = () => {
                           {canKick ? (
                             <Button
                               className="max-[720px]:min-h-[2.7rem] max-[720px]:px-4"
-                              disabled={pendingKickId === participant.id}
+                              disabled={areRealtimeActionsDisabled || pendingKickId === participant.id}
                               onClick={() => handleKickParticipant(participant)}
                               variant="danger"
                             >
