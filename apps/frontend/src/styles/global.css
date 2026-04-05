@@ -883,8 +883,12 @@ select {
 }
 
 .participant-row__vote {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   justify-self: end;
-  min-width: 1rem;
+  min-width: 2.5rem;
+  min-height: 2.2rem;
   text-align: right;
 }
 
@@ -1031,6 +1035,109 @@ select {
   line-height: 0.95;
   letter-spacing: -0.08em;
   color: var(--vote-tile-value);
+}
+
+.coffee-icon {
+  --coffee-size: 1rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 1.15em;
+  height: 1.15em;
+  gap: 0.02em;
+  font-size: var(--coffee-size);
+  line-height: 1;
+  color: color-mix(in srgb, var(--vote-tile-value) 74%, var(--muted));
+  vertical-align: middle;
+}
+
+.coffee-icon__steam,
+.coffee-icon__cup {
+  font-family: "JetBrains Mono", monospace;
+  line-height: 1;
+  font-weight: 700;
+  text-shadow: 0 0 0.01em currentColor;
+}
+
+.coffee-icon__steam {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  transform: translateX(0.16rem);
+}
+
+.coffee-icon__cup {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.coffee-icon--compact {
+  --coffee-size: 0.72rem;
+  color: currentColor;
+}
+
+.coffee-icon--compact .coffee-icon__steam {
+  font-size: 0.58rem;
+}
+
+.coffee-icon--compact .coffee-icon__cup {
+  font-size: 0.82rem;
+}
+
+.coffee-icon--hero {
+  --coffee-size: clamp(1.25rem, 1vw + 0.75rem, 1.9rem);
+  color: inherit;
+  width: 1.22em;
+  height: 1.22em;
+}
+
+.coffee-icon--hero .coffee-icon__steam {
+  font-size: clamp(0.9rem, 0.8vw + 0.4rem, 1.25rem);
+  letter-spacing: 0.16em;
+  transform: translateX(0.26rem);
+}
+
+.coffee-icon--hero .coffee-icon__cup {
+  font-size: clamp(1.4rem, 1vw + 0.8rem, 2rem);
+  letter-spacing: 0.1em;
+}
+
+.coffee-icon--tile {
+  --coffee-size: 1.34rem;
+  color: color-mix(in srgb, var(--vote-tile-value) 92%, white 8%);
+  transform: translateY(-0.04rem);
+}
+
+.coffee-icon--tile .coffee-icon__steam {
+  font-size: 0.98rem;
+  letter-spacing: 0.1em;
+  transform: translateX(0.18rem);
+}
+
+.coffee-icon--tile .coffee-icon__cup {
+  font-size: 1.38rem;
+  letter-spacing: 0.06em;
+}
+
+.vote-tile--coffee {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--panel-strong-bg) 72%, transparent), transparent),
+    var(--vote-tile-bg);
+}
+
+.vote-tile--coffee .vote-tile__value {
+  font-size: clamp(1.2rem, 0.8vw + 1rem, 1.65rem);
+  letter-spacing: 0.02em;
+}
+
+.vote-tile--selected .coffee-icon {
+  color: color-mix(in srgb, var(--vote-tile-selected-text) 76%, transparent);
+}
+
+.hero-summary-value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1em;
 }
 
 .vote-tile--selected {

@@ -1,4 +1,5 @@
 import { ParticipantRole, RoundStatus } from "@prisma/client";
+import { COFFEE_VOTE_VALUE, UNKNOWN_VOTE_VALUE } from "@terminal-poker/shared-types";
 import { describe, expect, it } from "vitest";
 
 import { JiraRoomLinkProvider } from "./jira-provider";
@@ -89,5 +90,25 @@ describe("buildRoomSnapshot", () => {
     expect(snapshot.round.summary?.average).toBe(6.5);
     expect(snapshot.round.jiraTicketUrl).toBe("https://jira.example.com/browse/PROJ-1");
     expect(snapshot.participants[1].revealedVote).toBe("8");
+  });
+
+  it("ignores coffee and unknown cards in numeric summaries", () => {
+    const room = baseRoom();
+    room.rounds[0].status = RoundStatus.REVEALED;
+    room.rounds[0].votes[0].value = COFFEE_VOTE_VALUE;
+    room.rounds[0].votes.push({
+      id: "vote_2",
+      roundId: "round_1",
+      participantId: "p2",
+      value: UNKNOWN_VOTE_VALUE,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const snapshot = buildRoomSnapshot(room, "p1", new JiraRoomLinkProvider(), new Set(["p1", "p2"]));
+
+    expect(snapshot.round.summary?.average).toBeNull();
+    expect(snapshot.round.summary?.counts[COFFEE_VOTE_VALUE]).toBe(1);
+    expect(snapshot.round.summary?.counts[UNKNOWN_VOTE_VALUE]).toBe(1);
   });
 });

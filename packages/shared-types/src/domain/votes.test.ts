@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COFFEE_VOTE_VALUE,
   DEFAULT_VOTING_DECK_ID,
+  UNKNOWN_VOTE_VALUE,
   VOTE_CARD_META,
   VOTING_DECK,
   VOTING_DECK_OPTIONS,
@@ -13,14 +15,16 @@ import {
 
 describe("vote deck", () => {
   it("keeps the default modified fibonacci deck order", () => {
-    expect(VOTING_DECK).toEqual(["0", "0.5", "1", "2", "3", "5", "8", "13", "20", "40", "100", "?"]);
+    expect(VOTING_DECK).toEqual(["0", "0.5", "1", "2", "3", "5", "8", "13", "20", "40", "100", "?", "COFFEE"]);
     expect(DEFAULT_VOTING_DECK_ID).toBe("modified-fibonacci");
   });
 
   it("exposes keyboard hints for each card", () => {
     expect(VOTE_CARD_META).toHaveLength(VOTING_DECK.length);
     expect(VOTE_CARD_META[1]).toMatchObject({ value: "0.5", shortcut: "2" });
-    expect(isVoteValue("?")).toBe(true);
+    expect(VOTE_CARD_META.at(-1)).toMatchObject({ value: COFFEE_VOTE_VALUE, shortcut: "c" });
+    expect(isVoteValue(UNKNOWN_VOTE_VALUE)).toBe(true);
+    expect(isVoteValue(COFFEE_VOTE_VALUE)).toBe(true);
     expect(isVoteValue("XL")).toBe(true);
     expect(isVoteValue("coffee")).toBe(false);
   });

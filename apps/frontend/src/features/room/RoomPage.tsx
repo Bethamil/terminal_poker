@@ -1,7 +1,9 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import {
+  COFFEE_VOTE_VALUE,
+  UNKNOWN_VOTE_VALUE,
   VOTING_DECK_OPTIONS,
   getVoteCardMeta,
   getVotingDeckName,
@@ -21,6 +23,24 @@ import { useRoomConnection } from "./useRoomConnection";
 
 const countOnlineParticipants = (participants: ParticipantSnapshot[]) =>
   participants.filter((participant) => participant.presence === "online").length;
+
+const CoffeeIcon = ({ className = "" }: { className?: string }) => (
+  <span aria-hidden="true" className={`coffee-icon ${className}`.trim()}>
+    <span className="coffee-icon__steam">//</span>
+    <span className="coffee-icon__cup">[_]</span>
+  </span>
+);
+
+const renderVoteValue = (
+  value: string,
+  variant: "compact" | "hero" | "tile" = "compact"
+): ReactNode => {
+  if (value !== COFFEE_VOTE_VALUE) {
+    return value;
+  }
+
+  return <CoffeeIcon className={`coffee-icon--${variant}`} />;
+};
 
 const ParticipantRail = ({
   currentParticipantId,
@@ -95,7 +115,7 @@ const ParticipantRail = ({
               participant.revealedVote ? "participant-row__vote--revealed" : ""
             }`}
           >
-            {participant.revealedVote ? participant.revealedVote : participant.hasVoted ? "●" : "·"}
+            {participant.revealedVote ? renderVoteValue(participant.revealedVote) : participant.hasVoted ? "●" : "·"}
           </div>
         </div>
       ))}
@@ -136,7 +156,9 @@ const MobileParticipantStrip = ({
         const isCurrent = participant.id === currentParticipantId;
         const voteState =
           roundStatus === "revealed"
-            ? participant.revealedVote ?? "·"
+            ? participant.revealedVote
+              ? renderVoteValue(participant.revealedVote)
+              : "·"
             : participant.hasVoted
               ? "●"
               : "·";
@@ -175,6 +197,8 @@ const formatAverage = (average: number | null) => {
 
   return Number.isInteger(average) ? String(average) : average.toFixed(1).replace(/\.0$/, "");
 };
+
+const isRangeVote = (value: string) => value !== UNKNOWN_VOTE_VALUE && value !== COFFEE_VOTE_VALUE;
 
 const formatVoteShortcutHint = (shortcuts: string[]) => {
   const normalizedShortcuts = shortcuts.map((shortcut) => shortcut.toUpperCase());
@@ -327,7 +351,6 @@ export const RoomPage = () => {
     () => formatVoteShortcutHint(voteCardMeta.map((card) => card.shortcut)),
     [voteCardMeta]
   );
-
   const handleInlineJoin = async (event: FormEvent) => {
     event.preventDefault();
     setJoinError(null);
@@ -509,15 +532,15 @@ export const RoomPage = () => {
   const topVoteLabel = roundSummary?.consensus ?? "SPLIT";
   const hasTopVote = roundSummary?.consensus !== null;
   const revealedValuesInOrder = snapshot.votingDeck.filter(
-    (value) => value !== "?" && (roundSummary?.counts[value] ?? 0) > 0
+    (value) => isRangeVote(value) && (roundSummary?.counts[value] ?? 0) > 0
   );
-  const hasUnknownVotes = (roundSummary?.counts["?"] ?? 0) > 0;
+  const hasUnknownVotes = (roundSummary?.counts[UNKNOWN_VOTE_VALUE] ?? 0) > 0;
   const rangeLabel =
     revealedValuesInOrder.length > 1
       ? `${revealedValuesInOrder[0]}-${revealedValuesInOrder[revealedValuesInOrder.length - 1]}`
-      : revealedValuesInOrder[0] ?? (hasUnknownVotes ? "?" : "—");
+      : revealedValuesInOrder[0] ?? (hasUnknownVotes ? UNKNOWN_VOTE_VALUE : "—");
   const summaryLabel = hasTopVote ? "TOP VOTE" : "RESULT";
-  const summaryPrimaryValue = hasTopVote ? topVoteLabel : "SPLIT";
+  const summaryPrimaryValue = hasTopVote ? renderVoteValue(topVoteLabel, "hero") : "SPLIT";
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
   const activeParticipantCount = countOnlineParticipants(snapshot.participants);
@@ -654,7 +677,7 @@ export const RoomPage = () => {
                   <div className="grid gap-1.5">
                     <span className="hero-card__label">{summaryLabel}</span>
                     <strong
-                      className="font-['Space_Grotesk'] text-[clamp(2.6rem,5vw,4.5rem)] leading-[0.88] tracking-[-0.08em] uppercase"
+                      className="hero-summary-value font-['Space_Grotesk'] text-[clamp(2.6rem,5vw,4.5rem)] leading-[0.88] tracking-[-0.08em] uppercase"
                       style={{ color: hasTopVote ? "var(--primary)" : "var(--text)" }}
                     >
                       {summaryPrimaryValue}
@@ -757,17 +780,23 @@ export const RoomPage = () => {
               <div className="vote-grid">
                 {voteCardMeta.map((card) => {
                   const isSelected = snapshot.viewer.selectedVote === card.value;
+                  const isCoffeeCard = card.value === COFFEE_VOTE_VALUE;
                   return (
                     <button
                       disabled={isVotingClosed}
                       className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
+                        isCoffeeCard ? "vote-tile--coffee" : ""
+                      } ${
                         isVotingClosed ? "vote-tile--locked" : ""
                       }`.trim()}
                       key={card.value}
                       onClick={() => castVote(card.value)}
                       type="button"
                     >
-                      <strong className="vote-tile__value">{card.value}</strong>
+                      {isCoffeeCard ? (
+                        <CoffeeIcon className="coffee-icon--tile" />
+                      ) : null}
+                      {!isCoffeeCard ? <strong className="vote-tile__value">{card.value}</strong> : null}
                     </button>
                   );
                 })}

@@ -1,6 +1,8 @@
 import { ParticipantRole, Prisma, RoundStatus } from "@prisma/client";
 import {
+  COFFEE_VOTE_VALUE,
   RoomSnapshot,
+  UNKNOWN_VOTE_VALUE,
   VoteValue,
   getVotingDeck,
   resolveVotingDeckId
@@ -26,11 +28,12 @@ const mapRoundStatus = (status: RoundStatus): "active" | "revealed" =>
   status === RoundStatus.REVEALED ? "revealed" : "active";
 
 const toNumericVote = (value: VoteValue): number | null => {
-  if (value === "?") {
+  if (value === UNKNOWN_VOTE_VALUE || value === COFFEE_VOTE_VALUE) {
     return null;
   }
 
-  return Number(value);
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
 };
 
 const buildSummary = (votes: VoteValue[], votingDeck: VoteValue[]) => {
