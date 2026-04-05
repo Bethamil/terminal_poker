@@ -42,11 +42,6 @@ export const useRoomConnection = (
   const [isVoteBlocked, setIsVoteBlocked] = useState<boolean>(false);
   const [sessionEndedError, setSessionEndedError] = useState<RoomErrorPayload | null>(null);
   const socketRef = useRef<ReturnType<typeof createRoomSocket> | null>(null);
-  const isRealtimeReadyRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    isRealtimeReadyRef.current = isRealtimeReady;
-  }, [isRealtimeReady]);
 
   useEffect(() => {
     if (!participantToken) {
@@ -60,9 +55,6 @@ export const useRoomConnection = (
     }
 
     let disposed = false;
-    let handleVisibilityChange: (() => void) | null = null;
-    let handlePageShow: (() => void) | null = null;
-    let handleOnline: (() => void) | null = null;
     setIsLoading(true);
     setError(null);
     setIsVoteBlocked(false);
@@ -141,43 +133,6 @@ export const useRoomConnection = (
 
           setIsRealtimeReady(false);
         });
-
-        const recoverRealtimeSession = () => {
-          if (disposed) {
-            return;
-          }
-
-          if (socket.connected) {
-            if (isRealtimeReadyRef.current) {
-              return;
-            }
-
-            socket.disconnect().connect();
-            return;
-          }
-
-          socket.connect();
-        };
-
-        handleVisibilityChange = () => {
-          if (document.visibilityState !== "visible") {
-            return;
-          }
-
-          recoverRealtimeSession();
-        };
-
-        handlePageShow = () => {
-          recoverRealtimeSession();
-        };
-
-        handleOnline = () => {
-          recoverRealtimeSession();
-        };
-
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-        window.addEventListener("pageshow", handlePageShow);
-        window.addEventListener("online", handleOnline);
 
         socket.on("room:snapshot", (nextSnapshot: RoomSnapshot) => {
           if (disposed) {
@@ -259,15 +214,6 @@ export const useRoomConnection = (
     return () => {
       disposed = true;
       setIsRealtimeReady(false);
-      if (handleVisibilityChange) {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      }
-      if (handlePageShow) {
-        window.removeEventListener("pageshow", handlePageShow);
-      }
-      if (handleOnline) {
-        window.removeEventListener("online", handleOnline);
-      }
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
