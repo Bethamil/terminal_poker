@@ -245,12 +245,13 @@ export const registerRoomHandlers = (
   socket.on("vote:cast", async (payload) => {
     try {
       const session = getSocketSession(socket, payload.roomCode);
-      await roomService.castVote(session.roomCode, session.participantToken, payload.value);
-      io.to(session.roomCode).emit("vote:status", {
-        participantId: session.participantId,
-        hasVoted: true
-      });
-      await emitRoomSnapshots(io, roomService, session.roomCode);
+      const { isFirstVote } = await roomService.castVote(session.roomCode, session.participantToken, payload.value);
+      if (isFirstVote) {
+        io.to(session.roomCode).emit("vote:status", {
+          participantId: session.participantId,
+          hasVoted: true
+        });
+      }
     } catch (error) {
       emitSocketError(socket, error);
     }
