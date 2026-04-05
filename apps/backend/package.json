@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "types": "dist/server.d.ts",
   "scripts": {
-    "build": "rm -f tsconfig.tsbuildinfo && tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
     "cleanup:expired-rooms": "tsx src/scripts/cleanup-expired-rooms.ts",
     "dev": "tsx watch src/server.ts",
     "prisma:generate": "prisma generate",
