@@ -124,6 +124,11 @@ export const VOTING_DECK = getVotingDeck(DEFAULT_VOTING_DECK_ID);
 
 export const VOTE_CARD_META = getVoteCardMeta(DEFAULT_VOTING_DECK_ID);
 
+export const isNonEstimateVoteValue = (
+  value: string
+): value is typeof COFFEE_VOTE_VALUE | typeof UNKNOWN_VOTE_VALUE =>
+  value === COFFEE_VOTE_VALUE || value === UNKNOWN_VOTE_VALUE;
+
 export const isVoteValue = (value: string): value is VoteValue =>
   ALL_VOTE_VALUES_SET.has(value);
 

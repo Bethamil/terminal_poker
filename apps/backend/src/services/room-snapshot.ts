@@ -1,10 +1,9 @@
 import { ParticipantRole, Prisma, RoundStatus } from "@prisma/client";
 import {
-  COFFEE_VOTE_VALUE,
   RoomSnapshot,
-  UNKNOWN_VOTE_VALUE,
   VoteValue,
   getVotingDeck,
+  isNonEstimateVoteValue,
   resolveVotingDeckId
 } from "@terminal-poker/shared-types";
 
@@ -28,7 +27,7 @@ const mapRoundStatus = (status: RoundStatus): "active" | "revealed" =>
   status === RoundStatus.REVEALED ? "revealed" : "active";
 
 const toNumericVote = (value: VoteValue): number | null => {
-  if (value === UNKNOWN_VOTE_VALUE || value === COFFEE_VOTE_VALUE) {
+  if (isNonEstimateVoteValue(value)) {
     return null;
   }
 

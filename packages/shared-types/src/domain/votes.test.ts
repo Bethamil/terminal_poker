@@ -9,6 +9,7 @@ import {
   VOTING_DECK_OPTIONS,
   getVoteCardMeta,
   getVotingDeck,
+  isNonEstimateVoteValue,
   isVoteValue,
   isVotingDeckId
 } from "./votes";
@@ -25,6 +26,9 @@ describe("vote deck", () => {
     expect(VOTE_CARD_META.at(-1)).toMatchObject({ value: COFFEE_VOTE_VALUE, shortcut: "c" });
     expect(isVoteValue(UNKNOWN_VOTE_VALUE)).toBe(true);
     expect(isVoteValue(COFFEE_VOTE_VALUE)).toBe(true);
+    expect(isNonEstimateVoteValue(UNKNOWN_VOTE_VALUE)).toBe(true);
+    expect(isNonEstimateVoteValue(COFFEE_VOTE_VALUE)).toBe(true);
+    expect(isNonEstimateVoteValue("5")).toBe(false);
     expect(isVoteValue("XL")).toBe(true);
     expect(isVoteValue("coffee")).toBe(false);
   });

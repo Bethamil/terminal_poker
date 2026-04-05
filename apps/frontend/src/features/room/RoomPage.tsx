@@ -7,6 +7,7 @@ import {
   VOTING_DECK_OPTIONS,
   getVoteCardMeta,
   getVotingDeckName,
+  isNonEstimateVoteValue,
   type ParticipantSnapshot,
   type UpdateRoomSettingsPayload
 } from "@terminal-poker/shared-types";
@@ -189,7 +190,7 @@ const formatAverage = (average: number | null) => {
   return Number.isInteger(average) ? String(average) : average.toFixed(1).replace(/\.0$/, "");
 };
 
-const isRangeVote = (value: string) => value !== UNKNOWN_VOTE_VALUE && value !== COFFEE_VOTE_VALUE;
+const isRangeVote = (value: string) => !isNonEstimateVoteValue(value);
 
 const formatVoteShortcutHint = (shortcuts: string[]) => {
   const normalizedShortcuts = shortcuts.map((shortcut) => shortcut.toUpperCase());
