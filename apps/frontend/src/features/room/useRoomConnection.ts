@@ -11,37 +11,12 @@ import {
 
 import { apiClient, ApiError } from "../../lib/api/client";
 import { createRoomSocket } from "../../lib/socket/room-socket";
-
-type RealtimeAck = { ok: true } | { ok: false; error: RoomErrorPayload };
-type RoomSocket = ReturnType<typeof createRoomSocket>;
-
-const sessionEndedCodes = new Set(["INVALID_SESSION", "KICKED", "LEFT_ROOM", "ROOM_CLOSED"]);
-
-const isSessionEndedCode = (code: string) => sessionEndedCodes.has(code);
-
-const toSessionEndedPayload = (error: RoomErrorPayload): RoomErrorPayload | null =>
-  isSessionEndedCode(error.code) ? error : null;
-
-const toRoomStateSessionEndedPayload = (error: ApiError): RoomErrorPayload | null => {
-  if (error.code === "ROOM_NOT_FOUND") {
-    return {
-      code: "ROOM_CLOSED",
-      message: "This room no longer exists."
-    };
-  }
-
-  return isSessionEndedCode(error.code)
-    ? {
-        code: error.code,
-        message: error.message
-      }
-    : null;
-};
+import { emitWithAck, type RoomSocket, toRoomStateSessionEndedPayload, toSessionEndedPayload } from "./roomConnectionUtils";
+import { useRoomShortcuts } from "./useRoomShortcuts";
 
 interface UseRoomConnectionResult {
   snapshot: RoomSnapshot | null;
   error: string | null;
-  isVoteBlocked: boolean;
   sessionEndedError: RoomErrorPayload | null;
   isLoading: boolean;
   isRealtimeReady: boolean;
@@ -66,7 +41,6 @@ export const useRoomConnection = (
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRealtimeReady, setIsRealtimeReady] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isVoteBlocked, setIsVoteBlocked] = useState<boolean>(false);
   const [sessionEndedError, setSessionEndedError] = useState<RoomErrorPayload | null>(null);
   const socketRef = useRef<RoomSocket | null>(null);
 
@@ -76,28 +50,12 @@ export const useRoomConnection = (
     }
   };
 
-  const emitWithAck = (
-    emit: (ack: (result: RealtimeAck) => void) => void,
-    onSuccess: () => void,
-    onError: (error: RoomErrorPayload) => void
-  ) => {
-    emit((result: RealtimeAck) => {
-      if (!result.ok) {
-        onError(result.error);
-        return;
-      }
-
-      onSuccess();
-    });
-  };
-
   useEffect(() => {
     if (!participantToken) {
       setSnapshot(null);
       setIsLoading(false);
       setIsRealtimeReady(false);
       setError(null);
-      setIsVoteBlocked(false);
       setSessionEndedError(null);
       return;
     }
@@ -105,7 +63,6 @@ export const useRoomConnection = (
     let disposed = false;
     setIsLoading(true);
     setError(null);
-    setIsVoteBlocked(false);
     setSessionEndedError(null);
 
     apiClient
@@ -211,7 +168,6 @@ export const useRoomConnection = (
           }
 
           if (payload.code === "ROUND_REVEALED") {
-            setIsVoteBlocked(true);
             return;
           }
 
@@ -252,12 +208,6 @@ export const useRoomConnection = (
     return { socket, participantToken };
   };
 
-  useEffect(() => {
-    if (snapshot?.round.status !== "revealed") {
-      setIsVoteBlocked(false);
-    }
-  }, [snapshot?.round.status]);
-
   const emitVote = (value: VoteValue) => {
     const session = getSocketSession(true);
 
@@ -266,11 +216,8 @@ export const useRoomConnection = (
     }
 
     if (snapshot?.round.status === "revealed") {
-      setIsVoteBlocked(true);
       return;
     }
-
-    setIsVoteBlocked(false);
 
     setSnapshot((prev) => {
       if (!prev) return prev;
@@ -405,48 +352,18 @@ export const useRoomConnection = (
     [snapshot]
   );
 
-  useEffect(() => {
-    if (!snapshot || !participantToken || !isRealtimeReady) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      const isTypingContext =
-        target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
-      const hasModifierKey = event.metaKey || event.ctrlKey || event.altKey;
-
-      if (isTypingContext || hasModifierKey) {
-        return;
-      }
-
-      const normalizedKey = event.key.toLowerCase();
-      const vote = availableShortcuts.get(normalizedKey);
-
-      if (vote) {
-        event.preventDefault();
-        emitVote(vote);
-      }
-
-      if (snapshot.viewer.role === "moderator" && normalizedKey === "r") {
-        event.preventDefault();
-        emitRoundAction(snapshot.round.status === "revealed" ? "round:unreveal" : "round:reveal");
-      }
-
-      if (snapshot.viewer.role === "moderator" && normalizedKey === "n") {
-        event.preventDefault();
-        emitRoundAction("round:reset");
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [availableShortcuts, isRealtimeReady, participantToken, snapshot]);
+  useRoomShortcuts({
+    availableShortcuts,
+    emitRoundAction,
+    emitVote,
+    isRealtimeReady,
+    participantToken,
+    snapshot
+  });
 
   return {
     snapshot,
     error,
-    isVoteBlocked,
     sessionEndedError,
     isLoading,
     isRealtimeReady,
