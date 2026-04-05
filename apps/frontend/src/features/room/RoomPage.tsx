@@ -159,7 +159,7 @@ const MobileParticipantStrip = ({
           <div
             className={`grid min-w-[8.2rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-[999px] border px-3 py-2 ${
               isCurrent
-                ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
+                ? "border-[color:var(--participant-active-border)] bg-[color:var(--participant-active-bg)]"
                 : "border-[color:var(--outline)] bg-[color:var(--panel-bg)]"
             }`}
             key={participant.id}
@@ -964,7 +964,7 @@ export const RoomPage = () => {
                       <div
                         className={`grid min-h-[4.1rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-[0.7rem] rounded-[10px] border px-[0.85rem] py-[0.8rem] max-[720px]:grid-cols-[auto_minmax(0,1fr)] max-[720px]:items-start max-[720px]:gap-x-[0.65rem] max-[720px]:gap-y-2 ${
                           isViewer
-                            ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
+                            ? "border-[color:var(--participant-active-border)] bg-[color:var(--participant-active-bg)]"
                             : "border-transparent bg-[color:var(--row-bg)]"
                         }`}
                         key={participant.id}
