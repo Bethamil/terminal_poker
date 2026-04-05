@@ -42,6 +42,11 @@ export const useRoomConnection = (
   const [isVoteBlocked, setIsVoteBlocked] = useState<boolean>(false);
   const [sessionEndedError, setSessionEndedError] = useState<RoomErrorPayload | null>(null);
   const socketRef = useRef<ReturnType<typeof createRoomSocket> | null>(null);
+  const isRealtimeReadyRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    isRealtimeReadyRef.current = isRealtimeReady;
+  }, [isRealtimeReady]);
 
   useEffect(() => {
     if (!participantToken) {
@@ -55,6 +60,9 @@ export const useRoomConnection = (
     }
 
     let disposed = false;
+    let handleVisibilityChange: (() => void) | null = null;
+    let handlePageShow: (() => void) | null = null;
+    let handleOnline: (() => void) | null = null;
     setIsLoading(true);
     setError(null);
     setIsVoteBlocked(false);
@@ -73,15 +81,125 @@ export const useRoomConnection = (
         const socket = createRoomSocket();
         socketRef.current = socket;
 
+        const joinRealtimeRoom = () => {
+          if (disposed) {
+            return;
+          }
+
+          setIsRealtimeReady(false);
+
+          socket.emit(
+            "room:joinRealtime",
+            {
+              roomCode: roomCode.toUpperCase(),
+              participantToken
+            },
+            (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => {
+              if (disposed) {
+                return;
+              }
+
+              if (!result.ok) {
+                setIsRealtimeReady(false);
+                setError(result.error.message);
+
+                if (
+                  result.error.code === "INVALID_SESSION" ||
+                  result.error.code === "KICKED" ||
+                  result.error.code === "LEFT_ROOM" ||
+                  result.error.code === "ROOM_CLOSED"
+                ) {
+                  setSessionEndedError(result.error);
+                }
+
+                return;
+              }
+
+              setError(null);
+              setSessionEndedError(null);
+              setIsRealtimeReady(true);
+            }
+          );
+        };
+
+        socket.on("connect", () => {
+          joinRealtimeRoom();
+        });
+
+        socket.on("disconnect", () => {
+          if (disposed) {
+            return;
+          }
+
+          setIsRealtimeReady(false);
+        });
+
+        socket.on("connect_error", () => {
+          if (disposed) {
+            return;
+          }
+
+          setIsRealtimeReady(false);
+        });
+
+        const recoverRealtimeSession = () => {
+          if (disposed) {
+            return;
+          }
+
+          if (socket.connected) {
+            if (isRealtimeReadyRef.current) {
+              return;
+            }
+
+            socket.disconnect().connect();
+            return;
+          }
+
+          socket.connect();
+        };
+
+        handleVisibilityChange = () => {
+          if (document.visibilityState !== "visible") {
+            return;
+          }
+
+          recoverRealtimeSession();
+        };
+
+        handlePageShow = () => {
+          recoverRealtimeSession();
+        };
+
+        handleOnline = () => {
+          recoverRealtimeSession();
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("pageshow", handlePageShow);
+        window.addEventListener("online", handleOnline);
+
         socket.on("room:snapshot", (nextSnapshot: RoomSnapshot) => {
+          if (disposed) {
+            return;
+          }
+
           setSnapshot(nextSnapshot);
         });
 
         socket.on("round:updated", (nextSnapshot: RoomSnapshot) => {
+          if (disposed) {
+            return;
+          }
+
           setSnapshot(nextSnapshot);
         });
 
         socket.on("vote:status", (payload: VoteStatusPayload) => {
+          if (disposed) {
+            return;
+          }
+
           setSnapshot((prev) => {
             if (!prev) return prev;
             return {
@@ -94,6 +212,10 @@ export const useRoomConnection = (
         });
 
         socket.on("room:error", (payload: RoomErrorPayload) => {
+          if (disposed) {
+            return;
+          }
+
           if (payload.code === "ROUND_REVEALED") {
             setIsVoteBlocked(true);
             return;
@@ -110,32 +232,6 @@ export const useRoomConnection = (
             setSessionEndedError(payload);
           }
         });
-
-        socket.emit(
-          "room:joinRealtime",
-          {
-            roomCode: roomCode.toUpperCase(),
-            participantToken
-          },
-          (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => {
-            if (!result.ok) {
-              setError(result.error.message);
-
-              if (
-                result.error.code === "INVALID_SESSION" ||
-                result.error.code === "KICKED" ||
-                result.error.code === "LEFT_ROOM" ||
-                result.error.code === "ROOM_CLOSED"
-              ) {
-                setSessionEndedError(result.error);
-              }
-
-              return;
-            }
-
-            setIsRealtimeReady(true);
-          }
-        );
       })
       .catch((requestError: unknown) => {
         const message =
@@ -163,6 +259,15 @@ export const useRoomConnection = (
     return () => {
       disposed = true;
       setIsRealtimeReady(false);
+      if (handleVisibilityChange) {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
+      if (handlePageShow) {
+        window.removeEventListener("pageshow", handlePageShow);
+      }
+      if (handleOnline) {
+        window.removeEventListener("online", handleOnline);
+      }
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
