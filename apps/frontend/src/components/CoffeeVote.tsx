@@ -4,7 +4,7 @@ type CoffeeVoteVariant = "compact" | "hero" | "tile" | "mobile";
 
 const COFFEE_ICON_STYLES: Record<CoffeeVoteVariant, { wrapper: string; steam: string; cup: string }> = {
   compact: {
-    wrapper: "inline-flex h-[1.15em] w-[1.15em] flex-col items-center justify-center leading-none text-current",
+    wrapper: "inline-flex h-[1.15em] flex-col items-center justify-center leading-none text-current",
     steam: "translate-x-[0.12rem] font-['JetBrains_Mono'] text-[0.58rem] font-bold leading-none tracking-[0.12em]",
     cup: "font-['JetBrains_Mono'] text-[0.82rem] font-bold leading-none tracking-[0.08em]"
   },
