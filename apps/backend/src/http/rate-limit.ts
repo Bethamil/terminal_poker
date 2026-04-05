@@ -10,7 +10,7 @@ const rateLimitResponse = {
 // and doesn't suffer from shared-network false positives.
 export const createRoomLimiter = rateLimit({
   windowMs: 60_000,
-  limit: 5,
+  limit: 10,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: rateLimitResponse

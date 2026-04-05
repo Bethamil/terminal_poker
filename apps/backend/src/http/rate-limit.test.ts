@@ -13,7 +13,7 @@ const createTestApp = () => {
 describe("createRoomLimiter", () => {
   it("allows requests within the limit", async () => {
     const app = createTestApp();
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       const res = await request(app).post("/");
       expect(res.status).toBe(200);
     }
@@ -21,7 +21,7 @@ describe("createRoomLimiter", () => {
 
   it("returns 429 when limit is exceeded", async () => {
     const app = createTestApp();
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       await request(app).post("/");
     }
     const res = await request(app).post("/");
