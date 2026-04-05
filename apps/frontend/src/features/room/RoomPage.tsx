@@ -13,6 +13,7 @@ import {
 } from "@terminal-poker/shared-types";
 
 import { AppHeader } from "../../components/AppHeader";
+import { AppFooter } from "../../components/AppFooter";
 import { AppModal } from "../../components/AppModal";
 import { Button } from "../../components/Button";
 import { CoffeeVote } from "../../components/CoffeeVote";
@@ -804,27 +805,27 @@ export const RoomPage = () => {
         </section>
       </main>
 
-      <footer
-        className="app-footer z-20 flex h-10 items-center justify-between px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] backdrop-blur-xl"
-        style={{
-          background: "var(--shell-footer-bg)",
-          borderTop: "1px solid var(--shell-footer-border)",
-          color: "var(--shell-footer-text)"
-        }}
-      >
-        <div className="flex items-center gap-4">
-          <span>{voteShortcutHint}</span>
-          <span>[R] REVEAL</span>
-          <span>[N] NEXT</span>
-        </div>
-        <div className="hidden items-center gap-2 md:flex">
-          <span
-            className="h-1.5 w-1.5 rounded-full"
-            style={{ background: isRealtimeReady ? "var(--shell-footer-dot)" : "var(--shell-footer-text)" }}
-          />
-          <span>{isRealtimeReady ? "CONNECTION_STABLE" : "SYNCING"}</span>
-        </div>
-      </footer>
+      <AppFooter
+        left={
+          <>
+            <span>{voteShortcutHint}</span>
+            <span>[R] REVEAL</span>
+            <span>[N] NEXT</span>
+          </>
+        }
+        leftClassName="hidden gap-4 md:flex"
+        center={
+          <>
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: isRealtimeReady ? "var(--shell-footer-dot)" : "var(--shell-footer-text)" }}
+            />
+            <span>{isRealtimeReady ? "CONNECTION_STABLE" : "SYNCING"}</span>
+          </>
+        }
+        centerClassName="gap-2"
+        rightClassName="gap-2"
+      />
 
       {isModerator && isSettingsOpen ? (
         <AppModal

@@ -7,6 +7,7 @@ import {
 } from "@terminal-poker/shared-types";
 
 import { AppHeader } from "../../components/AppHeader";
+import { AppFooter } from "../../components/AppFooter";
 import { AppModal } from "../../components/AppModal";
 import { Button } from "../../components/Button";
 import { Field } from "../../components/Field";
@@ -268,23 +269,11 @@ export const LandingPage = () => {
         </section>
       </main>
 
-      <footer
-        className="app-footer z-20 flex h-10 items-center justify-between px-4 font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.16em] backdrop-blur-xl"
-        style={{
-          background: "var(--shell-footer-bg)",
-          borderTop: "1px solid var(--shell-footer-border)",
-          color: "var(--shell-footer-text)"
-        }}
-      >
-        <div className="flex items-center gap-4">
-          <span>SYSTEM_ONLINE</span>
-        </div>
-        <div />
-        <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full" aria-hidden="true" style={{ background: "var(--shell-footer-dot)" }} />
-          <span>READY</span>
-        </div>
-      </footer>
+      <AppFooter
+        left={<span>SYSTEM_ONLINE</span>}
+        leftClassName="gap-4"
+        rightClassName="gap-2"
+      />
 
       {notice ? (
         <div className="notice notice--info fixed bottom-14 right-4 z-30 max-w-md">
