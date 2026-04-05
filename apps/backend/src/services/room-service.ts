@@ -1,4 +1,4 @@
-import { ParticipantRole, Prisma, PrismaClient } from "@prisma/client";
+import { ParticipantRole, Prisma, PrismaClient, RoundStatus } from "@prisma/client";
 import {
   CreateRoomRequest,
   DEFAULT_VOTING_DECK_ID,
@@ -66,6 +66,14 @@ export class RoomService {
     }
 
     return sanitized;
+  }
+
+  private canCreateNextRound(round: RoomAggregate["rounds"][number] | undefined): boolean {
+    if (!round) {
+      return false;
+    }
+
+    return round.status === RoundStatus.REVEALED || round.votes.length > 0 || Boolean(round.jiraTicketKey);
   }
 
   private async getAuthorizedRoom(
@@ -429,6 +437,12 @@ export class RoomService {
 
       if (authorized.role !== ParticipantRole.MODERATOR) {
         throw new AppError(403, "FORBIDDEN", "Only moderators can reset a round.");
+      }
+
+      console.log("authorized.room.rounds", authorized.room.rounds);
+
+      if (!this.canCreateNextRound(authorized.room.rounds[0])) {
+        return;
       }
 
       const repo = this.repository(transaction);
