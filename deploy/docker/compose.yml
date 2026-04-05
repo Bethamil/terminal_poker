@@ -4,7 +4,7 @@ services:
     command:
       - sh
       - -lc
-      - test -n "$$DATABASE_URL" && cd /app && pnpm --filter @terminal-poker/backend exec prisma db push && node apps/backend/dist/server.js
+      - test -n "$$DATABASE_URL" && cd /app && pnpm --filter @terminal-poker/backend exec prisma migrate deploy && node apps/backend/dist/server.js
     environment:
       PORT: 4000
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:8080}
