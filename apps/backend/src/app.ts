@@ -23,10 +23,10 @@ const isBackendRoute = (pathname: string) =>
 export const createApp = (roomService: RoomService, env: Env): Express => {
   const app = express();
 
-  if (env.TRUST_PROXY) {
-    // Trust the first proxy hop (Cloudflare / nginx) so request.ip reflects
-    // the real client address via X-Forwarded-For.
-    app.set("trust proxy", 1);
+  if (env.TRUST_PROXY_HOPS > 0) {
+    // Trust N proxy hops so request.ip reflects the real client address
+    // via X-Forwarded-For. E.g. 1 for Cloudflare only, 2 for Cloudflare + nginx.
+    app.set("trust proxy", env.TRUST_PROXY_HOPS);
   }
 
   app.use(
