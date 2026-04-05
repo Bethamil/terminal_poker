@@ -27,6 +27,7 @@ Expected settings in `.env.selfhost`:
 - `CLIENT_ORIGIN`
 - `DATABASE_URL`
 - `ROOM_INACTIVITY_TTL_HOURS`
+- `TRUST_PROXY_HOPS` (optional, default `0`)
 - optional Redis env vars
 
 ## Bundled Postgres
@@ -47,10 +48,25 @@ Expected settings in `.env.selfhost`:
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
 - `ROOM_INACTIVITY_TTL_HOURS`
+- `TRUST_PROXY_HOPS` (optional, default `0`)
 - optional Redis env vars
 
 Compose derives the internal `DATABASE_URL` automatically for the bundled setup.
 On startup, the container applies committed Prisma migrations with `prisma migrate deploy` before launching the compiled app from `dist`.
+
+## Reverse Proxy / Rate Limiting
+
+The backend includes per-IP rate limiting on public API endpoints. When running behind a reverse proxy (Cloudflare, nginx, etc.), set `TRUST_PROXY_HOPS` so Express reads the real client IP from `X-Forwarded-For`:
+
+```env
+# Number of trusted proxy hops in front of the app
+# 0 = disabled (default, fine for direct exposure or local dev)
+# 1 = one proxy (e.g. Cloudflare OR nginx)
+# 2 = two proxies (e.g. Cloudflare + nginx)
+TRUST_PROXY_HOPS=1
+```
+
+Without this, all requests appear to come from the proxy IP and share a single rate-limit bucket.
 
 ## Redis
 

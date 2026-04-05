@@ -34,4 +34,5 @@ helm upgrade --install terminal-poker <repo-name>/<chart-name> \
 - Move `DATABASE_URL` into your secret-management workflow before production use.
 - Move your Redis env vars into your secret-management workflow too if you are running multiple backend replicas.
 - Keep `replicaCount` at `1` unless Redis is configured, otherwise Socket.IO stays single-node.
+- Set `TRUST_PROXY_HOPS` to the number of reverse proxy hops in front of the app (e.g. `1` for an ingress controller, `2` for Cloudflare + ingress). This ensures the per-IP API rate limiter uses real client IPs.
 - The values file uses the same startup pattern as the self-hosted Docker Compose setup: `prisma migrate deploy` runs before the app starts, then Node starts the compiled backend from `dist`.

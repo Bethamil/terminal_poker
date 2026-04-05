@@ -51,6 +51,8 @@ extraEnvVars:
     value: "postgresql://REPLACE_ME"
   - name: ROOM_INACTIVITY_TTL_HOURS
     value: "24"
+  - name: TRUST_PROXY_HOPS
+    value: "1"
   - name: REDIS_MODE
     value: "none"
   # Enable one of the Redis modes below when running multiple replicas.
