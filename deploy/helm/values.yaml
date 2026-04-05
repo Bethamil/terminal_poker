@@ -12,7 +12,7 @@ args:
   - >-
     test -n "$DATABASE_URL" &&
     cd /app &&
-    pnpm --filter @terminal-poker/backend exec prisma db push &&
+    pnpm --filter @terminal-poker/backend exec prisma migrate deploy &&
     node apps/backend/dist/server.js
 
 containerPorts:

@@ -50,6 +50,7 @@ Expected settings in `.env.selfhost`:
 - optional Redis env vars
 
 Compose derives the internal `DATABASE_URL` automatically for the bundled setup.
+On startup, the container applies committed Prisma migrations with `prisma migrate deploy` before launching the compiled app from `dist`.
 
 ## Redis
 

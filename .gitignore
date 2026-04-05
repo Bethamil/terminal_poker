@@ -17,3 +17,4 @@ coverage
 apps/backend/prisma/dev.db
 apps/backend/prisma/dev.db-journal
 apps/backend/generated
+apps/backend/src/generated

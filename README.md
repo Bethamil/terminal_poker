@@ -93,7 +93,7 @@ Prepare the database and start the app:
 
 ```bash
 pnpm prisma:generate
-pnpm --filter @terminal-poker/backend exec prisma db push
+pnpm db:migrate
 pnpm dev
 ```
 
@@ -116,6 +116,7 @@ pnpm dev
 pnpm build
 pnpm test
 pnpm typecheck
+pnpm db:migrate
 pnpm --filter @terminal-poker/backend cleanup:expired-rooms
 pnpm db:clear
 pnpm db:reset
