@@ -1,6 +1,7 @@
 import Redis, { type Redis as RedisClient, type RedisOptions, type SentinelAddress } from "ioredis";
 
 import type { Env } from "../config/env";
+import { logger } from "../lib/logger";
 
 const REDIS_CONNECT_TIMEOUT_MS = 10_000;
 const REDIS_COMMAND_TIMEOUT_MS = 5_000;
@@ -46,8 +47,7 @@ const getCommonOptions = (connectionName: string): RedisOptions => ({
 
 const attachClientLogging = (client: RedisClient, label: string) => {
   client.on("error", (error) => {
-    // eslint-disable-next-line no-console
-    console.error(`[redis:${label}]`, error);
+    logger.error({ err: error, label: `redis:${label}` }, "redis client error");
   });
 };
 

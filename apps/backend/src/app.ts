@@ -3,10 +3,12 @@ import path from "node:path";
 
 import cors from "cors";
 import express, { type Express } from "express";
+import pinoHttp from "pino-http";
 
 import type { Env } from "./config/env";
 import { asAppError } from "./http/errors";
 import { createApiRouter } from "./http/routes";
+import { logger } from "./lib/logger";
 import type { RoomService } from "./services/room-service";
 
 const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
@@ -23,6 +25,7 @@ const isBackendRoute = (pathname: string) =>
 export const createApp = (roomService: RoomService, env: Env): Express => {
   const app = express();
 
+  app.use(pinoHttp({ logger }));
   app.use(
     cors({
       origin: env.CLIENT_ORIGIN,
@@ -51,6 +54,10 @@ export const createApp = (roomService: RoomService, env: Env): Express => {
 
   app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
     const appError = asAppError(error);
+
+    if (appError.statusCode >= 500) {
+      logger.error({ err: error }, appError.message);
+    }
 
     response.status(appError.statusCode).json({
       code: appError.code,
