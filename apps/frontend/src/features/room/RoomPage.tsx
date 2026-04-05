@@ -396,8 +396,12 @@ export const RoomPage = () => {
         left: (
           <>
             <span>{voteShortcutHint}</span>
-            <span>[R] REVEAL</span>
-            <span>[N] NEXT</span>
+            {isModerator ? (
+              <>
+                <span>[R] REVEAL</span>
+                <span>[N] NEXT</span>
+              </>
+            ) : null}
           </>
         ),
         leftClassName: "hidden gap-4 md:flex",
@@ -425,25 +429,34 @@ export const RoomPage = () => {
       overlay={
         isModerator ? (
           <RoomSettingsModal
-            activeParticipantCount={activeParticipantCount}
             areRealtimeActionsDisabled={areRealtimeActionsDisabled}
             isOpen={isSettingsOpen}
-            isSettingsSaved={isSettingsSaved}
-            jiraBaseUrlDraft={jiraBaseUrlDraft}
-            newPasscodeDraft={newPasscodeDraft}
-            onClearPasscode={() => void saveRoomSettings("clear")}
             onClose={() => setIsSettingsOpen(false)}
-            onJiraBaseUrlChange={setJiraBaseUrlDraft}
-            onKickParticipant={handleKickParticipant}
-            onNewPasscodeChange={setNewPasscodeDraft}
-            onSave={() => void saveRoomSettings(newPasscodeDraft.trim() ? "set" : "keep")}
-            onSettingsTabChange={setSettingsTab}
-            onVotingDeckIdChange={setVotingDeckIdDraft}
-            pendingKickId={pendingKickId}
-            settingsError={settingsError}
-            settingsTab={settingsTab}
-            snapshot={snapshot}
-            votingDeckIdDraft={votingDeckIdDraft}
+            room={{
+              hasJoinPasscode: snapshot.room.hasJoinPasscode,
+              hasJiraBaseUrl: Boolean(snapshot.room.jiraBaseUrl),
+              isSettingsSaved,
+              jiraBaseUrlDraft,
+              newPasscodeDraft,
+              onClearPasscode: () => void saveRoomSettings("clear"),
+              onJiraBaseUrlChange: setJiraBaseUrlDraft,
+              onNewPasscodeChange: setNewPasscodeDraft,
+              onSave: () => void saveRoomSettings(newPasscodeDraft.trim() ? "set" : "keep"),
+              onVotingDeckIdChange: setVotingDeckIdDraft,
+              settingsError,
+              votingDeckIdDraft
+            }}
+            tab={{
+              activeParticipantCount,
+              activeTab: settingsTab,
+              onTabChange: setSettingsTab
+            }}
+            users={{
+              onKickParticipant: handleKickParticipant,
+              participants: snapshot.participants,
+              pendingKickId,
+              viewerParticipantId: snapshot.viewer.participantId
+            }}
           />
         ) : null
       }

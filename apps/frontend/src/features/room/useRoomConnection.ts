@@ -351,14 +351,17 @@ export const useRoomConnection = (
       ),
     [snapshot]
   );
+  const areShortcutsEnabled = Boolean(snapshot && participantToken && isRealtimeReady);
+  const isModerator = snapshot?.viewer.role === "moderator";
+  const isRoundRevealed = snapshot?.round.status === "revealed";
 
   useRoomShortcuts({
     availableShortcuts,
+    enabled: areShortcutsEnabled,
     emitRoundAction,
     emitVote,
-    isRealtimeReady,
-    participantToken,
-    snapshot
+    isModerator,
+    isRoundRevealed
   });
 
   return {

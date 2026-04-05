@@ -1,26 +1,26 @@
 import { useEffect } from "react";
 
-import type { RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
+import type { VoteValue } from "@terminal-poker/shared-types";
 
 interface UseRoomShortcutsOptions {
   availableShortcuts: Map<string, VoteValue>;
+  enabled: boolean;
   emitRoundAction: (eventName: "round:reveal" | "round:unreveal" | "round:reset") => void;
   emitVote: (value: VoteValue) => void;
-  isRealtimeReady: boolean;
-  participantToken: string | null;
-  snapshot: RoomSnapshot | null;
+  isModerator: boolean;
+  isRoundRevealed: boolean;
 }
 
 export const useRoomShortcuts = ({
   availableShortcuts,
+  enabled,
   emitRoundAction,
   emitVote,
-  isRealtimeReady,
-  participantToken,
-  snapshot
+  isModerator,
+  isRoundRevealed
 }: UseRoomShortcutsOptions) => {
   useEffect(() => {
-    if (!snapshot || !participantToken || !isRealtimeReady) {
+    if (!enabled) {
       return;
     }
 
@@ -42,12 +42,12 @@ export const useRoomShortcuts = ({
         emitVote(vote);
       }
 
-      if (snapshot.viewer.role === "moderator" && normalizedKey === "r") {
+      if (isModerator && normalizedKey === "r") {
         event.preventDefault();
-        emitRoundAction(snapshot.round.status === "revealed" ? "round:unreveal" : "round:reveal");
+        emitRoundAction(isRoundRevealed ? "round:unreveal" : "round:reveal");
       }
 
-      if (snapshot.viewer.role === "moderator" && normalizedKey === "n") {
+      if (isModerator && normalizedKey === "n") {
         event.preventDefault();
         emitRoundAction("round:reset");
       }
@@ -55,5 +55,5 @@ export const useRoomShortcuts = ({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [availableShortcuts, emitRoundAction, emitVote, isRealtimeReady, participantToken, snapshot]);
+  }, [availableShortcuts, enabled, emitRoundAction, emitVote, isModerator, isRoundRevealed]);
 };

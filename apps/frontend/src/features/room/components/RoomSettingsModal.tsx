@@ -1,7 +1,6 @@
 import {
   VOTING_DECK_OPTIONS,
   type ParticipantSnapshot,
-  type RoomSnapshot,
   type UpdateRoomSettingsPayload
 } from "@terminal-poker/shared-types";
 
@@ -12,6 +11,7 @@ import { SelectField } from "../../../components/SelectField";
 import { StatusChip } from "../../../components/StatusChip";
 
 export type RoomSettingsTab = "room" | "users";
+type VotingDeckId = UpdateRoomSettingsPayload["votingDeckId"];
 
 const settingsTabs: Array<{
   id: RoomSettingsTab;
@@ -22,48 +22,50 @@ const settingsTabs: Array<{
   { id: "users", label: "USERS", chip: (participantCount) => `${participantCount} ACTIVE` }
 ];
 
-interface RoomSettingsModalProps {
+interface RoomSettingsModalTabState {
   activeParticipantCount: number;
-  areRealtimeActionsDisabled: boolean;
-  isOpen: boolean;
+  activeTab: RoomSettingsTab;
+  onTabChange: (tab: RoomSettingsTab) => void;
+}
+
+interface RoomSettingsModalRoomState {
+  hasJoinPasscode: boolean;
+  hasJiraBaseUrl: boolean;
   isSettingsSaved: boolean;
   jiraBaseUrlDraft: string;
   newPasscodeDraft: string;
   onClearPasscode: () => void;
-  onClose: () => void;
   onJiraBaseUrlChange: (value: string) => void;
-  onKickParticipant: (participant: ParticipantSnapshot) => void;
   onNewPasscodeChange: (value: string) => void;
   onSave: () => void;
-  onSettingsTabChange: (tab: RoomSettingsTab) => void;
-  onVotingDeckIdChange: (value: UpdateRoomSettingsPayload["votingDeckId"]) => void;
-  pendingKickId: string | null;
+  onVotingDeckIdChange: (value: VotingDeckId) => void;
   settingsError: string | null;
-  settingsTab: RoomSettingsTab;
-  snapshot: RoomSnapshot;
-  votingDeckIdDraft: UpdateRoomSettingsPayload["votingDeckId"];
+  votingDeckIdDraft: VotingDeckId;
+}
+
+interface RoomSettingsModalUsersState {
+  onKickParticipant: (participant: ParticipantSnapshot) => void;
+  participants: ParticipantSnapshot[];
+  pendingKickId: string | null;
+  viewerParticipantId: string;
+}
+
+interface RoomSettingsModalProps {
+  areRealtimeActionsDisabled: boolean;
+  isOpen: boolean;
+  onClose: () => void;
+  room: RoomSettingsModalRoomState;
+  tab: RoomSettingsModalTabState;
+  users: RoomSettingsModalUsersState;
 }
 
 export const RoomSettingsModal = ({
-  activeParticipantCount,
   areRealtimeActionsDisabled,
   isOpen,
-  isSettingsSaved,
-  jiraBaseUrlDraft,
-  newPasscodeDraft,
-  onClearPasscode,
   onClose,
-  onJiraBaseUrlChange,
-  onKickParticipant,
-  onNewPasscodeChange,
-  onSave,
-  onSettingsTabChange,
-  onVotingDeckIdChange,
-  pendingKickId,
-  settingsError,
-  settingsTab,
-  snapshot,
-  votingDeckIdDraft
+  room,
+  tab,
+  users
 }: RoomSettingsModalProps) => {
   if (!isOpen) {
     return null;
@@ -85,22 +87,25 @@ export const RoomSettingsModal = ({
             className="grid grid-cols-2 gap-2 min-[721px]:grid-cols-1"
             role="tablist"
           >
-            {settingsTabs.map((tab) => {
-              const chip = typeof tab.chip === "function" ? tab.chip(snapshot.participants.length) : tab.chip;
-              const isActive = settingsTab === tab.id;
+            {settingsTabs.map((settingsTab) => {
+              const chip =
+                typeof settingsTab.chip === "function"
+                  ? settingsTab.chip(users.participants.length)
+                  : settingsTab.chip;
+              const isActive = settingsTab.id === tab.activeTab;
 
               return (
                 <button
-                  aria-controls={`room-settings-panel-${tab.id}`}
+                  aria-controls={`room-settings-panel-${settingsTab.id}`}
                   aria-selected={isActive}
                   className={`grid cursor-pointer gap-1 rounded-[12px] border px-3 py-2.5 text-left transition-[transform,border-color,background-color,box-shadow] duration-150 hover:-translate-y-[1px] hover:border-[color:var(--button-secondary-border)] hover:bg-[color:var(--panel-strong-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--button-secondary-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--card-bg)] active:translate-y-0 min-[721px]:gap-2 min-[721px]:px-4 min-[721px]:py-3 ${
                     isActive
                       ? "border-[color:var(--button-secondary-border)] bg-[color:var(--button-secondary-bg)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                       : "border-[color:var(--outline)] bg-[color:var(--panel-bg)]"
                   }`}
-                  id={`room-settings-tab-${tab.id}`}
-                  key={tab.id}
-                  onClick={() => onSettingsTabChange(tab.id)}
+                  id={`room-settings-tab-${settingsTab.id}`}
+                  key={settingsTab.id}
+                  onClick={() => tab.onTabChange(settingsTab.id)}
                   role="tab"
                   type="button"
                 >
@@ -108,7 +113,7 @@ export const RoomSettingsModal = ({
                     {chip}
                   </span>
                   <span className="font-['JetBrains_Mono'] text-[0.82rem] uppercase tracking-[0.08em] text-[color:var(--text)] min-[721px]:text-[0.88rem] min-[721px]:tracking-[0.1em]">
-                    {tab.label}
+                    {settingsTab.label}
                   </span>
                 </button>
               );
@@ -116,7 +121,7 @@ export const RoomSettingsModal = ({
           </div>
         </div>
 
-        {settingsTab === "room" ? (
+        {tab.activeTab === "room" ? (
           <section
             aria-labelledby="room-settings-tab-room"
             className="grid min-h-0 content-start gap-4 overflow-y-auto rounded-[calc(var(--radius)-2px)] border border-[color:var(--outline)] bg-[color:var(--settings-section-bg)] p-4 pr-3 max-[720px]:gap-[0.85rem] max-[720px]:p-[0.85rem] max-[720px]:pr-[0.65rem]"
@@ -132,15 +137,15 @@ export const RoomSettingsModal = ({
             <div className="grid gap-4">
               <Field
                 label="JIRA URL"
-                value={jiraBaseUrlDraft}
-                onChange={(event) => onJiraBaseUrlChange(event.target.value)}
+                value={room.jiraBaseUrlDraft}
+                onChange={(event) => room.onJiraBaseUrlChange(event.target.value)}
                 placeholder="https://jira.example.com"
               />
               <SelectField
                 label="DECK"
-                value={votingDeckIdDraft}
+                value={room.votingDeckIdDraft}
                 onChange={(event) =>
-                  onVotingDeckIdChange(event.target.value as UpdateRoomSettingsPayload["votingDeckId"])
+                  room.onVotingDeckIdChange(event.target.value as VotingDeckId)
                 }
                 hint="Changing the deck starts a new round."
               >
@@ -152,42 +157,42 @@ export const RoomSettingsModal = ({
               </SelectField>
               <Field
                 hint={
-                  snapshot.room.hasJoinPasscode
+                  room.hasJoinPasscode
                     ? "Leave blank to keep the current passcode."
                     : "Leave blank to keep the room open."
                 }
                 label="NEW PASSCODE"
-                value={newPasscodeDraft}
-                onChange={(event) => onNewPasscodeChange(event.target.value)}
-                placeholder={snapshot.room.hasJoinPasscode ? "••••••••" : "optional"}
+                value={room.newPasscodeDraft}
+                onChange={(event) => room.onNewPasscodeChange(event.target.value)}
+                placeholder={room.hasJoinPasscode ? "••••••••" : "optional"}
                 type="password"
               />
             </div>
             <div className="shortcut-strip justify-between rounded-[10px] border border-[color:var(--outline)] bg-[color:var(--panel-bg)] px-4 py-[0.8rem] max-[720px]:grid max-[720px]:grid-cols-2 max-[720px]:gap-[0.55rem] max-[720px]:px-[0.85rem] max-[720px]:py-[0.7rem]">
-              <span>{snapshot.room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
-              <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
+              <span>{room.hasJoinPasscode ? "LOCKED" : "OPEN"}</span>
+              <span>{room.hasJiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
             </div>
             <div className="action-row max-[720px]:grid max-[720px]:grid-cols-1 max-[720px]:gap-[0.6rem]">
               <Button
                 className="max-[720px]:w-full"
                 disabled={areRealtimeActionsDisabled}
-                onClick={onSave}
+                onClick={room.onSave}
                 variant="secondary"
               >
-                {isSettingsSaved ? "SAVED" : "SAVE"}
+                {room.isSettingsSaved ? "SAVED" : "SAVE"}
               </Button>
-              {snapshot.room.hasJoinPasscode ? (
+              {room.hasJoinPasscode ? (
                 <Button
                   className="max-[720px]:w-full"
                   disabled={areRealtimeActionsDisabled}
-                  onClick={onClearPasscode}
+                  onClick={room.onClearPasscode}
                   variant="ghost"
                 >
                   CLEAR PASSCODE
                 </Button>
               ) : null}
             </div>
-            {settingsError ? <div className="notice notice--error">{settingsError}</div> : null}
+            {room.settingsError ? <div className="notice notice--error">{room.settingsError}</div> : null}
           </section>
         ) : (
           <section
@@ -203,12 +208,12 @@ export const RoomSettingsModal = ({
               </h3>
             </div>
             <div className="border-l border-[color:var(--rail-accent)] bg-[color:color-mix(in_srgb,var(--chip-bg)_78%,transparent)] px-4 py-[0.85rem] font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.14em] text-[color:var(--rail-accent-text)] max-[720px]:px-[0.85rem] max-[720px]:py-[0.75rem] max-[720px]:text-[0.68rem] max-[720px]:tracking-[0.1em]">
-              ACTIVE ({activeParticipantCount}/{snapshot.participants.length})
+              ACTIVE ({tab.activeParticipantCount}/{users.participants.length})
             </div>
             <div className="grid min-h-0 content-start auto-rows-max gap-3 overflow-y-auto pr-[0.3rem] max-[720px]:gap-[0.65rem] max-[720px]:pb-1 max-[720px]:pr-[0.1rem]">
-              {snapshot.participants.map((participant) => {
-                const canKick = participant.id !== snapshot.viewer.participantId && participant.role !== "moderator";
-                const isViewer = participant.id === snapshot.viewer.participantId;
+              {users.participants.map((participant) => {
+                const canKick = participant.id !== users.viewerParticipantId && participant.role !== "moderator";
+                const isViewer = participant.id === users.viewerParticipantId;
 
                 return (
                   <div
@@ -236,11 +241,11 @@ export const RoomSettingsModal = ({
                       {canKick ? (
                         <Button
                           className="max-[720px]:min-h-[2.7rem] max-[720px]:px-4"
-                          disabled={areRealtimeActionsDisabled || pendingKickId === participant.id}
-                          onClick={() => onKickParticipant(participant)}
+                          disabled={areRealtimeActionsDisabled || users.pendingKickId === participant.id}
+                          onClick={() => users.onKickParticipant(participant)}
                           variant="danger"
                         >
-                          {pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
+                          {users.pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
                         </Button>
                       ) : (
                         <span className="mono-muted whitespace-nowrap">{isViewer ? "YOU" : "LOCKED"}</span>
