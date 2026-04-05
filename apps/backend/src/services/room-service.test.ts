@@ -304,6 +304,22 @@ describe("RoomService moderator actions", () => {
     expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(afterVote.getTime());
   });
 
+  it("does not create duplicate empty rounds when reset is spammed", async () => {
+    const room = createRoomAggregate();
+    const service = createService(room);
+
+    await service.resetRound("AB123", "moderator-token");
+    expect(room.rounds).toHaveLength(2);
+
+    await service.resetRound("AB123", "moderator-token");
+    expect(room.rounds).toHaveLength(2);
+    expect(room.rounds[0]).toMatchObject({
+      jiraTicketKey: null,
+      status: RoundStatus.ACTIVE,
+      votes: []
+    });
+  });
+
   it("touches room activity for moderator mutations and participant removal", async () => {
     const room = createRoomAggregate();
     const service = createService(room);
