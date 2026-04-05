@@ -24,22 +24,60 @@ import { useRoomConnection } from "./useRoomConnection";
 const countOnlineParticipants = (participants: ParticipantSnapshot[]) =>
   participants.filter((participant) => participant.presence === "online").length;
 
-const CoffeeIcon = ({ className = "" }: { className?: string }) => (
-  <span aria-hidden="true" className={`coffee-icon ${className}`.trim()}>
-    <span className="coffee-icon__steam">//</span>
-    <span className="coffee-icon__cup">[_]</span>
-  </span>
-);
+type CoffeeIconVariant = "compact" | "hero" | "tile" | "mobile";
+
+const COFFEE_ICON_STYLES: Record<CoffeeIconVariant, { wrapper: string; steam: string; cup: string }> = {
+  compact: {
+    wrapper: "inline-flex h-[1.15em] w-[1.15em] flex-col items-center justify-center leading-none text-current",
+    steam: "translate-x-[0.12rem] font-['JetBrains_Mono'] text-[0.58rem] font-bold leading-none tracking-[0.12em]",
+    cup: "font-['JetBrains_Mono'] text-[0.82rem] font-bold leading-none tracking-[0.08em]"
+  },
+  hero: {
+    wrapper:
+      "inline-flex h-[1.22em] w-[1.22em] flex-col items-center justify-center leading-none text-inherit",
+    steam:
+      "translate-x-[0.26rem] font-['JetBrains_Mono'] text-[clamp(0.9rem,0.8vw+0.4rem,1.25rem)] font-bold leading-none tracking-[0.16em]",
+    cup:
+      "font-['JetBrains_Mono'] text-[clamp(1.4rem,1vw+0.8rem,2rem)] font-bold leading-none tracking-[0.1em]"
+  },
+  tile: {
+    wrapper:
+      "inline-flex h-[1.15em] w-[1.15em] -translate-y-[0.04rem] flex-col items-center justify-center leading-none text-[color:color-mix(in_srgb,var(--vote-tile-value)_92%,white_8%)]",
+    steam: "translate-x-[0.18rem] font-['JetBrains_Mono'] text-[0.98rem] font-bold leading-none tracking-[0.1em]",
+    cup: "font-['JetBrains_Mono'] text-[1.38rem] font-bold leading-none tracking-[0.06em]"
+  },
+  mobile: {
+    wrapper: "inline-flex h-[0.92em] w-[0.92em] flex-col items-center justify-center leading-none text-current",
+    steam: "translate-x-[0.1rem] font-['JetBrains_Mono'] text-[0.62rem] font-bold leading-none tracking-[0.08em]",
+    cup: "font-['JetBrains_Mono'] text-[0.86rem] font-bold leading-none tracking-[0.05em]"
+  }
+};
+
+const CoffeeIcon = ({ variant }: { variant: CoffeeIconVariant }) => {
+  const styles = COFFEE_ICON_STYLES[variant];
+
+  return (
+    <span aria-hidden="true" className={styles.wrapper}>
+      <span className={styles.steam}>//</span>
+      <span className={styles.cup}>[_]</span>
+    </span>
+  );
+};
 
 const renderVoteValue = (
   value: string,
-  variant: "compact" | "hero" | "tile" = "compact"
+  variant: CoffeeIconVariant = "compact"
 ): ReactNode => {
   if (value !== COFFEE_VOTE_VALUE) {
     return value;
   }
 
-  return <CoffeeIcon className={`coffee-icon--${variant}`} />;
+  return (
+    <span className="inline-flex items-center">
+      <CoffeeIcon variant={variant} />
+      <span className="sr-only">Coffee</span>
+    </span>
+  );
 };
 
 const ParticipantRail = ({
@@ -157,7 +195,7 @@ const MobileParticipantStrip = ({
         const voteState =
           roundStatus === "revealed"
             ? participant.revealedVote
-              ? renderVoteValue(participant.revealedVote)
+              ? renderVoteValue(participant.revealedVote, "mobile")
               : "·"
             : participant.hasVoted
               ? "●"
@@ -175,7 +213,7 @@ const MobileParticipantStrip = ({
             <div className={`presence-dot presence-dot--${participant.presence}`} />
             <strong className="truncate text-[0.8rem]">{participant.name}</strong>
             <div
-              className={`text-right font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] ${
+              className={`flex min-w-[2.25rem] items-center justify-end text-right font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] ${
                 roundStatus === "revealed" && participant.revealedVote
                   ? "font-['Space_Grotesk'] text-[1rem] tracking-[-0.04em] text-[color:var(--text)]"
                   : "text-[color:var(--muted)]"
@@ -677,7 +715,7 @@ export const RoomPage = () => {
                   <div className="grid gap-1.5">
                     <span className="hero-card__label">{summaryLabel}</span>
                     <strong
-                      className="hero-summary-value font-['Space_Grotesk'] text-[clamp(2.6rem,5vw,4.5rem)] leading-[0.88] tracking-[-0.08em] uppercase"
+                      className="inline-flex min-h-[1em] items-center font-['Space_Grotesk'] text-[clamp(2.6rem,5vw,4.5rem)] leading-[0.88] tracking-[-0.08em] uppercase"
                       style={{ color: hasTopVote ? "var(--primary)" : "var(--text)" }}
                     >
                       {summaryPrimaryValue}
@@ -783,6 +821,7 @@ export const RoomPage = () => {
                   const isCoffeeCard = card.value === COFFEE_VOTE_VALUE;
                   return (
                     <button
+                      aria-label={isCoffeeCard ? card.label : undefined}
                       disabled={isVotingClosed}
                       className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
                         isCoffeeCard ? "vote-tile--coffee" : ""
@@ -793,9 +832,7 @@ export const RoomPage = () => {
                       onClick={() => castVote(card.value)}
                       type="button"
                     >
-                      {isCoffeeCard ? (
-                        <CoffeeIcon className="coffee-icon--tile" />
-                      ) : null}
+                      {isCoffeeCard ? <CoffeeIcon variant="tile" /> : null}
                       {!isCoffeeCard ? <strong className="vote-tile__value">{card.value}</strong> : null}
                     </button>
                   );
