@@ -504,12 +504,19 @@ export const RoomPage = () => {
     );
   }
 
-  if (isLoading || !snapshot) {
+  if (isLoading || !snapshot || !isRealtimeReady) {
     return (
       <div className="shell shell--room">
-        <div className="loading-state card">
-          <StatusChip tone="accent">SYNC</StatusChip>
-          <h1>Loading room…</h1>
+        <div className="grid min-h-[60vh] place-items-center">
+          <div className="grid justify-items-center gap-4 text-center">
+            <div
+              aria-hidden="true"
+              className="h-10 w-10 animate-spin rounded-full border-2 border-[color:var(--outline)] border-t-[color:var(--primary)]"
+            />
+            <h1 className="font-['JetBrains_Mono'] text-sm uppercase tracking-[0.18em] text-[color:var(--text)]">
+              Loading room...
+            </h1>
+          </div>
         </div>
       </div>
     );
@@ -929,11 +936,19 @@ export const RoomPage = () => {
                   <span>{snapshot.room.jiraBaseUrl ? "JIRA ON" : "JIRA OFF"}</span>
                 </div>
                 <div className="action-row max-[720px]:grid max-[720px]:grid-cols-1 max-[720px]:gap-[0.6rem]">
-                  <Button className="max-[720px]:w-full" onClick={handleSaveRoomSettings} variant="secondary">
+                  <Button
+                    className="max-[720px]:w-full"
+                    onClick={handleSaveRoomSettings}
+                    variant="secondary"
+                  >
                     {isSettingsSaved ? "SAVED" : "SAVE"}
                   </Button>
                   {snapshot.room.hasJoinPasscode ? (
-                    <Button className="max-[720px]:w-full" onClick={() => void saveRoomSettings("clear")} variant="ghost">
+                    <Button
+                      className="max-[720px]:w-full"
+                      onClick={() => void saveRoomSettings("clear")}
+                      variant="ghost"
+                    >
                       CLEAR PASSCODE
                     </Button>
                   ) : null}
