@@ -7,6 +7,7 @@
     "build": "pnpm -r build",
     "db:clear": "printf 'TRUNCATE TABLE \"Vote\", \"Round\", \"Participant\", \"Room\" CASCADE;' | pnpm --filter @terminal-poker/backend exec prisma db execute --stdin --schema prisma/schema.prisma",
     "db:reset": "pnpm --filter @terminal-poker/backend exec prisma db push --force-reset",
+    "db:studio": "pnpm --filter @terminal-poker/backend exec prisma studio",
     "dev": "concurrently -n backend,frontend -c cyan,magenta \"pnpm dev:backend\" \"pnpm dev:frontend\"",
     "dev:backend": "pnpm --filter @terminal-poker/backend dev",
     "dev:frontend": "pnpm --filter @terminal-poker/frontend dev",

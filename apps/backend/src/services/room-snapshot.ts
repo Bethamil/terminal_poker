@@ -3,6 +3,7 @@ import {
   RoomSnapshot,
   VoteValue,
   getVotingDeck,
+  isNonEstimateVoteValue,
   resolveVotingDeckId
 } from "@terminal-poker/shared-types";
 
@@ -26,11 +27,12 @@ const mapRoundStatus = (status: RoundStatus): "active" | "revealed" =>
   status === RoundStatus.REVEALED ? "revealed" : "active";
 
 const toNumericVote = (value: VoteValue): number | null => {
-  if (value === "?") {
+  if (isNonEstimateVoteValue(value)) {
     return null;
   }
 
-  return Number(value);
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
 };
 
 const buildSummary = (votes: VoteValue[], votingDeck: VoteValue[]) => {

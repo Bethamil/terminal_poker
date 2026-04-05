@@ -2,9 +2,12 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import {
+  COFFEE_VOTE_VALUE,
+  UNKNOWN_VOTE_VALUE,
   VOTING_DECK_OPTIONS,
   getVoteCardMeta,
   getVotingDeckName,
+  isNonEstimateVoteValue,
   type ParticipantSnapshot,
   type UpdateRoomSettingsPayload
 } from "@terminal-poker/shared-types";
@@ -12,6 +15,7 @@ import {
 import { AppHeader } from "../../components/AppHeader";
 import { AppModal } from "../../components/AppModal";
 import { Button } from "../../components/Button";
+import { CoffeeVote } from "../../components/CoffeeVote";
 import { Field } from "../../components/Field";
 import { SelectField } from "../../components/SelectField";
 import { StatusChip } from "../../components/StatusChip";
@@ -95,7 +99,13 @@ const ParticipantRail = ({
               participant.revealedVote ? "participant-row__vote--revealed" : ""
             }`}
           >
-            {participant.revealedVote ? participant.revealedVote : participant.hasVoted ? "●" : "·"}
+            {participant.revealedVote
+              ? participant.revealedVote === COFFEE_VOTE_VALUE
+                ? <CoffeeVote />
+                : participant.revealedVote
+              : participant.hasVoted
+                ? "●"
+                : "·"}
           </div>
         </div>
       ))}
@@ -136,7 +146,11 @@ const MobileParticipantStrip = ({
         const isCurrent = participant.id === currentParticipantId;
         const voteState =
           roundStatus === "revealed"
-            ? participant.revealedVote ?? "·"
+            ? participant.revealedVote
+              ? participant.revealedVote === COFFEE_VOTE_VALUE
+                ? <CoffeeVote variant="mobile" />
+                : participant.revealedVote
+              : "·"
             : participant.hasVoted
               ? "●"
               : "·";
@@ -145,7 +159,7 @@ const MobileParticipantStrip = ({
           <div
             className={`grid min-w-[8.2rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-[999px] border px-3 py-2 ${
               isCurrent
-                ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
+                ? "border-[color:var(--participant-active-border)] bg-[color:var(--participant-active-bg)]"
                 : "border-[color:var(--outline)] bg-[color:var(--panel-bg)]"
             }`}
             key={participant.id}
@@ -153,7 +167,7 @@ const MobileParticipantStrip = ({
             <div className={`presence-dot presence-dot--${participant.presence}`} />
             <strong className="truncate text-[0.8rem]">{participant.name}</strong>
             <div
-              className={`text-right font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] ${
+              className={`flex min-w-[2.25rem] items-center justify-end text-right font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] ${
                 roundStatus === "revealed" && participant.revealedVote
                   ? "font-['Space_Grotesk'] text-[1rem] tracking-[-0.04em] text-[color:var(--text)]"
                   : "text-[color:var(--muted)]"
@@ -175,6 +189,8 @@ const formatAverage = (average: number | null) => {
 
   return Number.isInteger(average) ? String(average) : average.toFixed(1).replace(/\.0$/, "");
 };
+
+const isRangeVote = (value: string) => !isNonEstimateVoteValue(value);
 
 const formatVoteShortcutHint = (shortcuts: string[]) => {
   const normalizedShortcuts = shortcuts.map((shortcut) => shortcut.toUpperCase());
@@ -327,7 +343,6 @@ export const RoomPage = () => {
     () => formatVoteShortcutHint(voteCardMeta.map((card) => card.shortcut)),
     [voteCardMeta]
   );
-
   const handleInlineJoin = async (event: FormEvent) => {
     event.preventDefault();
     setJoinError(null);
@@ -509,15 +524,20 @@ export const RoomPage = () => {
   const topVoteLabel = roundSummary?.consensus ?? "SPLIT";
   const hasTopVote = roundSummary?.consensus !== null;
   const revealedValuesInOrder = snapshot.votingDeck.filter(
-    (value) => value !== "?" && (roundSummary?.counts[value] ?? 0) > 0
+    (value) => isRangeVote(value) && (roundSummary?.counts[value] ?? 0) > 0
   );
-  const hasUnknownVotes = (roundSummary?.counts["?"] ?? 0) > 0;
+  const hasUnknownVotes = (roundSummary?.counts[UNKNOWN_VOTE_VALUE] ?? 0) > 0;
   const rangeLabel =
     revealedValuesInOrder.length > 1
       ? `${revealedValuesInOrder[0]}-${revealedValuesInOrder[revealedValuesInOrder.length - 1]}`
-      : revealedValuesInOrder[0] ?? (hasUnknownVotes ? "?" : "—");
+      : revealedValuesInOrder[0] ?? (hasUnknownVotes ? UNKNOWN_VOTE_VALUE : "—");
   const summaryLabel = hasTopVote ? "TOP VOTE" : "RESULT";
-  const summaryPrimaryValue = hasTopVote ? topVoteLabel : "SPLIT";
+  const summaryPrimaryValue =
+    hasTopVote
+      ? topVoteLabel === COFFEE_VOTE_VALUE
+        ? <CoffeeVote variant="hero" />
+        : topVoteLabel
+      : "SPLIT";
   const revealActionLabel = snapshot.round.status === "revealed" ? "UNREVEAL" : "REVEAL VOTES";
   const waitingVotes = Math.max(snapshot.participants.length - votedCount, 0);
   const activeParticipantCount = countOnlineParticipants(snapshot.participants);
@@ -654,7 +674,7 @@ export const RoomPage = () => {
                   <div className="grid gap-1.5">
                     <span className="hero-card__label">{summaryLabel}</span>
                     <strong
-                      className="font-['Space_Grotesk'] text-[clamp(2.6rem,5vw,4.5rem)] leading-[0.88] tracking-[-0.08em] uppercase"
+                      className="inline-flex min-h-[1em] items-center font-['Space_Grotesk'] text-[clamp(2.6rem,5vw,4.5rem)] leading-[0.88] tracking-[-0.08em] uppercase"
                       style={{ color: hasTopVote ? "var(--primary)" : "var(--text)" }}
                     >
                       {summaryPrimaryValue}
@@ -757,17 +777,22 @@ export const RoomPage = () => {
               <div className="vote-grid">
                 {voteCardMeta.map((card) => {
                   const isSelected = snapshot.viewer.selectedVote === card.value;
+                  const isCoffeeCard = card.value === COFFEE_VOTE_VALUE;
                   return (
                     <button
+                      aria-label={isCoffeeCard ? card.label : undefined}
                       disabled={isVotingClosed}
                       className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
+                        isCoffeeCard ? "vote-tile--coffee" : ""
+                      } ${
                         isVotingClosed ? "vote-tile--locked" : ""
                       }`.trim()}
                       key={card.value}
                       onClick={() => castVote(card.value)}
                       type="button"
                     >
-                      <strong className="vote-tile__value">{card.value}</strong>
+                      {isCoffeeCard ? <CoffeeVote variant="tile" /> : null}
+                      {!isCoffeeCard ? <strong className="vote-tile__value">{card.value}</strong> : null}
                     </button>
                   );
                 })}
@@ -939,7 +964,7 @@ export const RoomPage = () => {
                       <div
                         className={`grid min-h-[4.1rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-[0.7rem] rounded-[10px] border px-[0.85rem] py-[0.8rem] max-[720px]:grid-cols-[auto_minmax(0,1fr)] max-[720px]:items-start max-[720px]:gap-x-[0.65rem] max-[720px]:gap-y-2 ${
                           isViewer
-                            ? "border-[rgba(135,245,197,0.18)] bg-[rgba(135,245,197,0.08)]"
+                            ? "border-[color:var(--participant-active-border)] bg-[color:var(--participant-active-bg)]"
                             : "border-transparent bg-[color:var(--row-bg)]"
                         }`}
                         key={participant.id}

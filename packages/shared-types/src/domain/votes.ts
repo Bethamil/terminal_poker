@@ -4,6 +4,9 @@ export interface VoteCardMeta<TValue extends string = string> {
   shortcut: string;
 }
 
+export const UNKNOWN_VOTE_VALUE = "?" as const;
+export const COFFEE_VOTE_VALUE = "COFFEE" as const;
+
 export const VOTING_DECK_IDS = ["modified-fibonacci", "fibonacci", "powers-of-two", "tshirt"] as const;
 
 export type VotingDeckId = (typeof VOTING_DECK_IDS)[number];
@@ -30,7 +33,8 @@ export const VOTING_DECK_PRESETS = {
       { value: "20", label: "XL", shortcut: "9" },
       { value: "40", label: "Epic", shortcut: "0" },
       { value: "100", label: "Huge", shortcut: "-" },
-      { value: "?", label: "Unknown", shortcut: "/" }
+      { value: UNKNOWN_VOTE_VALUE, label: "Unknown", shortcut: "/" },
+      { value: COFFEE_VOTE_VALUE, label: "Coffee", shortcut: "c" }
     ]
   },
   fibonacci: {
@@ -48,7 +52,8 @@ export const VOTING_DECK_PRESETS = {
       { value: "34", label: "Epic", shortcut: "9" },
       { value: "55", label: "Huge", shortcut: "0" },
       { value: "89", label: "Massive", shortcut: "-" },
-      { value: "?", label: "Unknown", shortcut: "/" }
+      { value: UNKNOWN_VOTE_VALUE, label: "Unknown", shortcut: "/" },
+      { value: COFFEE_VOTE_VALUE, label: "Coffee", shortcut: "c" }
     ]
   },
   "powers-of-two": {
@@ -63,7 +68,8 @@ export const VOTING_DECK_PRESETS = {
       { value: "16", label: "XL", shortcut: "6" },
       { value: "32", label: "Epic", shortcut: "7" },
       { value: "64", label: "Huge", shortcut: "8" },
-      { value: "?", label: "Unknown", shortcut: "/" }
+      { value: UNKNOWN_VOTE_VALUE, label: "Unknown", shortcut: "/" },
+      { value: COFFEE_VOTE_VALUE, label: "Coffee", shortcut: "c" }
     ]
   },
   tshirt: {
@@ -76,7 +82,8 @@ export const VOTING_DECK_PRESETS = {
       { value: "L", label: "Large", shortcut: "4" },
       { value: "XL", label: "Extra large", shortcut: "5" },
       { value: "XXL", label: "Oversized", shortcut: "6" },
-      { value: "?", label: "Unknown", shortcut: "/" }
+      { value: UNKNOWN_VOTE_VALUE, label: "Unknown", shortcut: "/" },
+      { value: COFFEE_VOTE_VALUE, label: "Coffee", shortcut: "c" }
     ]
   }
 } as const satisfies Record<VotingDeckId, VotingDeckDefinition>;
@@ -116,6 +123,11 @@ export const resolveVotingDeckId = (value: string | null | undefined): VotingDec
 export const VOTING_DECK = getVotingDeck(DEFAULT_VOTING_DECK_ID);
 
 export const VOTE_CARD_META = getVoteCardMeta(DEFAULT_VOTING_DECK_ID);
+
+export const isNonEstimateVoteValue = (
+  value: string
+): value is typeof COFFEE_VOTE_VALUE | typeof UNKNOWN_VOTE_VALUE =>
+  value === COFFEE_VOTE_VALUE || value === UNKNOWN_VOTE_VALUE;
 
 export const isVoteValue = (value: string): value is VoteValue =>
   ALL_VOTE_VALUES_SET.has(value);
