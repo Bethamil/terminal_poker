@@ -28,15 +28,9 @@ export function HomeView() {
       </Box>
 
       <Box flexDirection="column">
-        <Text color="gray">Server: {server}</Text>
-        {name && <Text color="gray">Name: {name}</Text>}
-      </Box>
-
-      <Box flexDirection="column">
         <Text bold color="white">Quick start</Text>
         <Text>  <Text color="cyan">/create</Text>  — Create a new room</Text>
         <Text>  <Text color="cyan">/join CODE</Text> — Join an existing room</Text>
-        <Text>  <Text color="cyan">/help</Text>   — Show all commands</Text>
       </Box>
 
       {recent.length > 0 && (
@@ -47,13 +41,28 @@ export function HomeView() {
               <Text color="cyan">  {r.code}</Text>
               <Text color="gray"> — {r.name}</Text>
               <Text color="gray" dimColor>
-                {" "}
-                ({new Date(r.lastVisited).toLocaleDateString()})
+                {" "}({new Date(r.lastVisited).toLocaleDateString()})
               </Text>
             </Text>
           ))}
         </Box>
       )}
+
+      <Box flexDirection="column">
+        <Text bold color="white">Settings</Text>
+        <Box gap={1}>
+          <Text color="cyan">  /server</Text>
+          <Text color="gray">—</Text>
+          <Text color="white">{server}</Text>
+        </Box>
+        <Box gap={1}>
+          <Text color="cyan">  /name</Text>
+          <Text color="gray">—</Text>
+          <Text color={name ? "white" : "gray"} dimColor={!name}>
+            {name || "not set"}
+          </Text>
+        </Box>
+      </Box>
     </Box>
   );
 }
