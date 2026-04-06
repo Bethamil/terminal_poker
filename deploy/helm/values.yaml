@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   registry: ghcr.io
   repository: bethamil/terminal_poker
-  tag: "0.1.0"
+  tag: "latest"
   pullPolicy: IfNotPresent
 
 command: ["sh"]
