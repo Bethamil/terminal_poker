@@ -15,8 +15,8 @@ export function VotingDeck({ deckId, selectedVote, roundStatus }: VotingDeckProp
   if (roundStatus === "revealed") {
     return (
       <Box>
-        <Text color="gray" dimColor>Votes revealed. Press </Text>
-        <Text color="yellow" bold>n</Text>
+        <Text color="gray" dimColor>Votes revealed. Type </Text>
+        <Text color="yellow" bold>/next</Text>
         <Text color="gray" dimColor> for next round.</Text>
       </Box>
     );
@@ -24,7 +24,10 @@ export function VotingDeck({ deckId, selectedVote, roundStatus }: VotingDeckProp
 
   return (
     <Box flexDirection="column">
-      <Text bold color="white">Vote</Text>
+      <Box gap={1}>
+        <Text bold color="white">Vote</Text>
+        <Text color="gray" dimColor>(type value + Enter, C for coffee)</Text>
+      </Box>
       <Box gap={1} flexWrap="wrap">
         {cards.map((card) => {
           const isSelected = selectedVote === card.value;
@@ -35,7 +38,7 @@ export function VotingDeck({ deckId, selectedVote, roundStatus }: VotingDeckProp
                 backgroundColor={isSelected ? "cyan" : undefined}
                 bold={isSelected}
               >
-                [{card.shortcut}]{card.value}
+                {card.value}
               </Text>
             </Box>
           );

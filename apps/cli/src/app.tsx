@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Box, Text, useApp, useInput } from "ink";
-import type { RoomSnapshot, VoteValue, VotingDeckId } from "@terminal-poker/shared-types";
+import { Box, Text, useApp } from "ink";
+import type { RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
 import { VOTING_DECK_PRESETS } from "@terminal-poker/shared-types";
 import { createApiClient, ApiError } from "./lib/api.js";
 import type { ApiClient } from "./lib/api.js";
@@ -143,56 +143,6 @@ export function App() {
     setPendingData({});
   }, []);
 
-  // Handle vote shortcut keys when in room
-  useInput(
-    (ch, key) => {
-      if (screen !== "room" || !snapshot || !session || inputMode) return;
-      if (key.ctrl && ch === "c") {
-        exit();
-        return;
-      }
-
-      const round = snapshot.round;
-      const viewer = snapshot.viewer;
-
-      // Shortcut voting
-      if (round.status === "active") {
-        const cards = VOTING_DECK_PRESETS[snapshot.room.votingDeckId].cards;
-        const card = cards.find((c) => c.shortcut === ch);
-        if (card) {
-          socketRef.current?.emit("vote:cast", {
-            roomCode: session.roomCode,
-            participantToken: session.participantToken,
-            value: card.value as VoteValue,
-          });
-          log(`Voted: ${card.value}`, "cyan");
-          return;
-        }
-      }
-
-      // Moderator shortcuts
-      if (viewer.role === "moderator") {
-        if (ch === "r" && round.status === "active") {
-          socketRef.current?.emit("round:reveal", {
-            roomCode: session.roomCode,
-            participantToken: session.participantToken,
-          });
-          log("Revealing votes...", "yellow");
-          return;
-        }
-        if (ch === "n" && round.status === "revealed") {
-          socketRef.current?.emit("round:reset", {
-            roomCode: session.roomCode,
-            participantToken: session.participantToken,
-          });
-          log("Starting next round...", "yellow");
-          return;
-        }
-      }
-    },
-    { isActive: screen === "room" && !inputMode },
-  );
-
   // Process commands
   const handleCommand = useCallback(
     async (raw: string) => {
@@ -251,33 +201,6 @@ export function App() {
               log("Enter room code:", "cyan");
             }
             return;
-
-          case "rejoin": {
-            const code = args.toUpperCase();
-            if (!code) {
-              log("Usage: /rejoin CODE", "red");
-              return;
-            }
-            const saved = getSession(code);
-            if (!saved) {
-              log(`No saved session for ${code}`, "red");
-              return;
-            }
-            log(`Rejoining ${code}...`, "cyan");
-            try {
-              apiRef.current = createApiClient(saved.serverUrl);
-              const { snapshot: snap } = await apiRef.current.getRoomState(
-                saved.roomCode,
-                saved.participantToken,
-              );
-              connectToRoom(saved.roomCode, saved.participantToken, snap);
-            } catch (err) {
-              const msg = err instanceof ApiError ? err.message : "Failed to rejoin";
-              log(msg, "red");
-              clearSession(code);
-            }
-            return;
-          }
 
           case "server": {
             if (!args) {
@@ -441,9 +364,28 @@ export function App() {
     }
   }, [log]);
 
-  // Multi-step join flow
+  // Multi-step join flow (tries to rejoin saved session first)
   const startJoin = useCallback(
-    (code: string) => {
+    async (code: string) => {
+      // Try rejoin from saved session first
+      const saved = getSession(code);
+      if (saved) {
+        log(`Rejoining ${code}...`, "cyan");
+        try {
+          apiRef.current = createApiClient(saved.serverUrl);
+          const { snapshot: snap } = await apiRef.current.getRoomState(
+            saved.roomCode,
+            saved.participantToken,
+          );
+          connectToRoom(saved.roomCode, saved.participantToken, snap);
+          return;
+        } catch {
+          log("Saved session expired, joining fresh...", "yellow");
+          clearSession(code);
+        }
+      }
+
+      // Fall through to normal join
       const name = getDefaultName();
       setPendingData({ roomCode: code });
       if (name) {
@@ -454,7 +396,7 @@ export function App() {
         log(`Joining ${code}. Enter your display name:`, "cyan");
       }
     },
-    [log],
+    [log, connectToRoom],
   );
 
   const handleInputMode = useCallback(

@@ -20,11 +20,7 @@ export function HelpText({ isModerator, inRoom }: HelpTextProps) {
           </Text>
           <Text>
             <Text color="cyan" bold>/join CODE</Text>
-            <Text color="gray"> — Join a room by code</Text>
-          </Text>
-          <Text>
-            <Text color="cyan" bold>/rejoin CODE</Text>
-            <Text color="gray"> — Rejoin a saved session</Text>
+            <Text color="gray"> — Join or rejoin a room by code</Text>
           </Text>
           <Text>
             <Text color="cyan" bold>/server URL</Text>
@@ -44,20 +40,14 @@ export function HelpText({ isModerator, inRoom }: HelpTextProps) {
       {inRoom && (
         <>
           <Text>
-            <Text color="cyan" bold>1-9, 0, -, /, c</Text>
-            <Text color="gray"> — Cast vote (shortcut keys)</Text>
-          </Text>
-          <Text>
             <Text color="cyan" bold>/vote VALUE</Text>
-            <Text color="gray"> — Cast vote by value</Text>
+            <Text color="gray"> — Cast vote (or just type the value)</Text>
           </Text>
           {isModerator && (
             <>
               <Text>
                 <Text color="yellow" bold>/reveal</Text>
-                <Text color="gray"> — Reveal all votes (or press </Text>
-                <Text color="yellow" bold>r</Text>
-                <Text color="gray">)</Text>
+                <Text color="gray"> — Reveal all votes</Text>
               </Text>
               <Text>
                 <Text color="yellow" bold>/unreveal</Text>
@@ -65,9 +55,7 @@ export function HelpText({ isModerator, inRoom }: HelpTextProps) {
               </Text>
               <Text>
                 <Text color="yellow" bold>/next</Text>
-                <Text color="gray"> — Start next round (or press </Text>
-                <Text color="yellow" bold>n</Text>
-                <Text color="gray">)</Text>
+                <Text color="gray"> — Start next round</Text>
               </Text>
               <Text>
                 <Text color="yellow" bold>/ticket KEY</Text>

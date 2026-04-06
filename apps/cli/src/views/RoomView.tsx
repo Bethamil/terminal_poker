@@ -90,12 +90,12 @@ export function RoomView({ snapshot, connected }: RoomViewProps) {
         )}
         {viewer.role === "moderator" && round.status === "active" && (
           <Text color="gray">
-            Press <Text color="yellow" bold>r</Text> to reveal
+            <Text color="yellow" bold>/reveal</Text> to show votes
           </Text>
         )}
         {viewer.role === "moderator" && round.status === "revealed" && (
           <Text color="gray">
-            Press <Text color="yellow" bold>n</Text> for next round
+            <Text color="yellow" bold>/next</Text> for next round
           </Text>
         )}
       </Box>
