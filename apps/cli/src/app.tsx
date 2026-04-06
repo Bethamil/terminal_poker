@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Box, Text, useApp, useStdout } from "ink";
 import type { RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
-import { VOTING_DECK_PRESETS } from "@terminal-poker/shared-types";
+import { VOTING_DECK_PRESETS, VOTING_DECK_IDS } from "@terminal-poker/shared-types";
 import { createApiClient, ApiError } from "./lib/api.js";
 import type { ApiClient } from "./lib/api.js";
 import { createRoomSocket } from "./lib/socket.js";
@@ -355,6 +355,96 @@ export function App({ initialJoin }: AppProps) {
               jiraTicketKey: args || null,
             });
             log(args ? `Ticket set: ${args}` : "Ticket cleared", "cyan");
+            return;
+          }
+
+          case "jira": {
+            if (!session || !snapshot || connectionStatus !== "live") {
+              log(session ? "Not connected — waiting for live session" : "Not in a room", session ? "yellow" : "red");
+              return;
+            }
+            const jiraUrl = args === "clear" || !args ? null : args;
+            socketRef.current?.emit("room:updateSettings", {
+              roomCode: session.roomCode,
+              participantToken: session.participantToken,
+              jiraBaseUrl: jiraUrl,
+              votingDeckId: snapshot.room.votingDeckId,
+              joinPasscode: null,
+              joinPasscodeMode: "keep",
+            });
+            log(jiraUrl ? `Jira URL set to ${jiraUrl}` : "Jira URL cleared", "cyan");
+            return;
+          }
+
+          case "deck": {
+            if (!session || !snapshot || connectionStatus !== "live") {
+              log(session ? "Not connected — waiting for live session" : "Not in a room", session ? "yellow" : "red");
+              return;
+            }
+            if (!args) {
+              const options = VOTING_DECK_IDS.map((id) => `${id}${id === snapshot.room.votingDeckId ? " (current)" : ""}`).join(", ");
+              log(`Decks: ${options}`, "gray");
+              return;
+            }
+            if (!VOTING_DECK_IDS.includes(args as typeof VOTING_DECK_IDS[number])) {
+              log(`Unknown deck: ${args}. Options: ${VOTING_DECK_IDS.join(", ")}`, "red");
+              return;
+            }
+            socketRef.current?.emit("room:updateSettings", {
+              roomCode: session.roomCode,
+              participantToken: session.participantToken,
+              jiraBaseUrl: snapshot.room.jiraBaseUrl,
+              votingDeckId: args as typeof VOTING_DECK_IDS[number],
+              joinPasscode: null,
+              joinPasscodeMode: "keep",
+            });
+            log(`Deck changed to ${args}`, "cyan");
+            return;
+          }
+
+          case "passcode": {
+            if (!session || !snapshot || connectionStatus !== "live") {
+              log(session ? "Not connected — waiting for live session" : "Not in a room", session ? "yellow" : "red");
+              return;
+            }
+            const isClear = args === "clear" || !args;
+            socketRef.current?.emit("room:updateSettings", {
+              roomCode: session.roomCode,
+              participantToken: session.participantToken,
+              jiraBaseUrl: snapshot.room.jiraBaseUrl,
+              votingDeckId: snapshot.room.votingDeckId,
+              joinPasscode: isClear ? null : args,
+              joinPasscodeMode: isClear ? "clear" : "set",
+            });
+            log(isClear ? "Passcode cleared" : "Passcode updated", "cyan");
+            return;
+          }
+
+          case "kick": {
+            if (!session || !snapshot || connectionStatus !== "live") {
+              log(session ? "Not connected — waiting for live session" : "Not in a room", session ? "yellow" : "red");
+              return;
+            }
+            if (!args) {
+              log("Usage: /kick NAME", "red");
+              return;
+            }
+            const target = snapshot.participants.find(
+              (p) => p.name.toLowerCase() === args.toLowerCase() && p.role !== "moderator" && p.id !== snapshot.viewer.participantId,
+            );
+            if (!target) {
+              const names = snapshot.participants
+                .filter((p) => p.role !== "moderator" && p.id !== snapshot.viewer.participantId)
+                .map((p) => p.name);
+              log(names.length ? `No such participant: ${args}. Options: ${names.join(", ")}` : "No participants to kick", "red");
+              return;
+            }
+            socketRef.current?.emit("room:kickParticipant", {
+              roomCode: session.roomCode,
+              participantToken: session.participantToken,
+              participantId: target.id,
+            });
+            log(`Kicked ${target.name}`, "yellow");
             return;
           }
 
