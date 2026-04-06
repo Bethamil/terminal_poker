@@ -1,9 +1,8 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { getRecentRooms, getDefaultServer, getDefaultName } from "../lib/store.js";
+import { getDefaultServer, getDefaultName } from "../lib/store.js";
 
 export function HomeView() {
-  const recent = getRecentRooms();
   const server = getDefaultServer();
   const name = getDefaultName();
 
@@ -31,22 +30,8 @@ export function HomeView() {
         <Text bold color="white">Quick start</Text>
         <Text>  <Text color="cyan">/create</Text>  — Create a new room</Text>
         <Text>  <Text color="cyan">/join CODE</Text> — Join an existing room</Text>
+        <Text>  <Text color="cyan">/recent</Text>  — Browse recent rooms</Text>
       </Box>
-
-      {recent.length > 0 && (
-        <Box flexDirection="column">
-          <Text bold color="white">Recent rooms</Text>
-          {recent.slice(0, 5).map((r) => (
-            <Text key={r.code}>
-              <Text color="cyan">  {r.code}</Text>
-              <Text color="gray"> — {r.name}</Text>
-              <Text color="gray" dimColor>
-                {" "}({new Date(r.lastVisited).toLocaleDateString()})
-              </Text>
-            </Text>
-          ))}
-        </Box>
-      )}
 
       <Box flexDirection="column">
         <Text bold color="white">Settings</Text>

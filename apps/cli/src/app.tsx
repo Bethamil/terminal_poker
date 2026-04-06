@@ -18,9 +18,27 @@ import {
 } from "./lib/store.js";
 import { CommandInput } from "./components/CommandInput.js";
 import { HomeView } from "./views/HomeView.js";
+import { RecentView } from "./views/RecentView.js";
 import { RoomView } from "./views/RoomView.js";
 
-type Screen = "home" | "room" | "creating" | "joining";
+type Screen = "home" | "room" | "recent" | "creating" | "joining";
+
+function parseRoomInput(input: string): { code: string; serverUrl?: string } {
+  // Handle full URLs like https://poker.bloem.dev/room/ABC12
+  try {
+    const url = new URL(input);
+    const match = url.pathname.match(/\/room\/([A-Za-z0-9]+)/);
+    if (match) {
+      return {
+        code: match[1]!.toUpperCase(),
+        serverUrl: url.origin,
+      };
+    }
+  } catch {
+    // Not a URL, treat as room code
+  }
+  return { code: input.toUpperCase() };
+}
 
 interface RoomSession {
   roomCode: string;
@@ -208,10 +226,16 @@ export function App() {
 
           case "join":
             if (args) {
-              startJoin(args.toUpperCase());
+              const parsed = parseRoomInput(args);
+              if (parsed.serverUrl) {
+                setDefaultServer(parsed.serverUrl);
+                apiRef.current = createApiClient(parsed.serverUrl);
+                log(`Server set to ${parsed.serverUrl}`, "green");
+              }
+              startJoin(parsed.code);
             } else {
               setInputMode("join-code");
-              log("Enter room code:", "cyan");
+              log("Enter room code or URL:", "cyan");
             }
             return;
 
@@ -238,14 +262,7 @@ export function App() {
           }
 
           case "recent": {
-            const recent = getRecentRooms();
-            if (recent.length === 0) {
-              log("No recent rooms", "gray");
-            } else {
-              recent.forEach((r) =>
-                log(`  ${r.code} — ${r.name}`, "cyan"),
-              );
-            }
+            setScreen("recent");
             return;
           }
 
@@ -448,9 +465,16 @@ export function App() {
           break;
         }
 
-        case "join-code":
-          startJoin(value.toUpperCase());
+        case "join-code": {
+          const parsed = parseRoomInput(value);
+          if (parsed.serverUrl) {
+            setDefaultServer(parsed.serverUrl);
+            apiRef.current = createApiClient(parsed.serverUrl);
+            log(`Server set to ${parsed.serverUrl}`, "green");
+          }
+          startJoin(parsed.code);
           break;
+        }
 
         case "join-name":
           setPendingData((prev) => ({ ...prev, userName: value }));
@@ -541,6 +565,16 @@ export function App() {
       {/* Main content area */}
       <Box flexDirection="column" flexGrow={1}>
         {screen === "home" && <HomeView />}
+        {screen === "recent" && (
+          <RecentView
+            onSelect={(code, serverUrl) => {
+              setDefaultServer(serverUrl);
+              apiRef.current = createApiClient(serverUrl);
+              startJoin(code);
+            }}
+            onBack={() => setScreen("home")}
+          />
+        )}
         {screen === "room" && snapshot && (
           <RoomView snapshot={snapshot} connected={connected} termWidth={termWidth} />
         )}

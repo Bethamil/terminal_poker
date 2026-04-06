@@ -9,7 +9,7 @@ export interface CommandDef {
 
 export const COMMANDS: CommandDef[] = [
   { name: "create", description: "Create a new room", context: "home" },
-  { name: "join", args: "CODE", description: "Join or rejoin a room by code", context: "home" },
+  { name: "join", args: "CODE|URL", description: "Join or rejoin a room by code or URL", context: "home" },
   { name: "server", args: "URL", description: "Set or show server URL", context: "home" },
   { name: "name", args: "NAME", description: "Set or show display name", context: "home" },
   { name: "recent", description: "Show recent rooms", context: "home" },

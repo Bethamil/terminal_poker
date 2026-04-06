@@ -26,7 +26,7 @@ export function VotingDeck({ deckId, selectedVote, roundStatus }: VotingDeckProp
     <Box flexDirection="column">
       <Box gap={1}>
         <Text bold color="white">Vote</Text>
-        <Text color="gray" dimColor>(type value + Enter, C for coffee)</Text>
+        <Text color="gray" dimColor>(type value + Enter)</Text>
       </Box>
       <Box gap={1} flexWrap="wrap">
         {cards.map((card) => {
