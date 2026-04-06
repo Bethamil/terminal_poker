@@ -95,6 +95,7 @@ export function App({ initialJoin }: AppProps) {
 
   const socketRef = useRef<RoomSocket | null>(null);
   const apiRef = useRef<ApiClient>(createApiClient(getDefaultServer()));
+  const roundIdRef = useRef<string | null>(null);
 
   const log = useCallback((text: string, color = "gray") => {
     setLogs((prev) => [...prev.slice(-20), { text, color }]);
@@ -118,6 +119,7 @@ export function App({ initialJoin }: AppProps) {
       setSession({ roomCode, participantToken, serverUrl });
       setScreen("room");
       setConnectionStatus("connecting");
+      roundIdRef.current = snap.round.id;
 
       const socket = createRoomSocket(serverUrl);
       socketRef.current = socket;
@@ -144,12 +146,11 @@ export function App({ initialJoin }: AppProps) {
       });
 
       socket.on("room:snapshot", (newSnapshot) => {
+        if (roundIdRef.current && roundIdRef.current !== newSnapshot.round.id) {
+          setLogs([{ text: "New round started", color: "green" }]);
+        }
+        roundIdRef.current = newSnapshot.round.id;
         setSnapshot(newSnapshot);
-      });
-
-      socket.on("round:updated", (newSnapshot) => {
-        setSnapshot(newSnapshot);
-        setLogs([]);
       });
 
       socket.on("vote:status", (payload) => {
@@ -295,6 +296,10 @@ export function App({ initialJoin }: AppProps) {
               participantToken: session.participantToken,
               value: args as VoteValue,
             });
+            setSnapshot((prev) => prev ? {
+              ...prev,
+              viewer: { ...prev.viewer, selectedVote: args as VoteValue },
+            } : prev);
             log(`✓ Voted: ${args}`, "green");
             return;
           }
@@ -402,6 +407,10 @@ export function App({ initialJoin }: AppProps) {
             participantToken: session.participantToken,
             value: card.value as VoteValue,
           });
+          setSnapshot((prev) => prev ? {
+            ...prev,
+            viewer: { ...prev.viewer, selectedVote: card.value as VoteValue },
+          } : prev);
           log(`✓ Voted: ${card.value}`, "green");
           return;
         }
