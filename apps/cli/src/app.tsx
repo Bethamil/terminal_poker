@@ -608,7 +608,7 @@ export function App({ initialJoin }: AppProps) {
   else if (session) placeholder = "Vote or type / for commands";
 
   return (
-    <Box flexDirection="column" width={termWidth} height={termHeight}>
+    <Box flexDirection="column" width={termWidth} height={termHeight} paddingX={1}>
       {/* Main content area */}
       <Box flexDirection="column" flexGrow={1}>
         {screen === "home" && <HomeView />}
@@ -623,7 +623,7 @@ export function App({ initialJoin }: AppProps) {
           />
         )}
         {screen === "room" && snapshot && (
-          <RoomView snapshot={snapshot} connectionStatus={connectionStatus} termWidth={termWidth} />
+          <RoomView snapshot={snapshot} connectionStatus={connectionStatus} termWidth={termWidth - 2} />
         )}
       </Box>
 
@@ -640,7 +640,7 @@ export function App({ initialJoin }: AppProps) {
 
       {/* Input line */}
       <Box>
-        <Text color="gray">{"─".repeat(termWidth)}</Text>
+        <Text color="gray">{"─".repeat(Math.max(termWidth - 2, 0))}</Text>
       </Box>
       <CommandInput
         value={input}
