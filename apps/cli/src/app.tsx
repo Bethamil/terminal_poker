@@ -17,11 +17,10 @@ import {
   getRecentRooms,
 } from "./lib/store.js";
 import { CommandInput } from "./components/CommandInput.js";
-import { HelpText } from "./components/HelpText.js";
 import { HomeView } from "./views/HomeView.js";
 import { RoomView } from "./views/RoomView.js";
 
-type Screen = "home" | "room" | "help" | "creating" | "joining";
+type Screen = "home" | "room" | "creating" | "joining";
 
 interface RoomSession {
   roomCode: string;
@@ -203,16 +202,6 @@ export function App() {
             exit();
             return;
 
-          case "help":
-          case "h":
-            setScreen(screen === "room" ? "room" : "help");
-            if (screen === "room") {
-              log("Commands: /vote, /reveal, /next, /ticket, /leave, /help, /quit", "gray");
-            } else {
-              setScreen("help");
-            }
-            return;
-
           case "create":
             startCreate();
             return;
@@ -340,15 +329,8 @@ export function App() {
             return;
           }
 
-          case "back": {
-            if (screen === "help") {
-              setScreen(session ? "room" : "home");
-            }
-            return;
-          }
-
           default:
-            log(`Unknown command: /${cmd}. Type /help for commands.`, "red");
+            log(`Unknown command: /${cmd}. Type / to see commands.`, "red");
             return;
         }
       }
@@ -546,25 +528,19 @@ export function App() {
   else if (inputMode === "join-passcode") prompt = "passcode >";
   else if (session) prompt = `${session.roomCode} >`;
 
-  let placeholder = "Type /help for commands";
+  let placeholder = "Type / for commands";
   if (inputMode === "create-name" || inputMode === "join-name")
     placeholder = "Your display name";
   else if (inputMode === "create-room") placeholder = "Room name";
   else if (inputMode === "join-code") placeholder = "e.g. ABC12";
   else if (inputMode === "join-passcode") placeholder = "Room passcode";
-  else if (session) placeholder = "Vote or type /help";
+  else if (session) placeholder = "Vote or type / for commands";
 
   return (
     <Box flexDirection="column" width={termWidth} height={termHeight}>
       {/* Main content area */}
       <Box flexDirection="column" flexGrow={1}>
         {screen === "home" && <HomeView />}
-        {screen === "help" && (
-          <HelpText
-            isModerator={snapshot?.viewer.role === "moderator"}
-            inRoom={!!session}
-          />
-        )}
         {screen === "room" && snapshot && (
           <RoomView snapshot={snapshot} connected={connected} termWidth={termWidth} />
         )}
