@@ -1,3 +1,19 @@
+export function parseRoomInput(input: string): { code: string; serverUrl?: string } {
+  try {
+    const url = new URL(input);
+    const match = url.pathname.match(/\/room\/([A-Za-z0-9]+)/);
+    if (match) {
+      return {
+        code: match[1]!.toUpperCase(),
+        serverUrl: url.origin,
+      };
+    }
+  } catch {
+    // Not a URL, treat as room code
+  }
+  return { code: input.toUpperCase() };
+}
+
 export type CommandContext = "home" | "room" | "both" | "moderator";
 
 export interface CommandDef {
