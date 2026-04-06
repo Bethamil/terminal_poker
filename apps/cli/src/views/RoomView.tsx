@@ -23,6 +23,9 @@ const STATUS_DISPLAY: Record<ConnectionStatus, { label: string; color: string }>
 export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomViewProps) {
   const { room, round, participants, viewer } = snapshot;
 
+  const votedCount = participants.filter((p) => p.hasVoted).length;
+  const totalCount = participants.length;
+
   return (
     <Box flexDirection="column" gap={1}>
       {/* Room header */}
@@ -45,9 +48,9 @@ export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomVie
       </Box>
 
       {/* Main content: round info + participants side by side */}
-      <Box gap={4}>
+      <Box gap={4} flexGrow={1}>
         <Box flexDirection="column" flexGrow={1} gap={1}>
-          <RoundInfo round={round} />
+          <RoundInfo round={round} votedCount={votedCount} totalCount={totalCount} />
 
           {/* Voting deck */}
           <VotingDeck
@@ -55,6 +58,25 @@ export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomVie
             selectedVote={viewer.selectedVote}
             roundStatus={round.status}
           />
+
+          {/* Your vote status */}
+          {viewer.selectedVote && (
+            <Box>
+              <Text color="cyan">Your vote: <Text bold>{viewer.selectedVote}</Text></Text>
+            </Box>
+          )}
+
+          {/* Moderator hints */}
+          {viewer.role === "moderator" && round.status === "active" && (
+            <Text color="gray">
+              <Text color="yellow" bold>/reveal</Text> to show votes
+            </Text>
+          )}
+          {viewer.role === "moderator" && round.status === "revealed" && (
+            <Text color="gray">
+              <Text color="yellow" bold>/next</Text> for next round
+            </Text>
+          )}
         </Box>
 
         <Box flexDirection="column" width={40}>
@@ -64,26 +86,6 @@ export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomVie
             viewerId={viewer.participantId}
           />
         </Box>
-      </Box>
-
-      {/* Status line */}
-      <Text color="gray">{"─".repeat(termWidth)}</Text>
-      <Box gap={2}>
-        {viewer.selectedVote ? (
-          <Text color="cyan">Your vote: <Text bold>{viewer.selectedVote}</Text></Text>
-        ) : (
-          <Text color="gray" dimColor>No vote cast</Text>
-        )}
-        {viewer.role === "moderator" && round.status === "active" && (
-          <Text color="gray">
-            <Text color="yellow" bold>/reveal</Text> to show votes
-          </Text>
-        )}
-        {viewer.role === "moderator" && round.status === "revealed" && (
-          <Text color="gray">
-            <Text color="yellow" bold>/next</Text> for next round
-          </Text>
-        )}
       </Box>
     </Box>
   );

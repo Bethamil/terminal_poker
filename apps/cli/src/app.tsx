@@ -149,6 +149,7 @@ export function App({ initialJoin }: AppProps) {
 
       socket.on("round:updated", (newSnapshot) => {
         setSnapshot(newSnapshot);
+        setLogs([]);
       });
 
       socket.on("vote:status", (payload) => {
@@ -294,7 +295,7 @@ export function App({ initialJoin }: AppProps) {
               participantToken: session.participantToken,
               value: args as VoteValue,
             });
-            log(`Voted: ${args}`, "cyan");
+            log(`✓ Voted: ${args}`, "green");
             return;
           }
 
@@ -381,19 +382,27 @@ export function App({ initialJoin }: AppProps) {
         }
       }
 
-      // If in room and live, treat as a quick vote attempt
-      if (session && snapshot && connectionStatus === "live" && snapshot.round.status === "active") {
+      // If in room, treat as a quick vote attempt
+      if (session && snapshot) {
         const cards = VOTING_DECK_PRESETS[snapshot.room.votingDeckId].cards;
         const card = cards.find(
           (c) => c.value.toLowerCase() === trimmed.toLowerCase(),
         );
         if (card) {
+          if (snapshot.round.status !== "active") {
+            log("Votes already revealed", "yellow");
+            return;
+          }
+          if (connectionStatus !== "live") {
+            log("Not connected — waiting for live session", "yellow");
+            return;
+          }
           socketRef.current?.emit("vote:cast", {
             roomCode: session.roomCode,
             participantToken: session.participantToken,
             value: card.value as VoteValue,
           });
-          log(`Voted: ${card.value}`, "cyan");
+          log(`✓ Voted: ${card.value}`, "green");
           return;
         }
       }
@@ -627,14 +636,12 @@ export function App({ initialJoin }: AppProps) {
         )}
       </Box>
 
-      {/* Log — last 2 messages only */}
+      {/* Log — last message only */}
       {logs.length > 0 && (
-        <Box flexDirection="column">
-          {logs.slice(-2).map((entry, i) => (
-            <Text key={i} color={entry.color}>
-              {entry.text}
-            </Text>
-          ))}
+        <Box>
+          <Text color={logs[logs.length - 1]!.color}>
+            {logs[logs.length - 1]!.text}
+          </Text>
         </Box>
       )}
 

@@ -15,9 +15,7 @@ export function VotingDeck({ deckId, selectedVote, roundStatus }: VotingDeckProp
   if (roundStatus === "revealed") {
     return (
       <Box>
-        <Text color="gray" dimColor>Votes revealed. Type </Text>
-        <Text color="yellow" bold>/next</Text>
-        <Text color="gray" dimColor> for next round.</Text>
+        <Text color="gray" dimColor>Votes revealed.</Text>
       </Box>
     );
   }
