@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Box, Text, useApp } from "ink";
+import { Box, Text, useApp, useStdout } from "ink";
 import type { RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
 import { VOTING_DECK_PRESETS } from "@terminal-poker/shared-types";
 import { createApiClient, ApiError } from "./lib/api.js";
@@ -33,8 +33,32 @@ interface LogEntry {
   color: string;
 }
 
+function useTerminalSize() {
+  const { stdout } = useStdout();
+  const [size, setSize] = useState({
+    width: stdout?.columns ?? 80,
+    height: stdout?.rows ?? 24,
+  });
+
+  useEffect(() => {
+    const onResize = () => {
+      setSize({
+        width: stdout?.columns ?? 80,
+        height: stdout?.rows ?? 24,
+      });
+    };
+    process.stdout.on("resize", onResize);
+    return () => {
+      process.stdout.off("resize", onResize);
+    };
+  }, [stdout]);
+
+  return size;
+}
+
 export function App() {
   const { exit } = useApp();
+  const { width: termWidth, height: termHeight } = useTerminalSize();
 
   const [screen, setScreen] = useState<Screen>("home");
   const [input, setInput] = useState("");
@@ -531,7 +555,7 @@ export function App() {
   else if (session) placeholder = "Vote or type /help";
 
   return (
-    <Box flexDirection="column" flexGrow={1}>
+    <Box flexDirection="column" width={termWidth} height={termHeight}>
       {/* Main content area */}
       <Box flexDirection="column" flexGrow={1}>
         {screen === "home" && <HomeView />}
@@ -542,14 +566,14 @@ export function App() {
           />
         )}
         {screen === "room" && snapshot && (
-          <RoomView snapshot={snapshot} connected={connected} />
+          <RoomView snapshot={snapshot} connected={connected} termWidth={termWidth} />
         )}
       </Box>
 
-      {/* Log messages */}
+      {/* Log — last 2 messages only */}
       {logs.length > 0 && (
         <Box flexDirection="column">
-          {logs.slice(-5).map((entry, i) => (
+          {logs.slice(-2).map((entry, i) => (
             <Text key={i} color={entry.color}>
               {entry.text}
             </Text>
@@ -559,7 +583,7 @@ export function App() {
 
       {/* Input line */}
       <Box>
-        <Text color="gray">{"─".repeat(80)}</Text>
+        <Text color="gray">{"─".repeat(termWidth)}</Text>
       </Box>
       <CommandInput
         value={input}

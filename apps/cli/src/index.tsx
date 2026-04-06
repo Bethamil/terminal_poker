@@ -39,8 +39,14 @@ if (cli.flags.name) {
   setDefaultName(cli.flags.name);
 }
 
+// Enter alternate screen buffer for fullscreen experience
+process.stdout.write("\x1b[?1049h");
+process.stdout.write("\x1b[H");
+
 const { waitUntilExit } = render(<App />);
 
 waitUntilExit().then(() => {
+  // Leave alternate screen buffer
+  process.stdout.write("\x1b[?1049l");
   process.exit(0);
 });

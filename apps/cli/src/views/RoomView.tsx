@@ -8,15 +8,11 @@ import { VotingDeck } from "../components/VotingDeck.js";
 interface RoomViewProps {
   snapshot: RoomSnapshot;
   connected: boolean;
+  termWidth?: number;
 }
 
-export function RoomView({ snapshot, connected }: RoomViewProps) {
+export function RoomView({ snapshot, connected, termWidth = 80 }: RoomViewProps) {
   const { room, round, participants, viewer } = snapshot;
-
-  const votedCount = participants.filter((p) => p.hasVoted).length;
-  const totalCount = participants.length;
-  const progressPct =
-    totalCount > 0 ? Math.round((votedCount / totalCount) * 100) : 0;
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -36,32 +32,13 @@ export function RoomView({ snapshot, connected }: RoomViewProps) {
             {connected ? "● connected" : "○ disconnected"}
           </Text>
         </Box>
-        <Text color="gray">{"─".repeat(80)}</Text>
+        <Text color="gray">{"─".repeat(termWidth)}</Text>
       </Box>
 
       {/* Main content: round info + participants side by side */}
       <Box gap={4}>
         <Box flexDirection="column" flexGrow={1} gap={1}>
           <RoundInfo round={round} />
-
-          {/* Progress bar */}
-          {round.status === "active" && (
-            <Box flexDirection="column">
-              <Box gap={1}>
-                <Text color="gray">Progress:</Text>
-                <Text color="white" bold>
-                  {votedCount}/{totalCount}
-                </Text>
-                <Text color="gray">({progressPct}%)</Text>
-              </Box>
-              <Text color="green">
-                {"█".repeat(Math.floor(progressPct / 5))}
-                <Text color="gray">
-                  {"░".repeat(20 - Math.floor(progressPct / 5))}
-                </Text>
-              </Text>
-            </Box>
-          )}
 
           {/* Voting deck */}
           <VotingDeck
@@ -81,7 +58,7 @@ export function RoomView({ snapshot, connected }: RoomViewProps) {
       </Box>
 
       {/* Status line */}
-      <Text color="gray">{"─".repeat(80)}</Text>
+      <Text color="gray">{"─".repeat(termWidth)}</Text>
       <Box gap={2}>
         {viewer.selectedVote ? (
           <Text color="cyan">Your vote: <Text bold>{viewer.selectedVote}</Text></Text>
