@@ -43,7 +43,7 @@ if (cli.flags.name) {
 process.stdout.write("\x1b[?1049h");
 process.stdout.write("\x1b[H");
 
-const { waitUntilExit } = render(<App />);
+const { waitUntilExit } = render(<App initialJoin={cli.flags.join} />);
 
 waitUntilExit().then(() => {
   // Leave alternate screen buffer

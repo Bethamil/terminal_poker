@@ -76,7 +76,11 @@ function useTerminalSize() {
   return size;
 }
 
-export function App() {
+interface AppProps {
+  initialJoin?: string;
+}
+
+export function App({ initialJoin }: AppProps) {
   const { exit } = useApp();
   const { width: termWidth, height: termHeight } = useTerminalSize();
 
@@ -564,6 +568,20 @@ export function App() {
     },
     [connectToRoom, log],
   );
+
+  // Auto-join from --join flag
+  const initialJoinDone = useRef(false);
+  useEffect(() => {
+    if (initialJoin && !initialJoinDone.current) {
+      initialJoinDone.current = true;
+      const parsed = parseRoomInput(initialJoin);
+      if (parsed.serverUrl) {
+        setDefaultServer(parsed.serverUrl);
+        apiRef.current = createApiClient(parsed.serverUrl);
+      }
+      startJoin(parsed.code);
+    }
+  }, [initialJoin, startJoin]);
 
   const handleSubmit = useCallback(
     (value: string) => {
