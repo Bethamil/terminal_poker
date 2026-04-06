@@ -591,6 +591,8 @@ export function App() {
         onSubmit={handleSubmit}
         prompt={prompt}
         placeholder={placeholder}
+        inRoom={!!session}
+        isModerator={snapshot?.viewer.role === "moderator"}
       />
     </Box>
   );
