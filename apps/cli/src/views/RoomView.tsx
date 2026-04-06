@@ -5,13 +5,22 @@ import { Participants } from "../components/Participants.js";
 import { RoundInfo } from "../components/RoundInfo.js";
 import { VotingDeck } from "../components/VotingDeck.js";
 
+type ConnectionStatus = "connecting" | "sync" | "live" | "disconnected";
+
 interface RoomViewProps {
   snapshot: RoomSnapshot;
-  connected: boolean;
+  connectionStatus: ConnectionStatus;
   termWidth?: number;
 }
 
-export function RoomView({ snapshot, connected, termWidth = 80 }: RoomViewProps) {
+const STATUS_DISPLAY: Record<ConnectionStatus, { label: string; color: string }> = {
+  connecting: { label: "● connecting", color: "yellow" },
+  sync: { label: "● sync", color: "yellow" },
+  live: { label: "● live", color: "green" },
+  disconnected: { label: "○ disconnected", color: "red" },
+};
+
+export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomViewProps) {
   const { room, round, participants, viewer } = snapshot;
 
   return (
@@ -28,8 +37,8 @@ export function RoomView({ snapshot, connected, termWidth = 80 }: RoomViewProps)
             {viewer.role}
           </Text>
           <Box flexGrow={1} />
-          <Text color={connected ? "green" : "red"}>
-            {connected ? "● connected" : "○ disconnected"}
+          <Text color={STATUS_DISPLAY[connectionStatus].color}>
+            {STATUS_DISPLAY[connectionStatus].label}
           </Text>
         </Box>
         <Text color="gray">{"─".repeat(termWidth)}</Text>

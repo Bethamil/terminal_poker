@@ -40,9 +40,12 @@ function parseRoomInput(input: string): { code: string; serverUrl?: string } {
   return { code: input.toUpperCase() };
 }
 
+type ConnectionStatus = "connecting" | "sync" | "live" | "disconnected";
+
 interface RoomSession {
   roomCode: string;
   participantToken: string;
+  serverUrl: string;
 }
 
 interface LogEntry {
@@ -81,7 +84,7 @@ export function App() {
   const [input, setInput] = useState("");
   const [snapshot, setSnapshot] = useState<RoomSnapshot | null>(null);
   const [session, setSession] = useState<RoomSession | null>(null);
-  const [connected, setConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [inputMode, setInputMode] = useState<null | "create-name" | "create-room" | "join-code" | "join-name" | "join-passcode">(null);
   const [pendingData, setPendingData] = useState<Record<string, string>>({});
@@ -102,22 +105,27 @@ export function App() {
 
   // Connect socket to room
   const connectToRoom = useCallback(
-    (roomCode: string, participantToken: string, snap: RoomSnapshot) => {
+    (roomCode: string, participantToken: string, serverUrl: string, snap: RoomSnapshot) => {
       // Disconnect existing
       socketRef.current?.disconnect();
 
-      const serverUrl = getDefaultServer();
+      // Sync state: we have the snapshot from API but socket is not yet live
+      setSnapshot(snap);
+      setSession({ roomCode, participantToken, serverUrl });
+      setScreen("room");
+      setConnectionStatus("connecting");
+
       const socket = createRoomSocket(serverUrl);
       socketRef.current = socket;
 
       socket.on("connect", () => {
+        setConnectionStatus("sync");
         socket.emit(
           "room:joinRealtime",
           { roomCode, participantToken },
           (result) => {
             if (result && "ok" in result && result.ok) {
-              setConnected(true);
-              log("Connected to room", "green");
+              setConnectionStatus("live");
             } else {
               const err = result && "error" in result ? result.error : null;
               log(`Failed to join realtime: ${err?.message ?? "unknown"}`, "red");
@@ -127,7 +135,7 @@ export function App() {
       });
 
       socket.on("disconnect", () => {
-        setConnected(false);
+        setConnectionStatus("disconnected");
         log("Disconnected", "yellow");
       });
 
@@ -166,9 +174,6 @@ export function App() {
       });
 
       socket.connect();
-      setSnapshot(snap);
-      setSession({ roomCode, participantToken });
-      setScreen("room");
     },
     [log],
   );
@@ -176,7 +181,7 @@ export function App() {
   const disconnectAndGoHome = useCallback(() => {
     socketRef.current?.disconnect();
     socketRef.current = null;
-    setConnected(false);
+    setConnectionStatus("disconnected");
     setSnapshot(null);
     setSession(null);
     setScreen("home");
@@ -266,10 +271,14 @@ export function App() {
             return;
           }
 
-          // In-room commands
+          // In-room commands — require live connection
           case "vote": {
             if (!session || !snapshot) {
               log("Not in a room", "red");
+              return;
+            }
+            if (connectionStatus !== "live") {
+              log("Not connected — waiting for live session", "yellow");
               return;
             }
             if (!args) {
@@ -286,7 +295,10 @@ export function App() {
           }
 
           case "reveal": {
-            if (!session) return;
+            if (!session || connectionStatus !== "live") {
+              log(session ? "Not connected — waiting for live session" : "Not in a room", session ? "yellow" : "red");
+              return;
+            }
             socketRef.current?.emit("round:reveal", {
               roomCode: session.roomCode,
               participantToken: session.participantToken,
@@ -296,7 +308,10 @@ export function App() {
           }
 
           case "unreveal": {
-            if (!session) return;
+            if (!session || connectionStatus !== "live") {
+              log(session ? "Not connected — waiting for live session" : "Not in a room", session ? "yellow" : "red");
+              return;
+            }
             socketRef.current?.emit("round:unreveal", {
               roomCode: session.roomCode,
               participantToken: session.participantToken,
@@ -307,7 +322,10 @@ export function App() {
 
           case "next":
           case "reset": {
-            if (!session) return;
+            if (!session || connectionStatus !== "live") {
+              log(session ? "Not connected — waiting for live session" : "Not in a room", session ? "yellow" : "red");
+              return;
+            }
             socketRef.current?.emit("round:reset", {
               roomCode: session.roomCode,
               participantToken: session.participantToken,
@@ -317,7 +335,10 @@ export function App() {
           }
 
           case "ticket": {
-            if (!session) return;
+            if (!session || connectionStatus !== "live") {
+              log(session ? "Not connected — waiting for live session" : "Not in a room", session ? "yellow" : "red");
+              return;
+            }
             socketRef.current?.emit("round:setTicket", {
               roomCode: session.roomCode,
               participantToken: session.participantToken,
@@ -330,6 +351,10 @@ export function App() {
           case "leave": {
             if (!session) {
               log("Not in a room", "red");
+              return;
+            }
+            if (connectionStatus !== "live") {
+              log("Not connected — waiting for live session", "yellow");
               return;
             }
             try {
@@ -352,8 +377,8 @@ export function App() {
         }
       }
 
-      // If in room and not a command, treat as a quick vote attempt
-      if (session && snapshot && snapshot.round.status === "active") {
+      // If in room and live, treat as a quick vote attempt
+      if (session && snapshot && connectionStatus === "live" && snapshot.round.status === "active") {
         const cards = VOTING_DECK_PRESETS[snapshot.room.votingDeckId].cards;
         const card = cards.find(
           (c) => c.value.toLowerCase() === trimmed.toLowerCase(),
@@ -369,9 +394,9 @@ export function App() {
         }
       }
 
-      log(`Unknown input. Type /help for commands.`, "gray");
+      log(`Unknown input. Type / to see commands.`, "gray");
     },
-    [screen, session, snapshot, inputMode, connectToRoom, disconnectAndGoHome, exit, log],
+    [screen, session, snapshot, connectionStatus, inputMode, connectToRoom, disconnectAndGoHome, exit, log],
   );
 
   // Multi-step create flow
@@ -400,7 +425,7 @@ export function App() {
             saved.roomCode,
             saved.participantToken,
           );
-          connectToRoom(saved.roomCode, saved.participantToken, snap);
+          connectToRoom(saved.roomCode, saved.participantToken, saved.serverUrl, snap);
           return;
         } catch {
           log("Saved session expired, joining fresh...", "yellow");
@@ -451,9 +476,11 @@ export function App() {
               joinedAt: new Date().toISOString(),
             });
             log(`Room created: ${result.roomCode}`, "green");
+            const currentServer = getDefaultServer();
             connectToRoom(
               result.roomCode,
               result.participantToken,
+              currentServer,
               result.snapshot,
             );
           } catch (err) {
@@ -503,18 +530,20 @@ export function App() {
           name,
           joinPasscode: passcode ?? null,
         });
+        const joinServer = getDefaultServer();
         saveSession({
           roomCode: result.roomCode,
           participantToken: result.participantToken,
           roomName: result.snapshot.room.name,
           userName: name,
-          serverUrl: getDefaultServer(),
+          serverUrl: joinServer,
           joinedAt: new Date().toISOString(),
         });
         log(`Joined room: ${result.roomCode}`, "green");
         connectToRoom(
           result.roomCode,
           result.participantToken,
+          joinServer,
           result.snapshot,
         );
       } catch (err) {
@@ -576,7 +605,7 @@ export function App() {
           />
         )}
         {screen === "room" && snapshot && (
-          <RoomView snapshot={snapshot} connected={connected} termWidth={termWidth} />
+          <RoomView snapshot={snapshot} connectionStatus={connectionStatus} termWidth={termWidth} />
         )}
       </Box>
 
