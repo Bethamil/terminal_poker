@@ -1,0 +1,44 @@
+{
+  "name": "terminal-poker-cli",
+  "version": "0.1.0",
+  "description": "Terminal client for Terminal Poker – plan like a dev.",
+  "type": "module",
+  "bin": {
+    "terminal-poker": "./dist/index.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build:shared-types": "pnpm --filter @terminal-poker/shared-types build",
+    "prebuild": "pnpm run build:shared-types",
+    "build": "tsup --config tsup.config.ts",
+    "pretypecheck": "pnpm run build:shared-types",
+    "dev": "pnpm run build:shared-types && tsup --config tsup.config.ts --watch",
+    "prepack": "pnpm run typecheck && pnpm run build",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "conf": "^13.0.1",
+    "ink": "^5.1.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "meow": "^13.2.0",
+    "react": "^18.3.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@terminal-poker/shared-types": "workspace:*",
+    "@types/node": "^22.19.15",
+    "@types/react": "^18.3.12",
+    "tsup": "^8.5.1",
+    "typescript": "^5.6.3"
+  }
+}

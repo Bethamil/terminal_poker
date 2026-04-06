@@ -37,6 +37,30 @@
 - Jira-friendly room setup and optional ticket sync.
 - Resume recent rooms in the same browser.
 
+## Getting Started
+
+- Try it locally: [docs/development.md](docs/development.md)
+- Self-host it: [docs/deployment.md](docs/deployment.md)
+- Redis and cleanup behavior: [docs/operations.md](docs/operations.md)
+- Full docs index: [docs/README.md](docs/README.md)
+
+## CLI Client
+
+Prefer the real terminal workflow? There is also a CLI client package: [`terminal-poker-cli`](https://www.npmjs.com/package/terminal-poker-cli).
+
+<p align="center">
+  <img src="docs/assets/readme-cli.png" alt="Terminal Poker CLI client" width="900" />
+</p>
+
+Install it globally:
+
+```bash
+npm install -g terminal-poker-cli
+terminal-poker
+```
+
+The CLI connects to an existing Terminal Poker server. You can configure the server inside the CLI, or pass one explicitly with `--server` when needed.
+
 ## In Action
 
 <table>
@@ -54,44 +78,21 @@
   </tr>
 </table>
 
-## Quick Start
+## Run It Locally
 
 Requirements:
 
 - `pnpm`
 - Docker
 
-Start local infra:
+For the full local setup, environment variables, and common commands, see [docs/development.md](docs/development.md).
+
+The shortest path is:
 
 ```bash
 docker compose up -d postgres
-```
-
-Install dependencies:
-
-```bash
 pnpm install
-```
-
-Create `apps/backend/.env`:
-
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/terminal_poker?schema=public"
-CLIENT_ORIGIN="http://localhost:5173"
-PORT=4000
-ROOM_INACTIVITY_TTL_HOURS=24
-REDIS_MODE=none
-```
-
-Optional: create `apps/frontend/.env` if your backend is not running on `http://localhost:4000`:
-
-```env
-VITE_DEV_BACKEND_URL="http://localhost:4000"
-```
-
-Prepare the database and start the app:
-
-```bash
+cp apps/backend/.env.example apps/backend/.env
 pnpm prisma:generate
 pnpm db:migrate
 pnpm dev
@@ -104,93 +105,6 @@ Open:
 
 ## Deployment
 
-- Docker self-hosting: [deploy/docker/](deploy/docker/)
-- Helm / Kubernetes example values: [deploy/helm/](deploy/helm/)
+Deployment guides now live under [docs/deployment.md](docs/deployment.md).
 
 Release tags publish the container image to GHCR as `ghcr.io/bethamil/terminal_poker`.
-
-## Useful Commands
-
-```bash
-pnpm dev
-pnpm build
-pnpm test
-pnpm typecheck
-pnpm db:migrate
-pnpm --filter @terminal-poker/backend cleanup:expired-rooms
-pnpm db:clear
-pnpm db:reset
-```
-
-## Redis
-
-Redis is optional for local development and single-instance deployments.
-
-Use one of these modes:
-
-- `REDIS_MODE=none`: no Redis
-- `REDIS_MODE=standalone`: one Redis instance
-- `REDIS_MODE=sentinel`: Redis Sentinel-managed Redis
-
-To test that locally:
-
-```bash
-docker compose up -d postgres redis
-```
-
-No Redis:
-
-```env
-REDIS_MODE=none
-```
-
-Standalone Redis:
-
-```env
-REDIS_MODE=standalone
-REDIS_URL="redis://localhost:6379"
-```
-
-Sentinel Redis:
-
-```env
-REDIS_MODE=sentinel
-REDIS_SENTINEL_URL="redis://sentinel-1:26379,redis://sentinel-2:26379,redis://sentinel-3:26379"
-REDIS_SENTINEL_MASTER_NAME="mymaster"
-```
-
-## Room Cleanup
-
-Rooms store a `lastActivityAt` timestamp. It is updated on:
-
-- participant join
-- vote cast
-- room settings update
-- Jira ticket update
-- round reveal / unreveal
-- round reset
-- participant kick
-- participant leave
-
-Rooms are removed by running the cleanup command:
-
-```bash
-pnpm --filter @terminal-poker/backend cleanup:expired-rooms
-```
-
-The inactivity threshold is controlled by `ROOM_INACTIVITY_TTL_HOURS` in `apps/backend/.env`. For example, `ROOM_INACTIVITY_TTL_HOURS=24` removes rooms that have been inactive for more than 24 hours.
-
-For production, run this command from a cron job or Kubernetes `CronJob`.
-
-## Repo Layout
-
-```text
-apps/
-  backend/
-  frontend/
-packages/
-  shared-types/
-deploy/
-  docker/
-  helm/
-```
