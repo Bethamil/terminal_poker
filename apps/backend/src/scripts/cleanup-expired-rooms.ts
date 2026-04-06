@@ -11,14 +11,12 @@ const run = async () => {
   const repository = new RoomRepository(prisma);
   const result = await repository.removeExpiredRooms(cutoff);
 
-  logger.info(
-    `cleanup-expired-rooms removed ${result.count} rooms inactive since before ${cutoff.toISOString()}`
-  );
+  logger.info({ removedCount: result.count, cutoff: cutoff.toISOString() }, "cleanup-expired-rooms completed");
 };
 
 run()
   .catch(async (error) => {
-    logger.error(error);
+    logger.error({ err: error }, "cleanup-expired-rooms failed");
     process.exitCode = 1;
   })
   .finally(async () => {

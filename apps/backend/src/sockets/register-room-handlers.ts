@@ -313,7 +313,7 @@ export const registerRoomHandlers = (
         return;
       }
 
-      logger.error(error);
+      logger.error({ err: error }, "failed to emit room snapshots on disconnect");
     });
   });
 };

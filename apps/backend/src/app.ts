@@ -25,7 +25,15 @@ const isBackendRoute = (pathname: string) =>
 export const createApp = (roomService: RoomService, env: Env): Express => {
   const app = express();
 
-  app.use(pinoHttp({ logger }));
+  app.use(pinoHttp({
+    logger,
+    autoLogging: {
+      ignore: (req) => {
+        const url = (req as express.Request).originalUrl ?? req.url ?? "";
+        return url.startsWith("/socket.io") || url === "/healthz" || url === "/readyz";
+      }
+    }
+  }));
   app.use(
     cors({
       origin: env.CLIENT_ORIGIN,

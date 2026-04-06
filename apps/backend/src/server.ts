@@ -39,13 +39,12 @@ const bootstrap = async () => {
   });
 
   httpServer.listen(env.PORT, "0.0.0.0", () => {
-    logger.info(`socket adapter mode: ${env.REDIS_MODE}`);
-    logger.info(`backend listening on http://0.0.0.0:${env.PORT}`);
+    logger.info({ port: env.PORT, redisMode: env.REDIS_MODE }, "backend started");
   });
 };
 
 bootstrap().catch(async (error) => {
-  logger.fatal(error);
+  logger.fatal({ err: error }, "bootstrap failed");
   closeSocketIoRedisClients(redisClients);
   await prisma.$disconnect();
   process.exit(1);
