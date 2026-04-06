@@ -1,0 +1,46 @@
+import React from "react";
+import { Box, Text } from "ink";
+import type { VoteCardMeta, VoteValue, VotingDeckId } from "@terminal-poker/shared-types";
+import { VOTING_DECK_PRESETS } from "@terminal-poker/shared-types";
+
+interface VotingDeckProps {
+  deckId: VotingDeckId;
+  selectedVote: VoteValue | null;
+  roundStatus: string;
+}
+
+export function VotingDeck({ deckId, selectedVote, roundStatus }: VotingDeckProps) {
+  const cards = VOTING_DECK_PRESETS[deckId].cards as readonly VoteCardMeta<VoteValue>[];
+
+  if (roundStatus === "revealed") {
+    return (
+      <Box>
+        <Text color="gray" dimColor>Votes revealed. Press </Text>
+        <Text color="yellow" bold>n</Text>
+        <Text color="gray" dimColor> for next round.</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Text bold color="white">Vote</Text>
+      <Box gap={1} flexWrap="wrap">
+        {cards.map((card) => {
+          const isSelected = selectedVote === card.value;
+          return (
+            <Box key={card.value}>
+              <Text
+                color={isSelected ? "black" : "white"}
+                backgroundColor={isSelected ? "cyan" : undefined}
+                bold={isSelected}
+              >
+                [{card.shortcut}]{card.value}
+              </Text>
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}
