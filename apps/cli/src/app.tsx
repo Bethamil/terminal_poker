@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Box, Text, useApp, useStdout } from "ink";
 import type { RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
-import { VOTING_DECK_PRESETS, VOTING_DECK_IDS } from "@terminal-poker/shared-types";
+import { VOTING_DECK_PRESETS, VOTING_DECK_IDS, DEFAULT_VOTING_DECK_ID } from "@terminal-poker/shared-types";
 import { createApiClient, ApiError } from "./lib/api.js";
 import type { ApiClient } from "./lib/api.js";
 import { createRoomSocket } from "./lib/socket.js";
@@ -90,7 +90,7 @@ export function App({ initialJoin }: AppProps) {
   const [session, setSession] = useState<RoomSession | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [inputMode, setInputMode] = useState<null | "create-name" | "create-room" | "join-code" | "join-name" | "join-passcode">(null);
+  const [inputMode, setInputMode] = useState<null | "create-name" | "create-room" | "create-deck" | "create-jira" | "create-passcode" | "join-code" | "join-name" | "join-passcode">(null);
   const [pendingData, setPendingData] = useState<Record<string, string>>({});
 
   const socketRef = useRef<RoomSocket | null>(null);
@@ -199,13 +199,14 @@ export function App({ initialJoin }: AppProps) {
   const handleCommand = useCallback(
     async (raw: string) => {
       const trimmed = raw.trim();
-      if (!trimmed) return;
 
-      // Handle input mode (multi-step forms)
+      // Handle input mode (multi-step forms) — allow empty input for skippable steps
       if (inputMode) {
         await handleInputMode(trimmed);
         return;
       }
+
+      if (!trimmed) return;
 
       // Parse slash commands
       if (trimmed.startsWith("/")) {
@@ -575,33 +576,61 @@ export function App({ initialJoin }: AppProps) {
 
         case "create-room": {
           setPendingData((prev) => ({ ...prev, roomName: value }));
+          setInputMode("create-deck");
+          const deckOptions = VOTING_DECK_IDS.map((id, i) => `${i + 1}=${VOTING_DECK_PRESETS[id].name}`).join("  ");
+          log(`Voting deck — ${deckOptions}:`, "cyan");
+          break;
+        }
+
+        case "create-deck": {
+          const deckList = VOTING_DECK_IDS.map((id, i) => ({ id, index: i + 1 }));
+          const picked = deckList.find((d) => String(d.index) === value.trim());
+          if (!picked) {
+            const deckOptions = VOTING_DECK_IDS.map((id, i) => `${i + 1}=${VOTING_DECK_PRESETS[id].name}`).join("  ");
+            log(`Pick a number — ${deckOptions}:`, "red");
+            break;
+          }
+          setPendingData((prev) => ({ ...prev, votingDeckId: picked.id }));
+          setInputMode("create-jira");
+          log("Jira base URL (enter to skip):", "cyan");
+          break;
+        }
+
+        case "create-jira": {
+          setPendingData((prev) => ({ ...prev, jiraBaseUrl: value.trim() }));
+          setInputMode("create-passcode");
+          log("Join passcode (enter to skip):", "cyan");
+          break;
+        }
+
+        case "create-passcode": {
+          const passcode = value.trim();
+          const userName = pendingData.userName ?? getDefaultName() ?? "";
+          const roomName = pendingData.roomName ?? "";
+          const jiraBaseUrl = pendingData.jiraBaseUrl || null;
+          const votingDeckId = (pendingData.votingDeckId as typeof VOTING_DECK_IDS[number]) ?? DEFAULT_VOTING_DECK_ID;
           setInputMode(null);
-          const userName = pendingData.userName ?? getDefaultName();
           log("Creating room...", "cyan");
           try {
             const result = await apiRef.current.createRoom({
               name: userName,
-              roomName: value,
+              roomName,
+              jiraBaseUrl,
+              votingDeckId,
+              joinPasscode: passcode || null,
             });
             saveSession({
               roomCode: result.roomCode,
               participantToken: result.participantToken,
-              roomName: value,
+              roomName,
               userName,
               serverUrl: getDefaultServer(),
               joinedAt: new Date().toISOString(),
             });
             log(`Room created: ${result.roomCode}`, "green");
-            const currentServer = getDefaultServer();
-            connectToRoom(
-              result.roomCode,
-              result.participantToken,
-              currentServer,
-              result.snapshot,
-            );
+            connectToRoom(result.roomCode, result.participantToken, getDefaultServer(), result.snapshot);
           } catch (err) {
-            const msg =
-              err instanceof ApiError ? err.message : "Failed to create room";
+            const msg = err instanceof ApiError ? err.message : "Failed to create room";
             log(msg, "red");
           }
           setPendingData({});
@@ -707,6 +736,9 @@ export function App({ initialJoin }: AppProps) {
   let prompt = ">";
   if (inputMode === "create-name" || inputMode === "join-name") prompt = "name >";
   else if (inputMode === "create-room") prompt = "room >";
+  else if (inputMode === "create-deck") prompt = "deck >";
+  else if (inputMode === "create-jira") prompt = "jira >";
+  else if (inputMode === "create-passcode") prompt = "passcode >";
   else if (inputMode === "join-code") prompt = "code >";
   else if (inputMode === "join-passcode") prompt = "passcode >";
   else if (session) prompt = `${session.roomCode} >`;
@@ -715,6 +747,9 @@ export function App({ initialJoin }: AppProps) {
   if (inputMode === "create-name" || inputMode === "join-name")
     placeholder = "Your display name";
   else if (inputMode === "create-room") placeholder = "Room name";
+  else if (inputMode === "create-deck") placeholder = "1–4";
+  else if (inputMode === "create-jira") placeholder = "https://... or enter to skip";
+  else if (inputMode === "create-passcode") placeholder = "optional or enter to skip";
   else if (inputMode === "join-code") placeholder = "e.g. ABC12";
   else if (inputMode === "join-passcode") placeholder = "Room passcode";
   else if (session) placeholder = "Vote or type / for commands";
