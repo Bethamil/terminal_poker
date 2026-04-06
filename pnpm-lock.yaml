@@ -75,9 +75,6 @@ importers:
 
   apps/cli:
     dependencies:
-      '@terminal-poker/shared-types':
-        specifier: workspace:*
-        version: link:../../packages/shared-types
       chalk:
         specifier: ^5.4.1
         version: 5.6.2
@@ -103,6 +100,9 @@ importers:
         specifier: ^4.8.1
         version: 4.8.3
     devDependencies:
+      '@terminal-poker/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
       '@types/node':
         specifier: ^22.19.15
         version: 22.19.15
