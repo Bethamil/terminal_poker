@@ -19,7 +19,7 @@ export const COMMANDS: CommandDef[] = [
   { name: "next", description: "Start next round", context: "moderator" },
   { name: "ticket", args: "KEY", description: "Set Jira ticket for round", context: "moderator" },
   { name: "jira", args: "URL|clear", description: "Set or clear Jira base URL", context: "moderator" },
-  { name: "deck", args: "DECK_ID", description: "Change voting deck", context: "moderator" },
+  { name: "deck", args: "N", description: "Change voting deck (no arg to list options)", context: "moderator" },
   { name: "passcode", args: "VALUE|clear", description: "Set or clear join passcode", context: "moderator" },
   { name: "kick", args: "NAME", description: "Remove a participant", context: "moderator" },
   { name: "leave", description: "Leave the room", context: "room" },

@@ -381,24 +381,28 @@ export function App({ initialJoin }: AppProps) {
               log(session ? "Not connected — waiting for live session" : "Not in a room", session ? "yellow" : "red");
               return;
             }
-            if (!args) {
-              const options = VOTING_DECK_IDS.map((id) => `${id}${id === snapshot.room.votingDeckId ? " (current)" : ""}`).join(", ");
-              log(`Decks: ${options}`, "gray");
-              return;
-            }
-            if (!VOTING_DECK_IDS.includes(args as typeof VOTING_DECK_IDS[number])) {
-              log(`Unknown deck: ${args}. Options: ${VOTING_DECK_IDS.join(", ")}`, "red");
+            const deckList = VOTING_DECK_IDS.map((id, i) => ({
+              id,
+              name: VOTING_DECK_PRESETS[id].name,
+              index: i + 1,
+            }));
+            const resolved = deckList.find((d) => String(d.index) === args);
+            if (!args || !resolved) {
+              const options = deckList.map(
+                (d) => `${d.index}=${d.name}${d.id === snapshot.room.votingDeckId ? "*" : ""}`,
+              ).join("  ");
+              log(`/deck N — ${options}`, "gray");
               return;
             }
             socketRef.current?.emit("room:updateSettings", {
               roomCode: session.roomCode,
               participantToken: session.participantToken,
               jiraBaseUrl: snapshot.room.jiraBaseUrl,
-              votingDeckId: args as typeof VOTING_DECK_IDS[number],
+              votingDeckId: resolved.id,
               joinPasscode: null,
               joinPasscodeMode: "keep",
             });
-            log(`Deck changed to ${args}`, "cyan");
+            log(`Deck changed to ${resolved.name}`, "cyan");
             return;
           }
 
