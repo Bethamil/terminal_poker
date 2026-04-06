@@ -47,39 +47,46 @@ export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomVie
         <Text color="gray">{"─".repeat(termWidth)}</Text>
       </Box>
 
-      {/* Main content: round info + participants side by side */}
+      {/* Main content */}
       <Box gap={4} flexGrow={1}>
-        <Box flexDirection="column" flexGrow={1} gap={1}>
+        {/* Left: round info, voting, status */}
+        <Box flexDirection="column" flexGrow={1} gap={1} paddingTop={1}>
           <RoundInfo round={round} votedCount={votedCount} totalCount={totalCount} />
 
-          {/* Voting deck */}
-          <VotingDeck
-            deckId={room.votingDeckId}
-            selectedVote={viewer.selectedVote}
-            roundStatus={round.status}
-          />
+          <Box marginTop={1}>
+            <VotingDeck
+              deckId={room.votingDeckId}
+              selectedVote={viewer.selectedVote}
+              roundStatus={round.status}
+            />
+          </Box>
 
-          {/* Your vote status */}
+          {/* Your vote */}
           {viewer.selectedVote && (
-            <Box>
-              <Text color="cyan">Your vote: <Text bold>{viewer.selectedVote}</Text></Text>
+            <Box marginTop={1}>
+              <Text color="cyan" bold>Your vote: {viewer.selectedVote}</Text>
             </Box>
           )}
 
           {/* Moderator hints */}
           {viewer.role === "moderator" && round.status === "active" && (
-            <Text color="gray">
-              <Text color="yellow" bold>/reveal</Text> to show votes
-            </Text>
+            <Box marginTop={1}>
+              <Text color="gray">
+                <Text color="yellow" bold>/reveal</Text> to show votes
+              </Text>
+            </Box>
           )}
           {viewer.role === "moderator" && round.status === "revealed" && (
-            <Text color="gray">
-              <Text color="yellow" bold>/next</Text> for next round
-            </Text>
+            <Box marginTop={1}>
+              <Text color="gray">
+                <Text color="yellow" bold>/next</Text> for next round
+              </Text>
+            </Box>
           )}
         </Box>
 
-        <Box flexDirection="column" width={40}>
+        {/* Right: participants */}
+        <Box flexDirection="column" width={40} paddingTop={1}>
           <Participants
             participants={participants}
             roundStatus={round.status}

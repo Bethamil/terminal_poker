@@ -21,22 +21,20 @@ export function VotingDeck({ deckId, selectedVote, roundStatus }: VotingDeckProp
   }
 
   return (
-    <Box flexDirection="column">
-      <Box gap={1}>
-        <Text bold color="white">Vote</Text>
-        <Text color="gray" dimColor>(type value + Enter)</Text>
-      </Box>
+    <Box flexDirection="column" gap={1}>
+      <Text color="gray" dimColor>VOTE <Text color="gray">(type value + Enter)</Text></Text>
       <Box gap={1} flexWrap="wrap">
         {cards.map((card) => {
           const isSelected = selectedVote === card.value;
+          const label = ` ${card.value} `;
           return (
             <Box key={card.value}>
               <Text
-                color={isSelected ? "black" : "white"}
-                backgroundColor={isSelected ? "cyan" : undefined}
-                bold={isSelected}
+                color={isSelected ? "black" : "black"}
+                backgroundColor={isSelected ? "cyan" : "white"}
+                bold
               >
-                {card.value}
+                {label}
               </Text>
             </Box>
           );

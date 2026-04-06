@@ -32,53 +32,64 @@ export function RoundInfo({ round, votedCount, totalCount }: RoundInfoProps) {
   })();
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" gap={1}>
+      {/* Round status */}
       <Box gap={1}>
         <Text bold color="white">Round</Text>
         <Text color={statusColor}>[{statusLabel}]</Text>
+        {round.status === "active" && (
+          <Text color="gray" dimColor>
+            {votedCount}/{totalCount} voted
+          </Text>
+        )}
       </Box>
 
+      {/* Ticket */}
       {round.jiraTicketKey && (
-        <Box gap={1}>
-          <Text color="gray">Ticket:</Text>
+        <Box flexDirection="column">
+          <Text color="gray" dimColor>TICKET</Text>
           <Text color="cyan" bold>{round.jiraTicketKey}</Text>
           {round.jiraTicketUrl && (
-            <Text color="gray" dimColor> {round.jiraTicketUrl}</Text>
+            <Text color="gray" dimColor>{round.jiraTicketUrl}</Text>
           )}
         </Box>
       )}
 
+      {/* Results — revealed */}
       {round.status === "revealed" && summary && (
-        <Box flexDirection="column" marginTop={1}>
-          {/* Top vote or split */}
-          <Box gap={1}>
-            <Text color="gray">{summary.consensus ? "Top vote:" : "Result:"}</Text>
+        <Box flexDirection="column" gap={1}>
+          {/* Hero: top vote */}
+          <Box flexDirection="column">
+            <Text color="gray" dimColor>
+              {summary.consensus ? "TOP VOTE" : "RESULT"}
+            </Text>
             <Text color={summary.consensus ? "green" : "yellow"} bold>
+              {"  "}
               {summary.consensus ?? "SPLIT"}
             </Text>
           </Box>
 
-          {/* Stats row: AVG | RANGE | VOTES */}
-          <Box gap={2} marginTop={1}>
-            <Box gap={1}>
-              <Text color="gray">Avg</Text>
-              <Text color="cyan" bold>{formatAverage(summary.average)}</Text>
+          {/* Stats */}
+          <Box gap={4}>
+            <Box flexDirection="column">
+              <Text color="gray" dimColor>AVG</Text>
+              <Text color="cyan" bold>{"  "}{formatAverage(summary.average)}</Text>
             </Box>
-            <Box gap={1}>
-              <Text color="gray">Range</Text>
-              <Text color="white" bold>{rangeLabel}</Text>
+            <Box flexDirection="column">
+              <Text color="gray" dimColor>RANGE</Text>
+              <Text color="white" bold>{"  "}{rangeLabel}</Text>
             </Box>
-            <Box gap={1}>
-              <Text color="gray">Votes</Text>
-              <Text color="white" bold>{votedCount}/{totalCount}</Text>
+            <Box flexDirection="column">
+              <Text color="gray" dimColor>VOTES</Text>
+              <Text color="white" bold>{"  "}{votedCount}/{totalCount}</Text>
             </Box>
           </Box>
 
           {/* Distribution */}
           {Object.keys(summary.counts).length > 0 && (
-            <Box flexDirection="column" marginTop={1}>
-              <Text color="gray">Distribution</Text>
-              <Box gap={2} flexWrap="wrap">
+            <Box flexDirection="column">
+              <Text color="gray" dimColor>DISTRIBUTION</Text>
+              <Box gap={3} flexWrap="wrap">
                 {Object.entries(summary.counts)
                   .filter(([, count]) => (count ?? 0) > 0)
                   .map(([val, count]) => (

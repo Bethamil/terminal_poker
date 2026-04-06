@@ -22,40 +22,44 @@ export function Participants({ participants, roundStatus, viewerId }: Participan
       <Text bold color="white">
         Participants ({onlineCount}/{participants.length})
       </Text>
-      <Text color="gray">{"─".repeat(40)}</Text>
-      {sorted.map((p) => {
-        const isYou = p.id === viewerId;
-        const presenceDot = p.presence === "online" ? "●" : "○";
-        const presenceColor = p.presence === "online" ? "green" : "gray";
-        const roleBadge = p.role === "moderator" ? " ★" : "";
+      <Text color="gray">{"─".repeat(38)}</Text>
+      <Box flexDirection="column" marginTop={1} gap={0}>
+        {sorted.map((p) => {
+          const isYou = p.id === viewerId;
+          const presenceDot = p.presence === "online" ? "●" : "○";
+          const presenceColor = p.presence === "online" ? "green" : "gray";
+          const roleBadge = p.role === "moderator" ? " ★" : "";
 
-        let voteDisplay: string;
-        if (roundStatus === "revealed" && p.revealedVote) {
-          voteDisplay = p.revealedVote;
-        } else if (p.hasVoted) {
-          voteDisplay = "✓";
-        } else {
-          voteDisplay = "–";
-        }
+          let voteDisplay: string;
+          if (roundStatus === "revealed" && p.revealedVote) {
+            voteDisplay = p.revealedVote;
+          } else if (p.hasVoted) {
+            voteDisplay = "✓";
+          } else {
+            voteDisplay = "–";
+          }
 
-        const voteColor =
-          roundStatus === "revealed" && p.revealedVote
-            ? "cyan"
-            : p.hasVoted
-              ? "green"
-              : "gray";
+          const voteColor =
+            roundStatus === "revealed" && p.revealedVote
+              ? "cyan"
+              : p.hasVoted
+                ? "green"
+                : "gray";
 
-        return (
-          <Box key={p.id} gap={1}>
-            <Text color={presenceColor}>{presenceDot}</Text>
-            <Text color={isYou ? "cyan" : "white"} bold={isYou}>
-              {p.name}{isYou ? " (you)" : ""}{roleBadge}
-            </Text>
-            <Box flexGrow={1} />
-            <Text color={voteColor}>[{voteDisplay}]</Text>
-          </Box>
-        );
-      })}
+          return (
+            <Box key={p.id} gap={1}>
+              <Text color={presenceColor}>{presenceDot}</Text>
+              <Text color={isYou ? "cyan" : "white"} bold={isYou}>
+                {p.name}{isYou ? " (you)" : ""}{roleBadge}
+              </Text>
+              <Box flexGrow={1} />
+              <Text color={voteColor} bold={roundStatus === "revealed" && !!p.revealedVote}>
+                [{voteDisplay}]
+              </Text>
+            </Box>
+          );
+        })}
+      </Box>
     </Box>
   );
 }
