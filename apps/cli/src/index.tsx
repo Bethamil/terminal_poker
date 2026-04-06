@@ -11,7 +11,7 @@ const cli = meow(
     $ terminal-poker [options]
 
   Options
-    --server, -s  Server URL (default: saved or https://terminal-poker.up.railway.app)
+    --server, -s  Server URL
     --name, -n    Your display name
     --join, -j    Join a room immediately by code
     --help        Show this help

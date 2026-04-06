@@ -38,7 +38,9 @@ export function HomeView() {
         <Box gap={1}>
           <Text color="cyan">  /server</Text>
           <Text color="gray">—</Text>
-          <Text color="white">{server}</Text>
+          <Text color={server ? "white" : "gray"} dimColor={!server}>
+            {server || "not set"}
+          </Text>
         </Box>
         <Box gap={1}>
           <Text color="cyan">  /name</Text>

@@ -24,7 +24,7 @@ interface StoreSchema {
 const store = new Conf<StoreSchema>({
   projectName: "terminal-poker",
   defaults: {
-    defaultServer: "https://terminal-poker.up.railway.app",
+    defaultServer: "",
     defaultName: "",
     sessions: {},
     recentRooms: [],
