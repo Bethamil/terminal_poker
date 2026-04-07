@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Box, Text, useApp, useStdout } from "ink";
+import type { JoinableRole } from "@terminal-poker/shared-types";
 import { createApiClient } from "./lib/api.js";
 import type { ApiClient } from "./lib/api.js";
 import { parseRoomInput } from "./lib/commands.js";
@@ -47,9 +48,10 @@ function useTerminalSize() {
 
 interface AppProps {
   initialJoin?: string;
+  initialJoinRole?: JoinableRole;
 }
 
-export function App({ initialJoin }: AppProps) {
+export function App({ initialJoin, initialJoinRole = "participant" }: AppProps) {
   const { exit } = useApp();
   const { width: termWidth, height: termHeight } = useTerminalSize();
 
@@ -111,9 +113,9 @@ export function App({ initialJoin }: AppProps) {
         setDefaultServer(parsed.serverUrl);
         apiRef.current = createApiClient(parsed.serverUrl);
       }
-      flow.startJoin(parsed.code);
+      flow.startJoin(parsed.code, parsed.role ?? initialJoinRole);
     }
-  }, [initialJoin, flow.startJoin]);
+  }, [initialJoin, initialJoinRole, flow.startJoin]);
 
   const handleSubmit = useCallback(
     (value: string) => {
@@ -151,6 +153,7 @@ export function App({ initialJoin }: AppProps) {
         placeholder = "optional or enter to skip";
         break;
       case "join-code":
+      case "join-observer-code":
         prompt = "code >";
         placeholder = "e.g. ABC12";
         break;
@@ -161,7 +164,10 @@ export function App({ initialJoin }: AppProps) {
     }
   } else if (room.session) {
     prompt = `${room.session.roomCode} >`;
-    placeholder = "Vote or type / for commands";
+    placeholder =
+      room.snapshot?.viewer.role === "observer"
+        ? "Observing only. Type / for commands"
+        : "Vote or type / for commands";
   }
 
   return (
@@ -208,7 +214,7 @@ export function App({ initialJoin }: AppProps) {
         prompt={prompt}
         placeholder={placeholder}
         inRoom={!!room.session}
-        isModerator={room.snapshot?.viewer.role === "moderator"}
+        viewerRole={room.snapshot?.viewer.role}
       />
     </Box>
   );

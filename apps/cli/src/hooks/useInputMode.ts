@@ -1,5 +1,5 @@
 import { useState, useCallback, type MutableRefObject } from "react";
-import type { RoomSnapshot } from "@terminal-poker/shared-types";
+import type { JoinableRole, RoomSnapshot } from "@terminal-poker/shared-types";
 import { VOTING_DECK_PRESETS, VOTING_DECK_IDS, DEFAULT_VOTING_DECK_ID } from "@terminal-poker/shared-types";
 import { createApiClient, ApiError } from "../lib/api.js";
 import type { ApiClient } from "../lib/api.js";
@@ -22,6 +22,7 @@ export type InputMode =
   | "create-jira"
   | "create-passcode"
   | "join-code"
+  | "join-observer-code"
   | "join-name"
   | "join-passcode";
 
@@ -41,13 +42,19 @@ export function useInputMode({ log, connectToRoom, apiRef }: UseInputModeOptions
   }, []);
 
   const doJoin = useCallback(
-    async (code: string, name: string, passcode?: string) => {
+    async (
+      code: string,
+      name: string,
+      role: JoinableRole = "participant",
+      passcode?: string,
+    ) => {
       setInputMode(null);
-      log(`Joining ${code}...`, "cyan");
+      log(role === "observer" ? `Observing ${code}...` : `Joining ${code}...`, "cyan");
       try {
         const result = await apiRef.current.joinRoom(code, {
           name,
           joinPasscode: passcode ?? null,
+          role,
         });
         const joinServer = getDefaultServer();
         saveSession({
@@ -58,11 +65,16 @@ export function useInputMode({ log, connectToRoom, apiRef }: UseInputModeOptions
           serverUrl: joinServer,
           joinedAt: new Date().toISOString(),
         });
-        log(`Joined room: ${result.roomCode}`, "green");
+        log(
+          role === "observer"
+            ? `Joined room as observer: ${result.roomCode}`
+            : `Joined room: ${result.roomCode}`,
+          "green",
+        );
         connectToRoom(result.roomCode, result.participantToken, joinServer, result.snapshot);
       } catch (err) {
         if (err instanceof ApiError && err.code === "PASSCODE_REQUIRED") {
-          setPendingData((prev) => ({ ...prev, roomCode: code, userName: name }));
+          setPendingData((prev) => ({ ...prev, roomCode: code, userName: name, joinRole: role }));
           setInputMode("join-passcode");
           log("Room requires a passcode:", "yellow");
           return;
@@ -76,7 +88,7 @@ export function useInputMode({ log, connectToRoom, apiRef }: UseInputModeOptions
   );
 
   const startJoin = useCallback(
-    async (code: string) => {
+    async (code: string, requestedRole: JoinableRole = "participant") => {
       const saved = getSession(code);
       if (saved) {
         log(`Rejoining ${code}...`, "cyan");
@@ -95,21 +107,30 @@ export function useInputMode({ log, connectToRoom, apiRef }: UseInputModeOptions
       }
 
       const name = getDefaultName();
-      setPendingData({ roomCode: code });
+      setPendingData({ roomCode: code, joinRole: requestedRole });
       if (name) {
         setPendingData((prev) => ({ ...prev, userName: name }));
-        doJoin(code, name);
+        doJoin(code, name, requestedRole);
       } else {
         setInputMode("join-name");
-        log(`Joining ${code}. Enter your display name:`, "cyan");
+        log(
+          requestedRole === "observer"
+            ? `Observing ${code}. Enter your display name:`
+            : `Joining ${code}. Enter your display name:`,
+          "cyan",
+        );
       }
     },
     [log, connectToRoom, apiRef, doJoin],
   );
 
-  const startJoinPrompt = useCallback(() => {
-    setInputMode("join-code");
-    log("Enter room code or URL:", "cyan");
+  const startJoinPrompt = useCallback((role: JoinableRole = "participant") => {
+    setPendingData({ joinRole: role });
+    setInputMode(role === "observer" ? "join-observer-code" : "join-code");
+    log(
+      role === "observer" ? "Enter room code or URL to observe:" : "Enter room code or URL:",
+      "cyan",
+    );
   }, [log]);
 
   const startCreate = useCallback(() => {
@@ -215,18 +236,38 @@ export function useInputMode({ log, connectToRoom, apiRef }: UseInputModeOptions
             apiRef.current = createApiClient(parsed.serverUrl);
             log(`Server set to ${parsed.serverUrl}`, "green");
           }
-          startJoin(parsed.code);
+          startJoin(parsed.code, parsed.role ?? "participant");
+          break;
+        }
+
+        case "join-observer-code": {
+          const parsed = parseRoomInput(value);
+          if (parsed.serverUrl) {
+            setDefaultServer(parsed.serverUrl);
+            apiRef.current = createApiClient(parsed.serverUrl);
+            log(`Server set to ${parsed.serverUrl}`, "green");
+          }
+          startJoin(parsed.code, parsed.role ?? "observer");
           break;
         }
 
         case "join-name":
           setPendingData((prev) => ({ ...prev, userName: value }));
           setDefaultName(value);
-          doJoin(pendingData.roomCode!, value);
+          doJoin(
+            pendingData.roomCode!,
+            value,
+            (pendingData.joinRole as JoinableRole | undefined) ?? "participant",
+          );
           break;
 
         case "join-passcode":
-          doJoin(pendingData.roomCode!, pendingData.userName!, value);
+          doJoin(
+            pendingData.roomCode!,
+            pendingData.userName!,
+            (pendingData.joinRole as JoinableRole | undefined) ?? "participant",
+            value,
+          );
           break;
       }
     },

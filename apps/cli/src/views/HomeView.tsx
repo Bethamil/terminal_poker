@@ -30,6 +30,7 @@ export function HomeView() {
         <Text bold color="white">Quick start</Text>
         <Text>  <Text color="cyan">/create</Text>  — Create a new room</Text>
         <Text>  <Text color="cyan">/join CODE</Text> — Join an existing room</Text>
+        <Text>  <Text color="cyan">/observe CODE</Text> — Join as an observer</Text>
         <Text>  <Text color="cyan">/recent</Text>  — Browse recent rooms</Text>
       </Box>
 

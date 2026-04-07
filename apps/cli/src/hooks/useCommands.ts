@@ -1,5 +1,12 @@
 import { useCallback, type MutableRefObject } from "react";
-import type { RoomSnapshot, VoteValue, VotingDeckId, JoinPasscodeMode } from "@terminal-poker/shared-types";
+import type {
+  JoinPasscodeMode,
+  JoinableRole,
+  ParticipantRole,
+  RoomSnapshot,
+  VoteValue,
+  VotingDeckId,
+} from "@terminal-poker/shared-types";
 import { VOTING_DECK_PRESETS, VOTING_DECK_IDS } from "@terminal-poker/shared-types";
 import { createApiClient } from "../lib/api.js";
 import type { ApiClient } from "../lib/api.js";
@@ -27,12 +34,16 @@ interface RoomActions {
     joinPasscodeMode?: JoinPasscodeMode;
   }) => void;
   kickParticipant: (participantId: string) => void;
+  changeParticipantRole: (
+    participantId: string,
+    newRole: ParticipantRole,
+  ) => Promise<void>;
 }
 
 interface FlowActions {
   startCreate: () => void;
-  startJoin: (code: string) => void;
-  startJoinPrompt: () => void;
+  startJoin: (code: string, role?: JoinableRole) => void;
+  startJoinPrompt: (role?: JoinableRole) => void;
   handleInput: (value: string) => void;
 }
 
@@ -97,6 +108,7 @@ export function useCommands(deps: UseCommandsDeps) {
             return;
 
           case "join":
+          case "observe":
             if (args) {
               const parsed = parseRoomInput(args);
               if (parsed.serverUrl) {
@@ -104,9 +116,10 @@ export function useCommands(deps: UseCommandsDeps) {
                 apiRef.current = createApiClient(parsed.serverUrl);
                 log(`Server set to ${parsed.serverUrl}`, "green");
               }
-              flow.startJoin(parsed.code);
+              const joinRole = parsed.role ?? (cmd === "observe" ? "observer" : "participant");
+              flow.startJoin(parsed.code, joinRole);
             } else {
-              flow.startJoinPrompt();
+              flow.startJoinPrompt(cmd === "observe" ? "observer" : "participant");
             }
             return;
 
@@ -139,6 +152,7 @@ export function useCommands(deps: UseCommandsDeps) {
           // In-room commands
           case "vote": {
             if (!requireLive()) return;
+            if (!requireVotingRole()) return;
             if (!args) {
               log("Usage: /vote VALUE", "red");
               return;
@@ -225,20 +239,15 @@ export function useCommands(deps: UseCommandsDeps) {
               log("Usage: /kick NAME", "red");
               return;
             }
-            const target = snapshot.participants.find(
-              (p) =>
-                p.name.toLowerCase() === args.toLowerCase() &&
-                p.role !== "moderator" &&
-                p.id !== snapshot.viewer.participantId,
-            );
+            const target = findParticipantByName(args, {
+              excludeSelf: true,
+              excludeModerator: true,
+            });
             if (!target) {
-              const names = snapshot.participants
-                .filter(
-                  (p) =>
-                    p.role !== "moderator" &&
-                    p.id !== snapshot.viewer.participantId,
-                )
-                .map((p) => p.name);
+              const names = listParticipantNames({
+                excludeSelf: true,
+                excludeModerator: true,
+              });
               log(
                 names.length
                   ? `No such participant: ${args}. Options: ${names.join(", ")}`
@@ -249,6 +258,65 @@ export function useCommands(deps: UseCommandsDeps) {
             }
             room.kickParticipant(target.id);
             log(`Kicked ${target.name}`, "yellow");
+            return;
+          }
+
+          case "voter":
+          case "observer":
+          case "host": {
+            if (!requireLive() || !snapshot) return;
+            if (!requireModerator()) return;
+            if (!args) {
+              log(`Usage: /${cmd} NAME`, "red");
+              return;
+            }
+            const target = findParticipantByName(args, { excludeSelf: true });
+            if (!target) {
+              const names = listParticipantNames({ excludeSelf: true });
+              log(
+                names.length
+                  ? `No such participant: ${args}. Options: ${names.join(", ")}`
+                  : "No participants available",
+                "red",
+              );
+              return;
+            }
+
+            const nextRole =
+              cmd === "host"
+                ? "moderator"
+                : cmd === "observer"
+                  ? "observer"
+                  : "participant";
+            const verb =
+              nextRole === "moderator"
+                ? "Transferring host role"
+                : nextRole === "observer"
+                  ? "Changing role to observer"
+                  : "Changing role to voter";
+
+            if (target.role === nextRole) {
+              log(
+                `${target.name} is already ${nextRole === "participant" ? "a voter" : nextRole}.`,
+                "yellow",
+              );
+              return;
+            }
+
+            try {
+              await room.changeParticipantRole(target.id, nextRole);
+              log(
+                nextRole === "moderator"
+                  ? `${verb} to ${target.name}...`
+                  : `${verb} for ${target.name}...`,
+                "yellow",
+              );
+            } catch (error) {
+              log(
+                error instanceof Error ? error.message : "Unable to change participant role.",
+                "red",
+              );
+            }
             return;
           }
 
@@ -288,6 +356,10 @@ export function useCommands(deps: UseCommandsDeps) {
           (c) => c.value.toLowerCase() === trimmed.toLowerCase(),
         );
         if (card) {
+          if (!isVotingRole(snapshot.viewer.role)) {
+            log("Observers cannot vote. Type / to see observer commands.", "yellow");
+            return;
+          }
           if (snapshot.round.status !== "active") {
             log("Votes already revealed", "yellow");
             return;
@@ -317,6 +389,66 @@ export function useCommands(deps: UseCommandsDeps) {
       return false;
     }
     return true;
+  }
+
+  function requireModerator(): boolean {
+    if (!snapshot || snapshot.viewer.role !== "moderator") {
+      log("Only the host can run that command.", "red");
+      return false;
+    }
+    return true;
+  }
+
+  function requireVotingRole(): boolean {
+    if (!snapshot || !isVotingRole(snapshot.viewer.role)) {
+      log("Observers cannot vote. Ask the host to make you a voter.", "yellow");
+      return false;
+    }
+    return true;
+  }
+
+  function findParticipantByName(
+    name: string,
+    options: {
+      excludeSelf?: boolean;
+      excludeModerator?: boolean;
+    } = {},
+  ) {
+    if (!snapshot) return null;
+    const normalizedName = name.toLowerCase();
+    return snapshot.participants.find((participant) => {
+      if (options.excludeSelf && participant.id === snapshot.viewer.participantId) {
+        return false;
+      }
+      if (options.excludeModerator && participant.role === "moderator") {
+        return false;
+      }
+      return participant.name.toLowerCase() === normalizedName;
+    }) ?? null;
+  }
+
+  function listParticipantNames(
+    options: {
+      excludeSelf?: boolean;
+      excludeModerator?: boolean;
+    } = {},
+  ) {
+    if (!snapshot) return [];
+    return snapshot.participants
+      .filter((participant) => {
+        if (options.excludeSelf && participant.id === snapshot.viewer.participantId) {
+          return false;
+        }
+        if (options.excludeModerator && participant.role === "moderator") {
+          return false;
+        }
+        return true;
+      })
+      .map((participant) => participant.name);
+  }
+
+  function isVotingRole(role: ParticipantRole) {
+    return role !== "observer";
   }
 
   return handleCommand;
