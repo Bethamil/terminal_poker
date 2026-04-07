@@ -7,6 +7,12 @@ Release tags publish the application image to `ghcr.io/bethamil/terminal_poker`.
 - Docker Compose self-hosting for a single app image
 - Helm values for Kubernetes-based deployments
 
+## Rate Limiting
+
+Terminal Poker does not enforce app-level rate limiting out of the box.
+
+That is intentional: different deployments may want very different limits, exemptions, trusted networks, or bot protection strategies. Configure rate limiting at your edge layer instead, such as your reverse proxy, load balancer, ingress controller, CDN, or API gateway.
+
 ## Docker Self-Hosting
 
 The Docker deployment files live in [`deploy/docker/`](../deploy/docker/):
@@ -95,6 +101,7 @@ helm upgrade --install terminal-poker <repo-name>/<chart-name> \
 - Replace the default image tag when you publish a newer release.
 - Move `DATABASE_URL` into your secret-management workflow before production use.
 - Move your Redis env vars into your secret-management workflow too if you are running multiple backend replicas.
+- Apply any request rate limiting at your proxy or ingress layer rather than inside the app.
 - Keep `replicaCount` at `1` unless Redis is configured, otherwise Socket.IO stays single-node.
 - The values file uses the same startup pattern as the Docker setup: `prisma migrate deploy` runs before the app starts, then Node starts the compiled backend from `dist`.
 
