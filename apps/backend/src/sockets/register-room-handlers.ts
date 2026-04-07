@@ -3,6 +3,7 @@ import type { Socket } from "socket.io";
 import { ServerToClientEvents, ClientToServerEvents } from "@terminal-poker/shared-types";
 
 import { AppError, asAppError } from "../http/errors";
+import { logger } from "../lib/logger";
 import type { RoomService } from "../services/room-service";
 
 interface SocketData {
@@ -235,6 +236,7 @@ export const registerRoomHandlers = (
       ack?.({ ok: true });
 
       if (result.roomDeleted) {
+        logger.info({ code: session.roomCode, reason: "host_left" }, "room closed");
         await disconnectRoomSockets(io, session.roomCode, {
           code: "ROOM_CLOSED",
           message: "The host left, so the room was closed."
@@ -334,8 +336,7 @@ export const registerRoomHandlers = (
         return;
       }
 
-      // eslint-disable-next-line no-console
-      console.error(error);
+      logger.error({ err: error }, "failed to emit room snapshots on disconnect");
     });
   });
 };

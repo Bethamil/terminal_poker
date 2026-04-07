@@ -13,6 +13,7 @@ import type { JoinPasscodeMode, UpdateRoomSettingsPayload } from "@terminal-poke
 import { resolveVotingDeckId } from "@terminal-poker/shared-types";
 
 import { AppError } from "../http/errors";
+import { logger } from "../lib/logger";
 import { RoomRepository } from "../repositories/room-repository";
 import type { RoomAggregate } from "./room-snapshot";
 import { buildRoomSnapshot } from "./room-snapshot";
@@ -136,6 +137,8 @@ export class RoomService {
         roomId: room.id
       });
     });
+
+    logger.info({ code: roomCode }, "room created");
 
     const snapshotResponse = await this.getRoomState(roomCode, participantToken);
     return {

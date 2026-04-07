@@ -6,6 +6,7 @@ import { ClientToServerEvents, ServerToClientEvents } from "@terminal-poker/shar
 
 import { createApp } from "./app";
 import { getEnv } from "./config/env";
+import { logger } from "./lib/logger";
 import { createPrismaClient } from "./prisma/client";
 import { closeSocketIoRedisClients, createSocketIoRedisClients } from "./redis/socket-adapter";
 import { registerRoomHandlers } from "./sockets/register-room-handlers";
@@ -38,16 +39,12 @@ const bootstrap = async () => {
   });
 
   httpServer.listen(env.PORT, "0.0.0.0", () => {
-    // eslint-disable-next-line no-console
-    console.log(`socket adapter mode: ${env.REDIS_MODE}`);
-    // eslint-disable-next-line no-console
-    console.log(`backend listening on http://0.0.0.0:${env.PORT}`);
+    logger.info({ port: env.PORT, redisMode: env.REDIS_MODE }, "backend started");
   });
 };
 
 bootstrap().catch(async (error) => {
-  // eslint-disable-next-line no-console
-  console.error(error);
+  logger.fatal({ err: error }, "bootstrap failed");
   closeSocketIoRedisClients(redisClients);
   await prisma.$disconnect();
   process.exit(1);
