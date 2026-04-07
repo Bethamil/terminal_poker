@@ -46,20 +46,22 @@
 
 ## CLI Client
 
-Prefer the real terminal workflow? There is also a CLI client package: [`terminal-poker-cli`](https://www.npmjs.com/package/terminal-poker-cli).
-
-<p align="center">
-  <img src="docs/assets/readme-cli.png" alt="Terminal Poker CLI client" width="900" />
-</p>
-
-Install it globally:
-
-```bash
-npm install -g terminal-poker-cli
-terminal-poker
-```
-
-The CLI connects to an existing Terminal Poker server. You can configure the server inside the CLI, or pass one explicitly with `--server` when needed.
+<table>
+  <tr>
+    <td width="55%" valign="top">
+      Prefer the real terminal workflow? There is also a CLI client package: <a href="https://www.npmjs.com/package/terminal-poker-cli"><code>terminal-poker-cli</code></a>.
+      <br />
+      <br />
+      Install it globally:
+      <pre><code>npm install -g terminal-poker-cli
+terminal-poker</code></pre>
+      The CLI connects to an existing Terminal Poker server. You can configure the server inside the CLI, or pass one explicitly with <code>--server</code> when needed.
+    </td>
+    <td width="45%" align="right">
+      <img src="docs/assets/readme-cli.png" alt="Terminal Poker CLI client" width="440" />
+    </td>
+  </tr>
+</table>
 
 ## In Action
 
