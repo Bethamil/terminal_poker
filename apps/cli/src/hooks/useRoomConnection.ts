@@ -1,5 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { RoomSnapshot, VoteValue, VotingDeckId, JoinPasscodeMode } from "@terminal-poker/shared-types";
+import type {
+  JoinPasscodeMode,
+  ParticipantRole,
+  RoomSnapshot,
+  VoteValue,
+  VotingDeckId,
+} from "@terminal-poker/shared-types";
 import { createRoomSocket } from "../lib/socket.js";
 
 export type ConnectionStatus = "connecting" | "sync" | "live" | "disconnected";
@@ -178,6 +184,44 @@ export function useRoomConnection({ log, onNewRound, onSessionEnded }: UseRoomCo
     });
   }, [session]);
 
+  const changeParticipantRole = useCallback(
+    (participantId: string, newRole: ParticipantRole) =>
+      new Promise<void>((resolve, reject) => {
+        if (!session) {
+          reject(new Error("Room connection is not ready."));
+          return;
+        }
+
+        let settled = false;
+        const timeoutId = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          reject(new Error("Unable to change participant role right now."));
+        }, 4000);
+
+        socketRef.current?.emit(
+          "room:changeParticipantRole",
+          {
+            roomCode: session.roomCode,
+            participantToken: session.participantToken,
+            participantId,
+            newRole,
+          },
+          (result) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            if (result && "ok" in result && result.ok) {
+              resolve();
+              return;
+            }
+            reject(new Error(result?.error.message ?? "Unable to change participant role."));
+          },
+        );
+      }),
+    [session],
+  );
+
   return {
     snapshot,
     session,
@@ -191,5 +235,6 @@ export function useRoomConnection({ log, onNewRound, onSessionEnded }: UseRoomCo
     setTicket,
     updateSettings,
     kickParticipant,
+    changeParticipantRole,
   };
 }

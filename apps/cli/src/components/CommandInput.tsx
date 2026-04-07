@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
+import type { ParticipantRole } from "@terminal-poker/shared-types";
 import { getCommandsForContext } from "../lib/commands.js";
 
 interface CommandInputProps {
@@ -10,7 +11,7 @@ interface CommandInputProps {
   prompt?: string;
   placeholder?: string;
   inRoom?: boolean;
-  isModerator?: boolean;
+  viewerRole?: ParticipantRole | null;
 }
 
 export function CommandInput({
@@ -20,15 +21,15 @@ export function CommandInput({
   prompt = ">",
   placeholder,
   inRoom = false,
-  isModerator = false,
+  viewerRole = null,
 }: CommandInputProps) {
   const suggestions = useMemo(() => {
     if (!value.startsWith("/") || value.includes(" ")) return [];
     const query = value.slice(1).toLowerCase();
-    return getCommandsForContext(inRoom, isModerator).filter((cmd) =>
+    return getCommandsForContext(inRoom, viewerRole).filter((cmd) =>
       cmd.name.startsWith(query),
     );
-  }, [value, inRoom, isModerator]);
+  }, [value, inRoom, viewerRole]);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
 
   useEffect(() => {

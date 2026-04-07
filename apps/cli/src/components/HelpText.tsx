@@ -1,14 +1,15 @@
 import React from "react";
 import { Box, Text } from "ink";
+import type { ParticipantRole } from "@terminal-poker/shared-types";
 import { getCommandsForContext } from "../lib/commands.js";
 
 interface HelpTextProps {
-  isModerator: boolean;
   inRoom: boolean;
+  viewerRole?: ParticipantRole | null;
 }
 
-export function HelpText({ isModerator, inRoom }: HelpTextProps) {
-  const commands = getCommandsForContext(inRoom, isModerator);
+export function HelpText({ inRoom, viewerRole = null }: HelpTextProps) {
+  const commands = getCommandsForContext(inRoom, viewerRole);
 
   return (
     <Box flexDirection="column">

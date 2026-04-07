@@ -6,7 +6,7 @@ import { isNonEstimateVoteValue } from "@terminal-poker/shared-types";
 interface RoundInfoProps {
   round: RoundSnapshot;
   votedCount: number;
-  totalCount: number;
+  voterCount: number;
 }
 
 function formatAverage(avg: number | null): string {
@@ -14,7 +14,7 @@ function formatAverage(avg: number | null): string {
   return Number.isInteger(avg) ? String(avg) : avg.toFixed(1);
 }
 
-export function RoundInfo({ round, votedCount, totalCount }: RoundInfoProps) {
+export function RoundInfo({ round, votedCount, voterCount }: RoundInfoProps) {
   const statusColor = round.status === "revealed" ? "yellow" : "green";
   const statusLabel = round.status === "revealed" ? "REVEALED" : "VOTING";
 
@@ -39,7 +39,7 @@ export function RoundInfo({ round, votedCount, totalCount }: RoundInfoProps) {
         <Text color={statusColor}>[{statusLabel}]</Text>
         {round.status === "active" && (
           <Text color="gray" dimColor>
-            {votedCount}/{totalCount} voted
+            {votedCount}/{voterCount} voted
           </Text>
         )}
       </Box>
@@ -81,7 +81,7 @@ export function RoundInfo({ round, votedCount, totalCount }: RoundInfoProps) {
             </Box>
             <Box flexDirection="column">
               <Text color="gray" dimColor>VOTES</Text>
-              <Text color="white" bold>{"  "}{votedCount}/{totalCount}</Text>
+              <Text color="white" bold>{"  "}{votedCount}/{voterCount}</Text>
             </Box>
           </Box>
 

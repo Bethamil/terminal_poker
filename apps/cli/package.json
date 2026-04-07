@@ -1,6 +1,6 @@
 {
   "name": "terminal-poker-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Terminal client for Terminal Poker – plan like a dev.",
   "type": "module",
   "bin": {
