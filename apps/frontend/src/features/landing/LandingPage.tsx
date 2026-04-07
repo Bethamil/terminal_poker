@@ -275,7 +275,7 @@ export const LandingPage = () => {
           </section>
         </>
       }
-      mainClassName="mx-auto grid w-full max-w-[1380px] gap-7"
+      mainClassName="mx-auto grid w-full max-w-[1380px] content-start gap-7"
       overlay={
         <>
           {notice ? (
