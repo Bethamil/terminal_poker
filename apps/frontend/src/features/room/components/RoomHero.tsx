@@ -48,7 +48,7 @@ export const RoomHero = ({ snapshot, voterCount, votedCount }: RoomHeroProps) =>
       </div>
       <div className="grid gap-2">
         <div className="hero-card__ticket items-center justify-items-center gap-3">
-          <span className="hero-card__label">CURRENT TICKET</span>
+          <span className="hero-card__label">CURRENT_TICKET</span>
           <h1 className="ticket-title text-[clamp(3.1rem,11vw,8rem)] max-[720px]:text-[clamp(2.6rem,10vw,4.6rem)]">
             {snapshot.round.jiraTicketKey ?? "ROUND_OPEN"}
           </h1>

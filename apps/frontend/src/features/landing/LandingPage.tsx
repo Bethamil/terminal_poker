@@ -11,7 +11,6 @@ import { AppModal } from "../../components/AppModal";
 import { Button } from "../../components/Button";
 import { Field } from "../../components/Field";
 import { SelectField } from "../../components/SelectField";
-import { StatusChip } from "../../components/StatusChip";
 import { apiClient, ApiError } from "../../lib/api/client";
 import { sessionStorageStore, type StoredRoomRecord } from "../../lib/storage";
 
@@ -211,21 +210,15 @@ export const LandingPage = () => {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <article className="landing-form landing-form--create grid h-full content-start gap-4 p-4 [grid-template-rows:auto_auto_minmax(0,1fr)_auto]">
+              <article className="landing-form landing-form--create grid h-full grid-rows-[auto_auto_1fr] gap-4 p-4">
                 <div className="section-header">
-                  <StatusChip tone="success">CREATE</StatusChip>
                   <h2>[CREATE_SESSION]</h2>
                 </div>
                 <p className="hero-copy hero-copy--inline">
                   Start a new planning room with ticket sync, optional locking, and the deck you want.
                 </p>
-                <div className="shortcut-strip">
-                  <span>JIRA OPTIONAL</span>
-                  <span>LOCK OPTIONAL</span>
-                  <span>DECK SELECTABLE</span>
-                </div>
                 <Button
-                  className="mt-auto w-full lg:min-w-48 lg:w-fit"
+                  className="self-end w-full lg:min-w-48 lg:w-fit"
                   onClick={() => setActiveDialog("create")}
                   style={{
                     background: "var(--action-create-bg)",
@@ -236,21 +229,15 @@ export const LandingPage = () => {
                 </Button>
               </article>
 
-              <article className="landing-form landing-form--join grid h-full content-start gap-4 p-4 [grid-template-rows:auto_auto_minmax(0,1fr)_auto]">
+              <article className="landing-form landing-form--join grid h-full grid-rows-[auto_auto_1fr] gap-4 p-4">
                 <div className="section-header">
-                  <StatusChip>JOIN</StatusChip>
                   <h2>[JOIN_SESSION]</h2>
                 </div>
                 <p className="hero-copy hero-copy--inline">
                   Enter the room code first. If the room needs a passcode or your user name, the room gate asks next.
                 </p>
-                <div className="shortcut-strip">
-                  <span>ROOM CODE FIRST</span>
-                  <span>USER NAME NEXT</span>
-                  <span>PASSCODE IF NEEDED</span>
-                </div>
                 <Button
-                  className="mt-auto w-full lg:min-w-48 lg:w-fit"
+                  className="self-end w-full lg:min-w-48 lg:w-fit"
                   style={{
                     background: "var(--action-join-bg)",
                     color: "var(--action-join-text)"
