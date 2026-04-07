@@ -22,6 +22,9 @@ interface ParticipantRailProps extends RoomParticipantStatusProps {
 
 type RailTab = "voters" | "observers";
 
+const getParticipantGroupLabel = (count: number, singular: string, plural: string) =>
+  count === 1 ? singular : plural;
+
 export const ParticipantRail = ({
   currentParticipantId,
   observers,
@@ -39,7 +42,7 @@ export const ParticipantRail = ({
 
   return (
     <aside
-      className="room-sidebar card card--rail order-2 grid min-h-0 gap-4 border-white/5 px-4 py-4 lg:order-1 lg:h-full lg:min-h-[420px] lg:grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] lg:gap-5 lg:px-5 lg:py-5"
+      className="room-sidebar card card--rail order-2 grid min-h-0 gap-3 border-white/5 px-4 py-4 lg:order-1 lg:h-full lg:min-h-[420px] lg:grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] lg:gap-3 lg:px-5 lg:py-5"
       style={{ background: "var(--rail-panel-bg)" }}
     >
       <div className="grid gap-1">
@@ -63,8 +66,16 @@ export const ParticipantRail = ({
         role="tablist"
       >
         {([
-          { id: "voters" as const, label: "VOTERS", count: voters.length },
-          { id: "observers" as const, label: "OBSERVERS", count: observers.length }
+          {
+            id: "voters" as const,
+            label: getParticipantGroupLabel(voters.length, "VOTER", "VOTERS"),
+            count: voters.length
+          },
+          {
+            id: "observers" as const,
+            label: getParticipantGroupLabel(observers.length, "OBSERVER", "OBSERVERS"),
+            count: observers.length
+          }
         ]).map((tab) => {
           const isActive = activeTab === tab.id;
 
