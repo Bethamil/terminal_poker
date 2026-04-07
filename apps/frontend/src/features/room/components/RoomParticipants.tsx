@@ -83,7 +83,7 @@ export const ParticipantRail = ({
             <button
               aria-controls={`rail-panel-${tab.id}`}
               aria-selected={isActive}
-              className={`grid cursor-pointer gap-0.5 rounded-[10px] border px-3 py-2 text-left transition-[border-color,background-color] duration-150 hover:border-[color:var(--button-secondary-border)] hover:bg-[color:var(--panel-strong-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--button-secondary-border)] focus-visible:ring-offset-1 focus-visible:ring-offset-[color:var(--card-bg)] ${
+              className={`flex cursor-pointer items-center justify-center gap-2 rounded-[10px] border px-3 py-1.5 text-center transition-[border-color,background-color] duration-150 hover:border-[color:var(--button-secondary-border)] hover:bg-[color:var(--panel-strong-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--button-secondary-border)] focus-visible:ring-offset-1 focus-visible:ring-offset-[color:var(--card-bg)] ${
                 isActive
                   ? "border-[color:var(--button-secondary-border)] bg-[color:var(--button-secondary-bg)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                   : "border-[color:var(--outline)] bg-[color:var(--panel-bg)]"
@@ -94,10 +94,10 @@ export const ParticipantRail = ({
               role="tab"
               type="button"
             >
-              <span className="font-['JetBrains_Mono'] text-[0.62rem] uppercase tracking-[0.12em] text-[color:var(--muted)]">
+              <span className="font-['JetBrains_Mono'] text-[0.62rem] uppercase tracking-[0.08em] text-[color:var(--muted)]">
                 {tab.count}
               </span>
-              <span className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.08em] text-[color:var(--text)]">
+              <span className="whitespace-nowrap font-['JetBrains_Mono'] text-[0.68rem] uppercase tracking-[0.06em] text-[color:var(--text)]">
                 {tab.label}
               </span>
             </button>
