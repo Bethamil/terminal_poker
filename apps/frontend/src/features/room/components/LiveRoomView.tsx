@@ -1,4 +1,4 @@
-import type { ParticipantSnapshot, RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
+import type { JoinableRole, ParticipantSnapshot, RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
 
 import { StatusChip } from "../../../components/StatusChip";
 import { ParticipantRail } from "./RoomParticipants";
@@ -14,7 +14,7 @@ interface LiveRoomViewProps {
   isObserver: boolean;
   joinError: string | null;
   observers: ParticipantSnapshot[];
-  onInvite: () => void;
+  onInvite: (role: JoinableRole) => void;
   onResetRound: () => void;
   onRevealToggle: () => void;
   onTicketDraftChange: (value: string) => void;

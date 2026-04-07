@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ParticipantSnapshot } from "@terminal-poker/shared-types";
+import type { JoinableRole, ParticipantSnapshot } from "@terminal-poker/shared-types";
 import { COFFEE_VOTE_VALUE } from "@terminal-poker/shared-types";
 
 import { Button } from "../../../components/Button";
@@ -14,7 +14,7 @@ export interface RoomParticipantStatusProps {
 }
 
 interface ParticipantRailProps extends RoomParticipantStatusProps {
-  onInvite: () => void;
+  onInvite: (role: JoinableRole) => void;
   roomCode: string;
   roomLinkStatus: "idle" | "copied" | "error";
   roomName: string;
@@ -34,6 +34,7 @@ export const ParticipantRail = ({
 }: ParticipantRailProps) => {
   const [activeTab, setActiveTab] = useState<RailTab>("voters");
   const activeParticipants = activeTab === "voters" ? voters : observers;
+  const inviteRole: JoinableRole = activeTab === "observers" ? "observer" : "participant";
   const onlineCount = countOnlineParticipants(activeParticipants);
 
   return (
@@ -169,7 +170,7 @@ export const ParticipantRail = ({
       <div className="grid gap-3 pt-3">
         <Button
           className="w-full justify-center"
-          onClick={onInvite}
+          onClick={() => onInvite(inviteRole)}
           style={{
             background: "var(--action-accent-bg)",
             color: "var(--action-accent-text)"
@@ -179,7 +180,9 @@ export const ParticipantRail = ({
             ? "LINK COPIED"
             : roomLinkStatus === "error"
               ? "COPY FAILED"
-              : "INVITE_DEV"}
+              : activeTab === "observers"
+                ? "INVITE_OBSERVER"
+                : "INVITE_DEV"}
         </Button>
       </div>
     </aside>

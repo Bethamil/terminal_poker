@@ -832,8 +832,7 @@ select {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.65rem;
-  min-height: 4.1rem;
-  padding: 0.8rem 0.85rem;
+  padding: 0.3rem 0.85rem;
   background: var(--row-bg);
   border: 1px solid transparent;
   border-radius: 10px;

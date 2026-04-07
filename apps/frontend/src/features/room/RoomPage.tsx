@@ -172,9 +172,17 @@ export const RoomPage = () => {
     }
   };
 
-  const copyRoomLink = async () => {
+  const copyRoomLink = async (role?: JoinableRole) => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      const inviteUrl = new URL(window.location.href);
+
+      if (role) {
+        inviteUrl.searchParams.set("role", role);
+      } else {
+        inviteUrl.searchParams.delete("role");
+      }
+
+      await navigator.clipboard.writeText(inviteUrl.toString());
       setRoomLinkStatus("copied");
     } catch {
       setRoomLinkStatus("error");
@@ -447,7 +455,7 @@ export const RoomPage = () => {
           isObserver={isObserver}
           joinError={joinError}
           observers={observers}
-          onInvite={() => void copyRoomLink()}
+          onInvite={(role) => void copyRoomLink(role)}
           onResetRound={resetRound}
           onRevealToggle={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
           onTicketDraftChange={setTicketDraft}
