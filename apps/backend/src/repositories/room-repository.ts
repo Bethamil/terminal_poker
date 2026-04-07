@@ -143,6 +143,19 @@ export class RoomRepository {
     });
   }
 
+  async updateParticipantRole(participantId: string, role: ParticipantRole) {
+    return this.db.participant.update({
+      where: { id: participantId },
+      data: { role }
+    });
+  }
+
+  async deleteVotesForParticipantInRound(roundId: string, participantId: string) {
+    return this.db.vote.deleteMany({
+      where: { roundId, participantId }
+    });
+  }
+
   async removeParticipant(participantId: string) {
     return this.db.participant.delete({
       where: { id: participantId }

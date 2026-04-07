@@ -314,6 +314,62 @@ export class RoomService {
     });
   }
 
+  async changeParticipantRole(
+    roomCode: string,
+    participantToken: string,
+    targetParticipantId: string,
+    newRole: "moderator" | "participant" | "observer"
+  ): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+
+      if (authorized.role !== ParticipantRole.MODERATOR) {
+        throw new AppError(403, "FORBIDDEN", "Only moderators can change participant roles.");
+      }
+
+      if (authorized.participantId === targetParticipantId) {
+        throw new AppError(400, "CANNOT_CHANGE_OWN_ROLE", "Moderators cannot change their own role directly.");
+      }
+
+      const target = authorized.room.participants.find((p) => p.id === targetParticipantId);
+
+      if (!target) {
+        throw new AppError(404, "PARTICIPANT_NOT_FOUND", "Participant not found.");
+      }
+
+      const repo = this.repository(transaction);
+      const prismaNewRole =
+        newRole === "moderator"
+          ? ParticipantRole.MODERATOR
+          : newRole === "observer"
+            ? ParticipantRole.OBSERVER
+            : ParticipantRole.PARTICIPANT;
+
+      if (target.role === prismaNewRole) {
+        return;
+      }
+
+      // Transfer moderator: target becomes moderator, current moderator becomes participant
+      if (prismaNewRole === ParticipantRole.MODERATOR) {
+        await repo.updateParticipantRole(authorized.participantId, ParticipantRole.PARTICIPANT);
+        await repo.updateParticipantRole(targetParticipantId, ParticipantRole.MODERATOR);
+      } else {
+        await repo.updateParticipantRole(targetParticipantId, prismaNewRole);
+      }
+
+      // If changed to observer, remove their vote from the active round
+      if (prismaNewRole === ParticipantRole.OBSERVER) {
+        const activeRound = authorized.room.rounds[0];
+
+        if (activeRound) {
+          await repo.deleteVotesForParticipantInRound(activeRound.id, targetParticipantId);
+        }
+      }
+
+      await repo.touchRoomActivity(authorized.room.id);
+    });
+  }
+
   async kickParticipant(
     roomCode: string,
     participantToken: string,

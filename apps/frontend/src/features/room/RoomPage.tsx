@@ -46,6 +46,7 @@ export const RoomPage = () => {
   const settingsSavedTimeoutRef = useRef<number | null>(null);
   const {
     castVote,
+    changeParticipantRole,
     error,
     isLoading,
     isRealtimeReady,
@@ -221,9 +222,21 @@ export const RoomPage = () => {
     kickParticipant(participant.id);
   };
 
-  // TODO: Wire to backend socket event (room:changeParticipantRole) — requires new backend endpoint
-  const handleChangeParticipantRole = (_participantId: string, _newRole: ParticipantRole) => {
-    window.alert("Role changes will be available in a future update.");
+  const handleChangeParticipantRole = async (participantId: string, newRole: ParticipantRole) => {
+    if (newRole === "moderator") {
+      const target = snapshot?.participants.find((p) => p.id === participantId);
+      if (!window.confirm(`Transfer host role to ${target?.name ?? "this user"}? You will become a voter.`)) {
+        return;
+      }
+    }
+
+    try {
+      await changeParticipantRole(participantId, newRole);
+    } catch (requestError) {
+      setSettingsError(
+        requestError instanceof ApiError ? requestError.message : "Unable to change participant role."
+      );
+    }
   };
 
   const handleLeaveRoom = async () => {

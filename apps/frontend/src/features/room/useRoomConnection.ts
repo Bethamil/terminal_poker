@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   getVoteCardMeta,
+  type ParticipantRole,
   type RoomErrorPayload,
   type RoomSnapshot,
   type UpdateRoomSettingsPayload,
@@ -30,6 +31,7 @@ interface UseRoomConnectionResult {
     payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
   ) => Promise<void>;
   kickParticipant: (participantId: string) => void;
+  changeParticipantRole: (participantId: string, newRole: ParticipantRole) => Promise<void>;
 }
 
 export const useRoomConnection = (
@@ -310,6 +312,54 @@ export const useRoomConnection = (
       );
     });
 
+  const emitChangeParticipantRole = (participantId: string, newRole: ParticipantRole) =>
+    new Promise<void>((resolve, reject) => {
+      const session = getSocketSession(true);
+
+      if (!session) {
+        reject(new Error("Room connection is not ready."));
+        return;
+      }
+
+      let finished = false;
+      const timeoutId = window.setTimeout(() => {
+        if (finished) {
+          return;
+        }
+
+        finished = true;
+        reject(new ApiError(408, "REQUEST_TIMEOUT", "Unable to change participant role right now."));
+      }, 4000);
+
+      emitWithAck(
+        (ack) =>
+          session.socket.emit("room:changeParticipantRole", {
+            roomCode: normalizedRoomCode,
+            participantToken: session.participantToken,
+            participantId,
+            newRole
+          }, ack),
+        () => {
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+          window.clearTimeout(timeoutId);
+          resolve();
+        },
+        (nextError) => {
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+          window.clearTimeout(timeoutId);
+          reject(new ApiError(400, nextError.code, nextError.message));
+        }
+      );
+    });
+
   const emitKickParticipant = (participantId: string) => {
     const session = getSocketSession(true);
 
@@ -378,6 +428,7 @@ export const useRoomConnection = (
     resetRound: () => emitRoundAction("round:reset"),
     updateTicket: emitTicketUpdate,
     updateRoomSettings: emitRoomSettingsUpdate,
-    kickParticipant: emitKickParticipant
+    kickParticipant: emitKickParticipant,
+    changeParticipantRole: emitChangeParticipantRole
   };
 };

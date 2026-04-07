@@ -91,7 +91,14 @@ export const buildRoomSnapshot = (
     throw new Error("Room snapshot requested without an active round or viewer.");
   }
 
-  const roundVotes = activeRound.votes.map((vote) => vote.value as VoteValue);
+  const observerIds = new Set(
+    room.participants
+      .filter((p) => p.role === ParticipantRole.OBSERVER)
+      .map((p) => p.id)
+  );
+  const roundVotes = activeRound.votes
+    .filter((vote) => !observerIds.has(vote.participantId))
+    .map((vote) => vote.value as VoteValue);
   const isRevealed = activeRound.status === RoundStatus.REVEALED;
   const votingDeckId = resolveVotingDeckId(room.votingDeckId);
   const votingDeck = getVotingDeck(votingDeckId);
@@ -114,19 +121,24 @@ export const buildRoomSnapshot = (
       revealedAt: activeRound.revealedAt?.toISOString() ?? null,
       summary: isRevealed ? buildSummary(roundVotes, votingDeck) : null
     },
-    participants: room.participants.map((participant) => ({
-      id: participant.id,
-      name: participant.name,
-      role: mapParticipantRole(participant.role),
-      presence: activeParticipantIds.has(participant.id) ? "online" : "away",
-      hasVoted: votesByParticipantId.has(participant.id),
-      revealedVote: isRevealed ? votesByParticipantId.get(participant.id) ?? null : null
-    })),
+    participants: room.participants.map((participant) => {
+      const isObserver = participant.role === ParticipantRole.OBSERVER;
+      return {
+        id: participant.id,
+        name: participant.name,
+        role: mapParticipantRole(participant.role),
+        presence: activeParticipantIds.has(participant.id) ? "online" : "away",
+        hasVoted: isObserver ? false : votesByParticipantId.has(participant.id),
+        revealedVote: isObserver ? null : (isRevealed ? votesByParticipantId.get(participant.id) ?? null : null)
+      };
+    }),
     viewer: {
       participantId: viewer.id,
       name: viewer.name,
       role: mapParticipantRole(viewer.role),
-      selectedVote: (votesByParticipantId.get(viewer.id) ?? null) as VoteValue | null
+      selectedVote: viewer.role === ParticipantRole.OBSERVER
+        ? null
+        : (votesByParticipantId.get(viewer.id) ?? null) as VoteValue | null
     },
     votingDeck
   };
