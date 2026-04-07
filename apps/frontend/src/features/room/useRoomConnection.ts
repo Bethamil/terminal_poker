@@ -351,7 +351,8 @@ export const useRoomConnection = (
       ),
     [snapshot]
   );
-  const areShortcutsEnabled = Boolean(snapshot && participantToken && isRealtimeReady);
+  const isObserver = snapshot?.viewer.role === "observer";
+  const areShortcutsEnabled = Boolean(snapshot && participantToken && isRealtimeReady && !isObserver);
   const isModerator = snapshot?.viewer.role === "moderator";
   const isRoundRevealed = snapshot?.round.status === "revealed";
 

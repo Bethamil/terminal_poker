@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { getVoteCardMeta, type ParticipantSnapshot, type UpdateRoomSettingsPayload } from "@terminal-poker/shared-types";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { getVoteCardMeta, type JoinableRole, type ParticipantRole, type ParticipantSnapshot, type UpdateRoomSettingsPayload } from "@terminal-poker/shared-types";
 
 import { AppLayout } from "../../components/AppLayout";
 import { Button } from "../../components/Button";
@@ -11,17 +11,24 @@ import { LiveRoomView } from "./components/LiveRoomView";
 import { RoomJoinGateView } from "./components/RoomJoinGateView";
 import { RoomLoadingView } from "./components/RoomLoadingView";
 import { RoomSettingsModal, type RoomSettingsTab } from "./components/RoomSettingsModal";
-import { countOnlineParticipants, formatVoteShortcutHint } from "./roomViewUtils";
+import { countOnlineParticipants, formatVoteShortcutHint, groupParticipantsByVotingRole } from "./roomViewUtils";
 import { useRoomConnection } from "./useRoomConnection";
+
+const parseRoleParam = (value: string | null): JoinableRole => {
+  if (value === "observer") return "observer";
+  return "participant";
+};
 
 export const RoomPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { roomCode: roomCodeParam } = useParams();
   const roomCode = roomCodeParam?.toUpperCase() ?? "";
   const [participantToken, setParticipantToken] = useState<string | null>(
     roomCode ? sessionStorageStore.getParticipantToken(roomCode) : null
   );
   const [joinName, setJoinName] = useState("");
+  const [joinRole, setJoinRole] = useState<JoinableRole>(() => parseRoleParam(searchParams.get("role")));
   const [joinPasscode, setJoinPasscode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -144,6 +151,7 @@ export const RoomPage = () => {
     try {
       const response = await apiClient.joinRoom(roomCode, {
         name: joinName,
+        role: joinRole,
         joinPasscode: joinPasscode || null
       });
 
@@ -213,6 +221,11 @@ export const RoomPage = () => {
     kickParticipant(participant.id);
   };
 
+  // TODO: Wire to backend socket event (room:changeParticipantRole) — requires new backend endpoint
+  const handleChangeParticipantRole = (_participantId: string, _newRole: ParticipantRole) => {
+    window.alert("Role changes will be available in a future update.");
+  };
+
   const handleLeaveRoom = async () => {
     if (!snapshot) {
       return;
@@ -268,8 +281,10 @@ export const RoomPage = () => {
           joinError={joinError}
           joinName={joinName}
           joinPasscode={joinPasscode}
+          joinRole={joinRole}
           onJoinNameChange={setJoinName}
           onJoinPasscodeChange={setJoinPasscode}
+          onJoinRoleChange={setJoinRole}
           onSubmit={handleInlineJoin}
           roomCode={roomCode}
         />}
@@ -288,10 +303,12 @@ export const RoomPage = () => {
     );
   }
 
+  const { voters, observers } = groupParticipantsByVotingRole(snapshot.participants);
   const activeParticipantCount = countOnlineParticipants(snapshot.participants);
   const areRealtimeActionsDisabled = !isRealtimeReady;
   const connectionStatusLabel = isRealtimeReady ? "LIVE" : "SYNC";
   const isModerator = snapshot.viewer.role === "moderator";
+  const isObserver = snapshot.viewer.role === "observer";
   const leaveButtonLabel = isLeaving ? "LEAVING..." : isModerator ? "LEAVE & DELETE" : "LEAVE ROOM";
   const normalizedTicketDraft = ticketDraft.trim().toUpperCase();
   const hasTicketChanged = normalizedTicketDraft !== (snapshot.round.jiraTicketKey ?? "");
@@ -393,7 +410,7 @@ export const RoomPage = () => {
           </>
         ),
         centerClassName: "gap-2",
-        left: (
+        left: isObserver ? null : (
           <>
             <span>{voteShortcutHint}</span>
             {isModerator ? (
@@ -414,7 +431,9 @@ export const RoomPage = () => {
           error={error}
           hasTicketChanged={hasTicketChanged}
           isModerator={isModerator}
+          isObserver={isObserver}
           joinError={joinError}
+          observers={observers}
           onInvite={() => void copyRoomLink()}
           onResetRound={resetRound}
           onRevealToggle={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
@@ -423,6 +442,7 @@ export const RoomPage = () => {
           roomLinkStatus={roomLinkStatus}
           snapshot={snapshot}
           ticketDraft={ticketDraft}
+          voters={voters}
         />
       }
       mainClassName="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]"
@@ -452,6 +472,7 @@ export const RoomPage = () => {
               onTabChange: setSettingsTab
             }}
             users={{
+              onChangeParticipantRole: handleChangeParticipantRole,
               onKickParticipant: handleKickParticipant,
               participants: snapshot.participants,
               pendingKickId,

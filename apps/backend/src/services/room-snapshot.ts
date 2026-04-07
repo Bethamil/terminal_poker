@@ -20,8 +20,8 @@ export type RoomAggregate = Prisma.RoomGetPayload<{
   };
 }>;
 
-const mapParticipantRole = (role: ParticipantRole): "moderator" | "participant" =>
-  role === ParticipantRole.MODERATOR ? "moderator" : "participant";
+const mapParticipantRole = (role: ParticipantRole): "moderator" | "participant" | "observer" =>
+  role === ParticipantRole.MODERATOR ? "moderator" : role === ParticipantRole.OBSERVER ? "observer" : "participant";
 
 const mapRoundStatus = (status: RoundStatus): "active" | "revealed" =>
   status === RoundStatus.REVEALED ? "revealed" : "active";

@@ -1,6 +1,14 @@
 import type { VoteValue, VotingDeckId } from "./votes";
 
-export type ParticipantRole = "moderator" | "participant";
+export type ParticipantRole = "moderator" | "participant" | "observer";
+
+/** Roles available in the join form (moderator is assigned only at room creation). */
+export type JoinableRole = "participant" | "observer";
+
+export const JOINABLE_ROLES: ReadonlyArray<{ value: JoinableRole; label: string }> = [
+  { value: "participant", label: "VOTER" },
+  { value: "observer", label: "OBSERVER" }
+];
 export type PresenceState = "online" | "away";
 export type RoundStatus = "active" | "revealed";
 

@@ -171,10 +171,12 @@ export class RoomService {
         throw new AppError(403, "INVALID_PASSCODE", "Join passcode is incorrect.");
       }
 
+      const prismaRole = input.role === "observer" ? ParticipantRole.OBSERVER : ParticipantRole.PARTICIPANT;
+
       await repo.createParticipant({
         roomId: room.id,
         name,
-        role: ParticipantRole.PARTICIPANT,
+        role: prismaRole,
         sessionTokenHash: participantTokenHash
       });
 
@@ -223,6 +225,12 @@ export class RoomService {
   async castVote(roomCode: string, participantToken: string, value: VoteValue): Promise<{ isFirstVote: boolean }> {
     return this.prisma.$transaction(async (transaction) => {
       const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+      const participant = authorized.room.participants.find((p) => p.id === authorized.participantId);
+
+      if (participant?.role === ParticipantRole.OBSERVER) {
+        throw new AppError(403, "OBSERVER_CANNOT_VOTE", "Observers cannot cast votes.");
+      }
+
       const round = authorized.room.rounds[0];
       const votingDeck = getVotingDeck(resolveVotingDeckId(authorized.room.votingDeckId));
 

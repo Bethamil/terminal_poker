@@ -13,10 +13,11 @@ const isRangeVote = (value: string) => !isNonEstimateVoteValue(value);
 
 interface RoomHeroProps {
   snapshot: RoomSnapshot;
+  voterCount: number;
   votedCount: number;
 }
 
-export const RoomHero = ({ snapshot, votedCount }: RoomHeroProps) => {
+export const RoomHero = ({ snapshot, voterCount, votedCount }: RoomHeroProps) => {
   const roundStatusTone = snapshot.round.status === "revealed" ? "success" : "accent";
   const roundStatusLabel = snapshot.round.status === "revealed" ? "REVEALED" : "IN PROGRESS";
   const roundSummary = snapshot.round.summary;
@@ -91,7 +92,7 @@ export const RoomHero = ({ snapshot, votedCount }: RoomHeroProps) => {
               {[
                 { label: "AVG", value: formattedAverage, accent: true },
                 { label: "RANGE", value: rangeLabel, accent: false },
-                { label: "VOTES", value: String(votedCount), accent: false }
+                { label: "VOTES", value: `${votedCount}/${voterCount}`, accent: false }
               ].map((stat) => (
                 <div
                   className="grid content-start gap-1 border-l pl-4 first:border-l-0 first:pl-0"

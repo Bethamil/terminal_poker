@@ -11,6 +11,7 @@ export interface CreateRoomRequest {
 
 export interface JoinRoomRequest {
   name: string;
+  role?: "participant" | "observer";
   joinPasscode?: string | null;
 }
 

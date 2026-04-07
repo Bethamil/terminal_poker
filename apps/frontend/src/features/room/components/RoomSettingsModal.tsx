@@ -1,5 +1,6 @@
 import {
   VOTING_DECK_OPTIONS,
+  type ParticipantRole,
   type ParticipantSnapshot,
   type UpdateRoomSettingsPayload
 } from "@terminal-poker/shared-types";
@@ -21,6 +22,17 @@ const settingsTabs: Array<{
   { id: "room", label: "ROOM", chip: "CONFIG" },
   { id: "users", label: "USERS", chip: (participantCount) => `${participantCount} ACTIVE` }
 ];
+
+const getRoleLabel = (role: ParticipantRole): string => {
+  switch (role) {
+    case "moderator":
+      return "HOST";
+    case "observer":
+      return "OBSERVER";
+    default:
+      return "VOTER";
+  }
+};
 
 interface RoomSettingsModalTabState {
   activeParticipantCount: number;
@@ -44,6 +56,7 @@ interface RoomSettingsModalRoomState {
 }
 
 interface RoomSettingsModalUsersState {
+  onChangeParticipantRole: (participantId: string, newRole: ParticipantRole) => void;
   onKickParticipant: (participant: ParticipantSnapshot) => void;
   participants: ParticipantSnapshot[];
   pendingKickId: string | null;
@@ -212,8 +225,11 @@ export const RoomSettingsModal = ({
             </div>
             <div className="grid min-h-0 content-start auto-rows-max gap-3 overflow-y-auto pr-[0.3rem] max-[720px]:gap-[0.65rem] max-[720px]:pb-1 max-[720px]:pr-[0.1rem]">
               {users.participants.map((participant) => {
-                const canKick = participant.id !== users.viewerParticipantId && participant.role !== "moderator";
                 const isViewer = participant.id === users.viewerParticipantId;
+                const isModerator = participant.role === "moderator";
+                const canKick = !isViewer && !isModerator;
+                const canChangeRole = !isViewer && !isModerator;
+                const roleLabel = getRoleLabel(participant.role);
 
                 return (
                   <div
@@ -228,16 +244,42 @@ export const RoomSettingsModal = ({
                     <div className="grid min-w-0 gap-[0.2rem]">
                       <strong className="text-[0.92rem]">{participant.name}</strong>
                       <span className="font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] text-[color:var(--muted)]">
-                        {participant.role === "moderator"
-                          ? isViewer
-                            ? "HOST / YOU"
-                            : "HOST"
-                          : participant.hasVoted
-                            ? "VOTED"
-                            : "WAITING"}
+                        {roleLabel}{isViewer ? " / YOU" : ""}
                       </span>
                     </div>
-                    <div className="flex items-center justify-end max-[720px]:col-start-2 max-[720px]:justify-start">
+                    <div className="flex flex-wrap items-center justify-end gap-2 max-[720px]:col-start-2 max-[720px]:justify-start">
+                      {canChangeRole ? (
+                        <>
+                          {participant.role !== "participant" ? (
+                            <Button
+                              className="max-[720px]:min-h-[2.7rem] max-[720px]:px-4"
+                              disabled={areRealtimeActionsDisabled}
+                              onClick={() => users.onChangeParticipantRole(participant.id, "participant")}
+                              variant="ghost"
+                            >
+                              MAKE VOTER
+                            </Button>
+                          ) : null}
+                          {participant.role !== "observer" ? (
+                            <Button
+                              className="max-[720px]:min-h-[2.7rem] max-[720px]:px-4"
+                              disabled={areRealtimeActionsDisabled}
+                              onClick={() => users.onChangeParticipantRole(participant.id, "observer")}
+                              variant="ghost"
+                            >
+                              MAKE OBSERVER
+                            </Button>
+                          ) : null}
+                          <Button
+                            className="max-[720px]:min-h-[2.7rem] max-[720px]:px-4"
+                            disabled={areRealtimeActionsDisabled}
+                            onClick={() => users.onChangeParticipantRole(participant.id, "moderator")}
+                            variant="ghost"
+                          >
+                            MAKE HOST
+                          </Button>
+                        </>
+                      ) : null}
                       {canKick ? (
                         <Button
                           className="max-[720px]:min-h-[2.7rem] max-[720px]:px-4"
@@ -247,9 +289,10 @@ export const RoomSettingsModal = ({
                         >
                           {users.pendingKickId === participant.id ? "REMOVING..." : "REMOVE"}
                         </Button>
-                      ) : (
+                      ) : null}
+                      {!canChangeRole && !canKick ? (
                         <span className="mono-muted whitespace-nowrap">{isViewer ? "YOU" : "LOCKED"}</span>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 );
