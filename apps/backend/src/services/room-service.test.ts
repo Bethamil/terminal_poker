@@ -304,6 +304,22 @@ describe("RoomService moderator actions", () => {
     expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(afterVote.getTime());
   });
 
+  it("joins observers with the observer role", async () => {
+    const room = createRoomAggregate();
+    const service = createService(room);
+
+    await service.joinRoom("AB123", {
+      name: "Charlie",
+      role: "observer",
+      joinPasscode: "secret"
+    });
+
+    expect(room.participants.at(-1)).toMatchObject({
+      name: "Charlie",
+      role: ParticipantRole.OBSERVER
+    });
+  });
+
   it("does not create duplicate empty rounds when reset is spammed", async () => {
     const room = createRoomAggregate();
     const service = createService(room);

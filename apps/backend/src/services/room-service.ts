@@ -174,10 +174,12 @@ export class RoomService {
         throw new AppError(403, "INVALID_PASSCODE", "Join passcode is incorrect.");
       }
 
+      const prismaRole = input.role === "observer" ? ParticipantRole.OBSERVER : ParticipantRole.PARTICIPANT;
+
       await repo.createParticipant({
         roomId: room.id,
         name,
-        role: ParticipantRole.PARTICIPANT,
+        role: prismaRole,
         sessionTokenHash: participantTokenHash
       });
 
@@ -226,6 +228,12 @@ export class RoomService {
   async castVote(roomCode: string, participantToken: string, value: VoteValue): Promise<{ isFirstVote: boolean }> {
     return this.prisma.$transaction(async (transaction) => {
       const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+      const participant = authorized.room.participants.find((p) => p.id === authorized.participantId);
+
+      if (participant?.role === ParticipantRole.OBSERVER) {
+        throw new AppError(403, "OBSERVER_CANNOT_VOTE", "Observers cannot cast votes.");
+      }
+
       const round = authorized.room.rounds[0];
       const votingDeck = getVotingDeck(resolveVotingDeckId(authorized.room.votingDeckId));
 
@@ -303,6 +311,62 @@ export class RoomService {
         await repo.createRound({
           roomId: authorized.room.id
         });
+      }
+
+      await repo.touchRoomActivity(authorized.room.id);
+    });
+  }
+
+  async changeParticipantRole(
+    roomCode: string,
+    participantToken: string,
+    targetParticipantId: string,
+    newRole: "moderator" | "participant" | "observer"
+  ): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
+
+      if (authorized.role !== ParticipantRole.MODERATOR) {
+        throw new AppError(403, "FORBIDDEN", "Only moderators can change participant roles.");
+      }
+
+      if (authorized.participantId === targetParticipantId) {
+        throw new AppError(400, "CANNOT_CHANGE_OWN_ROLE", "Moderators cannot change their own role directly.");
+      }
+
+      const target = authorized.room.participants.find((p) => p.id === targetParticipantId);
+
+      if (!target) {
+        throw new AppError(404, "PARTICIPANT_NOT_FOUND", "Participant not found.");
+      }
+
+      const repo = this.repository(transaction);
+      const prismaNewRole =
+        newRole === "moderator"
+          ? ParticipantRole.MODERATOR
+          : newRole === "observer"
+            ? ParticipantRole.OBSERVER
+            : ParticipantRole.PARTICIPANT;
+
+      if (target.role === prismaNewRole) {
+        return;
+      }
+
+      // Transfer moderator: target becomes moderator, current moderator becomes participant
+      if (prismaNewRole === ParticipantRole.MODERATOR) {
+        await repo.updateParticipantRole(authorized.participantId, ParticipantRole.PARTICIPANT);
+        await repo.updateParticipantRole(targetParticipantId, ParticipantRole.MODERATOR);
+      } else {
+        await repo.updateParticipantRole(targetParticipantId, prismaNewRole);
+      }
+
+      // If changed to observer, remove their vote from the active round
+      if (prismaNewRole === ParticipantRole.OBSERVER) {
+        const activeRound = authorized.room.rounds[0];
+
+        if (activeRound) {
+          await repo.deleteVotesForParticipantInRound(activeRound.id, targetParticipantId);
+        }
       }
 
       await repo.touchRoomActivity(authorized.room.id);

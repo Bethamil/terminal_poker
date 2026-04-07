@@ -1,5 +1,6 @@
-import type { RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
+import type { JoinableRole, ParticipantSnapshot, RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
 
+import { StatusChip } from "../../../components/StatusChip";
 import { ParticipantRail } from "./RoomParticipants";
 import { RoomHero } from "./RoomHero";
 import { RoomVotingSection } from "./RoomVotingSection";
@@ -10,8 +11,10 @@ interface LiveRoomViewProps {
   error: string | null;
   hasTicketChanged: boolean;
   isModerator: boolean;
+  isObserver: boolean;
   joinError: string | null;
-  onInvite: () => void;
+  observers: ParticipantSnapshot[];
+  onInvite: (role: JoinableRole) => void;
   onResetRound: () => void;
   onRevealToggle: () => void;
   onTicketDraftChange: (value: string) => void;
@@ -19,6 +22,7 @@ interface LiveRoomViewProps {
   roomLinkStatus: "idle" | "copied" | "error";
   snapshot: RoomSnapshot;
   ticketDraft: string;
+  voters: ParticipantSnapshot[];
 }
 
 export const LiveRoomView = ({
@@ -27,7 +31,9 @@ export const LiveRoomView = ({
   error,
   hasTicketChanged,
   isModerator,
+  isObserver,
   joinError,
+  observers,
   onInvite,
   onResetRound,
   onRevealToggle,
@@ -35,39 +41,57 @@ export const LiveRoomView = ({
   onUpdateTicket,
   roomLinkStatus,
   snapshot,
-  ticketDraft
+  ticketDraft,
+  voters
 }: LiveRoomViewProps) => {
-  const votedCount = snapshot.participants.filter((participant) => participant.hasVoted).length;
+  const votedCount = voters.filter((participant) => participant.hasVoted).length;
+  const voterCount = voters.length;
 
   return (
     <>
       <div className="hidden lg:grid">
         <ParticipantRail
           currentParticipantId={snapshot.viewer.participantId}
+          observers={observers}
           onInvite={onInvite}
-          participants={snapshot.participants}
           roomCode={snapshot.room.code}
           roomLinkStatus={roomLinkStatus}
           roomName={snapshot.room.name}
           roundStatus={snapshot.round.status}
+          voters={voters}
         />
       </div>
 
       <section className="order-1 grid gap-4 lg:order-2">
-        <RoomHero snapshot={snapshot} votedCount={votedCount} />
-        <RoomVotingSection
-          areRealtimeActionsDisabled={areRealtimeActionsDisabled}
-          castVote={castVote}
-          hasTicketChanged={hasTicketChanged}
-          isModerator={isModerator}
-          onResetRound={onResetRound}
-          onRevealToggle={onRevealToggle}
-          onTicketDraftChange={onTicketDraftChange}
-          onUpdateTicket={onUpdateTicket}
-          snapshot={snapshot}
-          ticketDraft={ticketDraft}
-          votedCount={votedCount}
-        />
+        <RoomHero snapshot={snapshot} voterCount={voterCount} votedCount={votedCount} />
+        {isObserver ? (
+          <div className="deck-card mx-auto w-full max-w-[82rem]">
+            <div className="section-header">
+              <StatusChip>OBSERVER</StatusChip>
+              <h2>Observing this session</h2>
+            </div>
+            <p className="mono-muted">
+              You are watching this round. Observers do not vote and are not counted in vote progress.
+            </p>
+          </div>
+        ) : (
+          <RoomVotingSection
+            areRealtimeActionsDisabled={areRealtimeActionsDisabled}
+            castVote={castVote}
+            hasTicketChanged={hasTicketChanged}
+            isModerator={isModerator}
+            observers={observers}
+            onResetRound={onResetRound}
+            onRevealToggle={onRevealToggle}
+            onTicketDraftChange={onTicketDraftChange}
+            onUpdateTicket={onUpdateTicket}
+            snapshot={snapshot}
+            ticketDraft={ticketDraft}
+            voterCount={voterCount}
+            votedCount={votedCount}
+            voters={voters}
+          />
+        )}
         {error || joinError ? <div className="notice notice--error">{error ?? joinError}</div> : null}
       </section>
     </>

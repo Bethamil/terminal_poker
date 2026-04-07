@@ -14,6 +14,7 @@ const createRoomSchema = z.object({
 
 const joinRoomSchema = z.object({
   name: z.string(),
+  role: z.enum(["participant", "observer"]).optional().default("participant"),
   joinPasscode: z.string().optional().nullable()
 });
 

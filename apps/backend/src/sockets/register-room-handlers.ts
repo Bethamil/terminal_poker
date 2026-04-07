@@ -205,6 +205,29 @@ export const registerRoomHandlers = (
     }
   });
 
+  socket.on("room:changeParticipantRole", async (payload, ack) => {
+    try {
+      const session = getSocketSession(socket, payload.roomCode);
+      await roomService.changeParticipantRole(
+        session.roomCode,
+        session.participantToken,
+        payload.participantId,
+        payload.newRole
+      );
+      ack?.({ ok: true });
+      await emitRoomSnapshots(io, roomService, session.roomCode);
+    } catch (error) {
+      const appError = asAppError(error);
+      ack?.({
+        ok: false,
+        error: {
+          code: appError.code,
+          message: appError.message
+        }
+      });
+    }
+  });
+
   socket.on("room:leave", async (payload, ack) => {
     try {
       const session = getSocketSession(socket, payload.roomCode);

@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { getVoteCardMeta, type ParticipantSnapshot, type UpdateRoomSettingsPayload } from "@terminal-poker/shared-types";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { getVoteCardMeta, type JoinableRole, type ParticipantRole, type ParticipantSnapshot, type UpdateRoomSettingsPayload } from "@terminal-poker/shared-types";
 
 import { AppLayout } from "../../components/AppLayout";
 import { Button } from "../../components/Button";
@@ -11,17 +11,24 @@ import { LiveRoomView } from "./components/LiveRoomView";
 import { RoomJoinGateView } from "./components/RoomJoinGateView";
 import { RoomLoadingView } from "./components/RoomLoadingView";
 import { RoomSettingsModal, type RoomSettingsTab } from "./components/RoomSettingsModal";
-import { countOnlineParticipants, formatVoteShortcutHint } from "./roomViewUtils";
+import { countOnlineParticipants, formatVoteShortcutHint, groupParticipantsByVotingRole } from "./roomViewUtils";
 import { useRoomConnection } from "./useRoomConnection";
+
+const parseRoleParam = (value: string | null): JoinableRole => {
+  if (value === "observer") return "observer";
+  return "participant";
+};
 
 export const RoomPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { roomCode: roomCodeParam } = useParams();
   const roomCode = roomCodeParam?.toUpperCase() ?? "";
   const [participantToken, setParticipantToken] = useState<string | null>(
     roomCode ? sessionStorageStore.getParticipantToken(roomCode) : null
   );
   const [joinName, setJoinName] = useState("");
+  const [joinRole, setJoinRole] = useState<JoinableRole>(() => parseRoleParam(searchParams.get("role")));
   const [joinPasscode, setJoinPasscode] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -39,6 +46,7 @@ export const RoomPage = () => {
   const settingsSavedTimeoutRef = useRef<number | null>(null);
   const {
     castVote,
+    changeParticipantRole,
     error,
     isLoading,
     isRealtimeReady,
@@ -144,6 +152,7 @@ export const RoomPage = () => {
     try {
       const response = await apiClient.joinRoom(roomCode, {
         name: joinName,
+        role: joinRole,
         joinPasscode: joinPasscode || null
       });
 
@@ -163,9 +172,17 @@ export const RoomPage = () => {
     }
   };
 
-  const copyRoomLink = async () => {
+  const copyRoomLink = async (role?: JoinableRole) => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      const inviteUrl = new URL(window.location.href);
+
+      if (role) {
+        inviteUrl.searchParams.set("role", role);
+      } else {
+        inviteUrl.searchParams.delete("role");
+      }
+
+      await navigator.clipboard.writeText(inviteUrl.toString());
       setRoomLinkStatus("copied");
     } catch {
       setRoomLinkStatus("error");
@@ -211,6 +228,23 @@ export const RoomPage = () => {
 
     setPendingKickId(participant.id);
     kickParticipant(participant.id);
+  };
+
+  const handleChangeParticipantRole = async (participantId: string, newRole: ParticipantRole) => {
+    if (newRole === "moderator") {
+      const target = snapshot?.participants.find((p) => p.id === participantId);
+      if (!window.confirm(`Transfer host role to ${target?.name ?? "this user"}? You will become a voter.`)) {
+        return;
+      }
+    }
+
+    try {
+      await changeParticipantRole(participantId, newRole);
+    } catch (requestError) {
+      setSettingsError(
+        requestError instanceof ApiError ? requestError.message : "Unable to change participant role."
+      );
+    }
   };
 
   const handleLeaveRoom = async () => {
@@ -268,8 +302,10 @@ export const RoomPage = () => {
           joinError={joinError}
           joinName={joinName}
           joinPasscode={joinPasscode}
+          joinRole={joinRole}
           onJoinNameChange={setJoinName}
           onJoinPasscodeChange={setJoinPasscode}
+          onJoinRoleChange={setJoinRole}
           onSubmit={handleInlineJoin}
           roomCode={roomCode}
         />}
@@ -288,10 +324,12 @@ export const RoomPage = () => {
     );
   }
 
+  const { voters, observers } = groupParticipantsByVotingRole(snapshot.participants);
   const activeParticipantCount = countOnlineParticipants(snapshot.participants);
   const areRealtimeActionsDisabled = !isRealtimeReady;
   const connectionStatusLabel = isRealtimeReady ? "LIVE" : "SYNC";
   const isModerator = snapshot.viewer.role === "moderator";
+  const isObserver = snapshot.viewer.role === "observer";
   const leaveButtonLabel = isLeaving ? "LEAVING..." : isModerator ? "LEAVE & DELETE" : "LEAVE ROOM";
   const normalizedTicketDraft = ticketDraft.trim().toUpperCase();
   const hasTicketChanged = normalizedTicketDraft !== (snapshot.round.jiraTicketKey ?? "");
@@ -393,7 +431,7 @@ export const RoomPage = () => {
           </>
         ),
         centerClassName: "gap-2",
-        left: (
+        left: isObserver ? null : (
           <>
             <span>{voteShortcutHint}</span>
             {isModerator ? (
@@ -414,8 +452,10 @@ export const RoomPage = () => {
           error={error}
           hasTicketChanged={hasTicketChanged}
           isModerator={isModerator}
+          isObserver={isObserver}
           joinError={joinError}
-          onInvite={() => void copyRoomLink()}
+          observers={observers}
+          onInvite={(role) => void copyRoomLink(role)}
           onResetRound={resetRound}
           onRevealToggle={snapshot.round.status === "revealed" ? unrevealRound : revealRound}
           onTicketDraftChange={setTicketDraft}
@@ -423,6 +463,7 @@ export const RoomPage = () => {
           roomLinkStatus={roomLinkStatus}
           snapshot={snapshot}
           ticketDraft={ticketDraft}
+          voters={voters}
         />
       }
       mainClassName="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]"
@@ -452,6 +493,7 @@ export const RoomPage = () => {
               onTabChange: setSettingsTab
             }}
             users={{
+              onChangeParticipantRole: handleChangeParticipantRole,
               onKickParticipant: handleKickParticipant,
               participants: snapshot.participants,
               pendingKickId,

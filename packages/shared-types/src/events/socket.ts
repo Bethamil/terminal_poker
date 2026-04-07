@@ -35,6 +35,13 @@ export interface KickParticipantPayload {
   participantId: string;
 }
 
+export interface ChangeParticipantRolePayload {
+  roomCode: string;
+  participantToken: string;
+  participantId: string;
+  newRole: "moderator" | "participant" | "observer";
+}
+
 export interface LeaveRoomPayload {
   roomCode: string;
   participantToken: string;
@@ -76,6 +83,10 @@ export interface ClientToServerEvents {
     ack?: (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => void
   ) => void;
   "room:kickParticipant": (payload: KickParticipantPayload) => void;
+  "room:changeParticipantRole": (
+    payload: ChangeParticipantRolePayload,
+    ack?: (result: { ok: true } | { ok: false; error: RoomErrorPayload }) => void
+  ) => void;
   "vote:cast": (payload: CastVotePayload) => void;
   "round:setTicket": (payload: SetTicketPayload) => void;
   "round:reveal": (payload: RoundActionPayload) => void;

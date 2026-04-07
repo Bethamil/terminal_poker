@@ -1,15 +1,19 @@
 import type { FormEvent } from "react";
+import { JOINABLE_ROLES, type JoinableRole } from "@terminal-poker/shared-types";
 
 import { Button } from "../../../components/Button";
 import { Field } from "../../../components/Field";
+import { SelectField } from "../../../components/SelectField";
 import { StatusChip } from "../../../components/StatusChip";
 
 interface RoomJoinGateViewProps {
   joinError: string | null;
   joinName: string;
   joinPasscode: string;
+  joinRole: JoinableRole;
   onJoinNameChange: (value: string) => void;
   onJoinPasscodeChange: (value: string) => void;
+  onJoinRoleChange: (value: JoinableRole) => void;
   onSubmit: (event: FormEvent) => void;
   roomCode: string;
 }
@@ -18,8 +22,10 @@ export const RoomJoinGateView = ({
   joinError,
   joinName,
   joinPasscode,
+  joinRole,
   onJoinNameChange,
   onJoinPasscodeChange,
+  onJoinRoleChange,
   onSubmit,
   roomCode
 }: RoomJoinGateViewProps) => (
@@ -35,6 +41,17 @@ export const RoomJoinGateView = ({
       placeholder="cyber_punk"
       required
     />
+    <SelectField
+      label="ROLE"
+      value={joinRole}
+      onChange={(event) => onJoinRoleChange(event.target.value as JoinableRole)}
+    >
+      {JOINABLE_ROLES.map((role) => (
+        <option key={role.value} value={role.value}>
+          {role.label}
+        </option>
+      ))}
+    </SelectField>
     <Field
       label="PASSCODE"
       value={joinPasscode}

@@ -1,4 +1,4 @@
-import { COFFEE_VOTE_VALUE, getVoteCardMeta, getVotingDeckName, type RoomSnapshot, type VoteValue } from "@terminal-poker/shared-types";
+import { COFFEE_VOTE_VALUE, getVoteCardMeta, getVotingDeckName, type ParticipantSnapshot, type RoomSnapshot, type VoteValue } from "@terminal-poker/shared-types";
 
 import { Button } from "../../../components/Button";
 import { Field } from "../../../components/Field";
@@ -11,13 +11,16 @@ interface RoomVotingSectionProps {
   castVote: (value: VoteValue) => void;
   hasTicketChanged: boolean;
   isModerator: boolean;
+  observers: ParticipantSnapshot[];
   onResetRound: () => void;
   onRevealToggle: () => void;
   onTicketDraftChange: (value: string) => void;
   onUpdateTicket: () => void;
   snapshot: RoomSnapshot;
   ticketDraft: string;
+  voterCount: number;
   votedCount: number;
+  voters: ParticipantSnapshot[];
 }
 
 export const RoomVotingSection = ({
@@ -25,13 +28,16 @@ export const RoomVotingSection = ({
   castVote,
   hasTicketChanged,
   isModerator,
+  observers,
   onResetRound,
   onRevealToggle,
   onTicketDraftChange,
   onUpdateTicket,
   snapshot,
   ticketDraft,
-  votedCount
+  voterCount,
+  votedCount,
+  voters
 }: RoomVotingSectionProps) => {
   const isVotingClosed = snapshot.round.status === "revealed";
   const voteCardMeta = getVoteCardMeta(snapshot.room.votingDeckId);
@@ -51,11 +57,12 @@ export const RoomVotingSection = ({
           <StatusChip tone="success">DECK</StatusChip>
           <h2>{getVotingDeckName(snapshot.room.votingDeckId)}</h2>
         </div>
-        <div className="mono-muted">{votedCount}/{snapshot.participants.length} VOTED</div>
+        <div className="mono-muted">{votedCount}/{voterCount} VOTED</div>
       </div>
       <MobileParticipantStrip
         currentParticipantId={snapshot.viewer.participantId}
-        participants={snapshot.participants}
+        voters={voters}
+        observers={observers}
         roundStatus={snapshot.round.status}
       />
       {isModerator ? (
