@@ -3,14 +3,14 @@
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #111113;
-  --background-tint-start: rgba(17, 17, 19, 0.92);
-  --background-tint-end: rgba(10, 10, 12, 0.98);
-  --surface-lowest: #09090b;
-  --surface-low: #111115;
-  --surface: #17171c;
-  --surface-high: #202028;
-  --surface-highest: #2b2b34;
+  --background: #1a1a20;
+  --background-tint-start: rgba(26, 26, 32, 0.92);
+  --background-tint-end: rgba(16, 16, 20, 0.98);
+  --surface-lowest: #121216;
+  --surface-low: #18181f;
+  --surface: #1e1e26;
+  --surface-high: #282830;
+  --surface-highest: #32323c;
   --text: #ece8f7;
   --text-soft: #b8b0c8;
   --muted: #7d7690;
@@ -25,11 +25,11 @@
   --danger-strong-bg: rgba(255, 158, 153, 0.16);
   --danger-border: rgba(255, 158, 153, 0.2);
   --grid-line: rgba(255, 255, 255, 0.04);
-  --shadow: 0 18px 36px rgba(0, 0, 0, 0.24);
-  --topbar-bg: rgba(17, 17, 19, 0.76);
-  --card-bg: rgba(18, 18, 22, 0.84);
-  --card-ghost-bg: linear-gradient(180deg, rgba(22, 22, 28, 0.94), rgba(10, 10, 12, 0.94));
-  --card-rail-bg: rgba(10, 10, 12, 0.94);
+  --shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
+  --topbar-bg: rgba(26, 26, 32, 0.76);
+  --card-bg: rgba(28, 28, 34, 0.84);
+  --card-ghost-bg: linear-gradient(180deg, rgba(30, 30, 38, 0.94), rgba(16, 16, 20, 0.94));
+  --card-rail-bg: rgba(16, 16, 20, 0.94);
   --chip-bg: rgba(255, 255, 255, 0.035);
   --chip-accent-bg: linear-gradient(135deg, rgba(211, 187, 255, 0.16), rgba(109, 40, 217, 0.22));
   --button-secondary-bg: rgba(124, 58, 237, 0.14);
@@ -38,7 +38,7 @@
   --panel-bg: rgba(255, 255, 255, 0.03);
   --panel-strong-bg: rgba(255, 255, 255, 0.04);
   --row-bg: rgba(255, 255, 255, 0.02);
-  --settings-section-bg: rgba(12, 12, 15, 0.72);
+  --settings-section-bg: rgba(18, 18, 22, 0.72);
   --vote-tile-bg: rgba(255, 255, 255, 0.045);
   --vote-tile-hover-border: rgba(211, 187, 255, 0.34);
   --vote-tile-selected-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(109, 40, 217, 0.14));
@@ -52,13 +52,13 @@
   --presence-online: #25c46c;
   --presence-online-shadow: 0 0 18px rgba(37, 196, 108, 0.24);
   --presence-away: #7a8199;
-  --input-bg: rgba(7, 7, 10, 0.82);
+  --input-bg: rgba(12, 12, 16, 0.82);
   --input-placeholder: rgba(236, 232, 247, 0.3);
-  --shell-footer-bg: rgba(9, 9, 11, 0.92);
+  --shell-footer-bg: rgba(14, 14, 18, 0.92);
   --shell-footer-border: rgba(255, 255, 255, 0.05);
   --shell-footer-text: #6f6987;
   --shell-footer-dot: #a98fff;
-  --rail-panel-bg: rgba(9, 9, 11, 0.92);
+  --rail-panel-bg: rgba(14, 14, 18, 0.92);
   --rail-title: #d7c7ff;
   --rail-meta: #6f6987;
   --rail-accent: #8c67ff;
@@ -78,7 +78,7 @@
   --landing-node-hover: #f0e9ff;
   --landing-node-border: rgba(255, 255, 255, 0.05);
   --landing-node-empty: #6f6987;
-  --landing-window-bg: rgba(9, 9, 11, 0.88);
+  --landing-window-bg: rgba(14, 14, 18, 0.88);
   --landing-window-border: rgba(255, 255, 255, 0.05);
   --landing-window-meta: #6f6987;
   --landing-window-command: #b8afcc;
@@ -86,9 +86,9 @@
   --landing-window-red: #8f6b72;
   --landing-window-purple: #8b78c7;
   --landing-window-muted: #6f6987;
-  --landing-form-create-bg: #0d1110;
+  --landing-form-create-bg: #131816;
   --landing-form-create-border: rgba(21, 185, 123, 0.2);
-  --landing-form-join-bg: #0d1015;
+  --landing-form-join-bg: #13161c;
   --landing-form-join-border: rgba(75, 124, 255, 0.2);
   --landing-note-bg: rgba(255, 255, 255, 0.03);
   --landing-note-border: rgba(169, 143, 255, 0.5);
@@ -231,9 +231,9 @@ body::before {
 body::after {
   z-index: -1;
   background:
-    radial-gradient(circle at 50% 45%, transparent 0, transparent 48%, rgba(0, 0, 0, 0.16) 100%),
-    radial-gradient(circle at top center, rgba(211, 187, 255, 0.045), transparent 32%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.18));
+    radial-gradient(circle at 50% 45%, transparent 0, transparent 48%, rgba(0, 0, 0, 0.11) 100%),
+    radial-gradient(circle at top center, rgba(211, 187, 255, 0.05), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.13));
 }
 
 a {
@@ -429,7 +429,7 @@ select {
   padding: 1.5rem;
   background:
     radial-gradient(circle at top, rgba(135, 245, 197, 0.12), transparent 32%),
-    rgba(8, 10, 11, 0.68);
+    rgba(14, 16, 20, 0.64);
   backdrop-filter: blur(14px);
 }
 
