@@ -466,7 +466,7 @@ export const RoomPage = () => {
           voters={voters}
         />
       }
-      mainClassName="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]"
+      mainClassName="grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)]"
       overlay={
         isModerator ? (
           <RoomSettingsModal

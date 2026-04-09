@@ -1,6 +1,7 @@
 import type { JoinableRole, ParticipantSnapshot, RoomSnapshot, VoteValue } from "@terminal-poker/shared-types";
 
 import { StatusChip } from "../../../components/StatusChip";
+import { useResizablePanel } from "../useResizablePanel";
 import { ParticipantRail } from "./RoomParticipants";
 import { RoomHero } from "./RoomHero";
 import { RoomVotingSection } from "./RoomVotingSection";
@@ -46,10 +47,16 @@ export const LiveRoomView = ({
 }: LiveRoomViewProps) => {
   const votedCount = voters.filter((participant) => participant.hasVoted).length;
   const voterCount = voters.length;
+  const { width: railWidth, handleProps } = useResizablePanel({
+    defaultWidth: 240,
+    minWidth: 180,
+    maxWidth: 480,
+    storageKey: "terminal-poker:rail-width",
+  });
 
   return (
     <>
-      <div className="hidden lg:grid">
+      <div className="relative hidden lg:grid" style={{ width: `${railWidth}px` }}>
         <ParticipantRail
           currentParticipantId={snapshot.viewer.participantId}
           observers={observers}
@@ -60,6 +67,16 @@ export const LiveRoomView = ({
           roundStatus={snapshot.round.status}
           voters={voters}
         />
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize participants panel"
+          className="group absolute -right-[5px] top-0 bottom-0 z-10 flex w-[10px] cursor-col-resize items-center justify-center"
+          style={{ touchAction: "none" }}
+          {...handleProps}
+        >
+          <div className="h-8 w-[3px] rounded-full bg-[color:var(--outline)] opacity-40 transition-opacity group-hover:opacity-100" />
+        </div>
       </div>
 
       <section className="order-1 grid gap-4 lg:order-2">
