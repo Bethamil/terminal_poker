@@ -49,7 +49,7 @@ export const LiveRoomView = ({
   const voterCount = voters.length;
   const { width: railWidth, handleProps } = useResizablePanel({
     defaultWidth: 240,
-    minWidth: 180,
+    minWidth: 240,
     maxWidth: 480,
     storageKey: "terminal-poker:rail-width",
   });
