@@ -11,6 +11,7 @@ export interface RoomParticipantStatusProps {
   voters: ParticipantSnapshot[];
   observers: ParticipantSnapshot[];
   roundStatus: "active" | "revealed";
+  hostVotes: boolean;
 }
 
 interface ParticipantRailProps extends RoomParticipantStatusProps {
@@ -27,6 +28,7 @@ const getParticipantGroupLabel = (count: number, singular: string, plural: strin
 
 export const ParticipantRail = ({
   currentParticipantId,
+  hostVotes,
   observers,
   onInvite,
   roomCode,
@@ -135,7 +137,13 @@ export const ParticipantRail = ({
               <div className="participant-row__identity">
                 <strong>{participant.name}</strong>
                 <span>
-                  {participant.role === "moderator" ? "HOST" : participant.hasVoted ? "VOTED" : "WAITING"}
+                  {participant.role === "moderator"
+                    ? hostVotes
+                      ? "HOST"
+                      : "FACILITATOR"
+                    : participant.hasVoted
+                      ? "VOTED"
+                      : "WAITING"}
                 </span>
               </div>
               <div

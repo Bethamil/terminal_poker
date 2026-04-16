@@ -13,6 +13,7 @@ const createRoomAggregate = (): RoomAggregate =>
     name: "Planning Alpha",
     jiraBaseUrl: "https://jira.old.example.com",
     votingDeckId: "modified-fibonacci",
+    hostVotes: true,
     joinPasscodeHash: hashPasscode("secret"),
     lastActivityAt: new Date("2026-01-01T10:00:00.000Z"),
     createdAt: new Date("2026-01-01T10:00:00.000Z"),
@@ -223,7 +224,8 @@ describe("RoomService moderator actions", () => {
       jiraBaseUrl: "https://jira.next.example.com/browse",
       votingDeckId: "powers-of-two",
       joinPasscode: null,
-      joinPasscodeMode: "keep"
+      joinPasscodeMode: "keep",
+      hostVotes: true
     });
 
     expect(room.jiraBaseUrl).toBe("https://jira.next.example.com");
@@ -345,7 +347,8 @@ describe("RoomService moderator actions", () => {
       jiraBaseUrl: "https://jira.next.example.com",
       votingDeckId: "modified-fibonacci",
       joinPasscode: null,
-      joinPasscodeMode: "keep"
+      joinPasscodeMode: "keep",
+      hostVotes: true
     });
     expect(room.lastActivityAt.getTime()).toBeGreaterThanOrEqual(beforeSettings.getTime());
 

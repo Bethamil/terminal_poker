@@ -163,6 +163,7 @@ export function useRoomConnection({ log, onNewRound, onSessionEnded }: UseRoomCo
     votingDeckId?: VotingDeckId;
     joinPasscode?: string | null;
     joinPasscodeMode?: JoinPasscodeMode;
+    hostVotes?: boolean;
   }) => {
     if (!session || !snapshot) return;
     socketRef.current?.emit("room:updateSettings", {
@@ -172,6 +173,7 @@ export function useRoomConnection({ log, onNewRound, onSessionEnded }: UseRoomCo
       votingDeckId: settings.votingDeckId ?? snapshot.room.votingDeckId,
       joinPasscode: settings.joinPasscode ?? null,
       joinPasscodeMode: settings.joinPasscodeMode ?? "keep",
+      hostVotes: settings.hostVotes ?? snapshot.room.hostVotes,
     });
   }, [session, snapshot]);
 

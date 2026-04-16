@@ -12,6 +12,7 @@ model Room {
   name             String        @db.VarChar(80)
   jiraBaseUrl      String?
   votingDeckId     String        @default("modified-fibonacci") @db.VarChar(32)
+  hostVotes        Boolean       @default(true)
   joinPasscodeHash String?
   lastActivityAt   DateTime      @default(now())
   createdAt        DateTime      @default(now())

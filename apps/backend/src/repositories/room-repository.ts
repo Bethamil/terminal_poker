@@ -93,13 +93,15 @@ export class RoomRepository {
     jiraBaseUrl: string | null;
     votingDeckId: string;
     joinPasscodeHash: string | null;
+    hostVotes: boolean;
   }) {
     return this.db.room.update({
       where: { id: data.roomId },
       data: {
         jiraBaseUrl: data.jiraBaseUrl,
         votingDeckId: data.votingDeckId,
-        joinPasscodeHash: data.joinPasscodeHash
+        joinPasscodeHash: data.joinPasscodeHash,
+        hostVotes: data.hostVotes
       }
     });
   }

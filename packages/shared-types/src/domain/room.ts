@@ -51,6 +51,7 @@ export interface RoomSnapshot {
     jiraBaseUrl: string | null;
     votingDeckId: VotingDeckId;
     hasJoinPasscode: boolean;
+    hostVotes: boolean;
     createdAt: string;
   };
   round: RoundSnapshot;

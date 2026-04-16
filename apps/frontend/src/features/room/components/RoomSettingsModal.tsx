@@ -23,10 +23,10 @@ const settingsTabs: Array<{
   { id: "users", label: "USERS", chip: (participantCount) => `${participantCount} ACTIVE` }
 ];
 
-const getRoleLabel = (role: ParticipantRole): string => {
+const getRoleLabel = (role: ParticipantRole, hostVotes: boolean): string => {
   switch (role) {
     case "moderator":
-      return "HOST";
+      return hostVotes ? "HOST" : "HOST / FACILITATOR";
     case "observer":
       return "OBSERVER";
     default:
@@ -43,10 +43,12 @@ interface RoomSettingsModalTabState {
 interface RoomSettingsModalRoomState {
   hasJoinPasscode: boolean;
   hasJiraBaseUrl: boolean;
+  hostVotesDraft: boolean;
   isSettingsSaved: boolean;
   jiraBaseUrlDraft: string;
   newPasscodeDraft: string;
   onClearPasscode: () => void;
+  onHostVotesChange: (value: boolean) => void;
   onJiraBaseUrlChange: (value: string) => void;
   onNewPasscodeChange: (value: string) => void;
   onSave: () => void;
@@ -168,6 +170,15 @@ export const RoomSettingsModal = ({
                   </option>
                 ))}
               </SelectField>
+              <SelectField
+                label="HOST ROLE"
+                value={room.hostVotesDraft ? "voter" : "facilitator"}
+                onChange={(event) => room.onHostVotesChange(event.target.value === "voter")}
+                hint="Facilitators run the room without casting a vote."
+              >
+                <option value="voter">VOTING HOST</option>
+                <option value="facilitator">FACILITATOR</option>
+              </SelectField>
               <Field
                 hint={
                   room.hasJoinPasscode
@@ -229,7 +240,7 @@ export const RoomSettingsModal = ({
                 const isModerator = participant.role === "moderator";
                 const canKick = !isViewer && !isModerator;
                 const canChangeRole = !isViewer && !isModerator;
-                const roleLabel = getRoleLabel(participant.role);
+                const roleLabel = getRoleLabel(participant.role, room.hostVotesDraft);
 
                 return (
                   <div

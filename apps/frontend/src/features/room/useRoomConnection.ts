@@ -28,7 +28,7 @@ interface UseRoomConnectionResult {
   resetRound: () => void;
   updateTicket: (jiraTicketKey: string | null) => void;
   updateRoomSettings: (
-    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
+    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode" | "hostVotes">
   ) => Promise<void>;
   kickParticipant: (participantId: string) => void;
   changeParticipantRole: (participantId: string, newRole: ParticipantRole) => Promise<void>;
@@ -221,6 +221,10 @@ export const useRoomConnection = (
       return;
     }
 
+    if (snapshot?.viewer.role === "moderator" && snapshot && !snapshot.room.hostVotes) {
+      return;
+    }
+
     setSnapshot((prev) => {
       if (!prev) return prev;
       return {
@@ -264,7 +268,7 @@ export const useRoomConnection = (
   };
 
   const emitRoomSettingsUpdate = (
-    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
+    payload: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode" | "hostVotes">
   ) =>
     new Promise<void>((resolve, reject) => {
       const session = getSocketSession(true);
@@ -402,8 +406,9 @@ export const useRoomConnection = (
     [snapshot]
   );
   const isObserver = snapshot?.viewer.role === "observer";
-  const areShortcutsEnabled = Boolean(snapshot && participantToken && isRealtimeReady && !isObserver);
   const isModerator = snapshot?.viewer.role === "moderator";
+  const isFacilitator = Boolean(isModerator && snapshot && !snapshot.room.hostVotes);
+  const areShortcutsEnabled = Boolean(snapshot && participantToken && isRealtimeReady && !isObserver);
   const isRoundRevealed = snapshot?.round.status === "revealed";
 
   useRoomShortcuts({
