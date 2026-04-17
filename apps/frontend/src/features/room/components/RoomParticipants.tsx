@@ -3,7 +3,7 @@ import type { JoinableRole, ParticipantSnapshot } from "@terminal-poker/shared-t
 import { COFFEE_VOTE_VALUE } from "@terminal-poker/shared-types";
 
 import { Button } from "../../../components/Button";
-import { CoffeeVote } from "../../../components/icons";
+import { CoffeeVote, VoteStatusIcon } from "../../../components/icons";
 import { countOnlineParticipants } from "../roomViewUtils";
 
 export interface RoomParticipantStatusProps {
@@ -25,6 +25,55 @@ type RailTab = "voters" | "observers";
 
 const getParticipantGroupLabel = (count: number, singular: string, plural: string) =>
   count === 1 ? singular : plural;
+
+const getParticipantMeta = (participant: ParticipantSnapshot, hostVotes: boolean) => {
+  const segments: string[] = [];
+
+  if (participant.role === "moderator") {
+    segments.push(hostVotes ? "HOST" : "FACILITATOR");
+    if (hostVotes) {
+      segments.push(participant.hasVoted ? "VOTED" : "WAITING");
+    }
+    return segments.join(" • ");
+  }
+
+  segments.push(participant.hasVoted ? "VOTED" : "WAITING");
+  return segments.join(" • ");
+};
+
+const isFacilitatorParticipant = (participant: ParticipantSnapshot, hostVotes: boolean) =>
+  participant.role === "moderator" && !hostVotes;
+
+const renderRevealedVoteValue = (participant: ParticipantSnapshot, mobile = false) => {
+  if (!participant.revealedVote) {
+    return <VoteStatusIcon mobile={mobile} state="waiting" />;
+  }
+
+  return participant.revealedVote === COFFEE_VOTE_VALUE
+    ? <CoffeeVote variant={mobile ? "mobile" : undefined} />
+    : participant.revealedVote;
+};
+
+const renderVoteStatus = (
+  participant: ParticipantSnapshot,
+  roundStatus: "active" | "revealed",
+  hostVotes: boolean,
+  mobile = false
+) => {
+  if (isFacilitatorParticipant(participant, hostVotes)) {
+    return null;
+  }
+
+  if (roundStatus === "revealed") {
+    return renderRevealedVoteValue(participant, mobile);
+  }
+
+  if (!participant.hasVoted) {
+    return <VoteStatusIcon mobile={mobile} state="waiting" />;
+  }
+
+  return <VoteStatusIcon mobile={mobile} state="voted" />;
+};
 
 export const ParticipantRail = ({
   currentParticipantId,
@@ -124,43 +173,29 @@ export const ParticipantRail = ({
           id="rail-panel-voters"
           role="tabpanel"
         >
-          {voters.map((participant) => (
-            <div
-              className={`participant-row ${
-                roundStatus === "revealed" ? "participant-row--revealed" : ""
-              } ${
-                participant.id === currentParticipantId ? "participant-row--active" : ""
-              }`}
-              key={participant.id}
-            >
-              <div className={`presence-dot presence-dot--${participant.presence}`} />
-              <div className="participant-row__identity">
-                <strong>{participant.name}</strong>
-                <span>
-                  {participant.role === "moderator"
-                    ? hostVotes
-                      ? "HOST"
-                      : "FACILITATOR"
-                    : participant.hasVoted
-                      ? "VOTED"
-                      : "WAITING"}
-                </span>
-              </div>
+          {voters.map((participant) => {
+            const isCurrentParticipant = participant.id === currentParticipantId;
+
+            return (
               <div
-                className={`participant-row__vote ${
-                  participant.revealedVote ? "participant-row__vote--revealed" : ""
-                }`}
+                className={`participant-row ${isCurrentParticipant ? "participant-row--active" : ""}`}
+                key={participant.id}
               >
-                {participant.revealedVote
-                  ? participant.revealedVote === COFFEE_VOTE_VALUE
-                    ? <CoffeeVote />
-                    : participant.revealedVote
-                  : participant.hasVoted
-                    ? "●"
-                    : "·"}
+                <div className={`presence-dot presence-dot--${participant.presence}`} />
+                <div className="participant-row__identity">
+                  <strong>{participant.name}</strong>
+                  <span>{getParticipantMeta(participant, hostVotes)}</span>
+                </div>
+                <div
+                  className={`participant-row__vote ${
+                    roundStatus === "revealed" ? "participant-row__vote--revealed" : ""
+                  }`}
+                >
+                  {renderVoteStatus(participant, roundStatus, hostVotes)}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div
@@ -169,20 +204,22 @@ export const ParticipantRail = ({
           id="rail-panel-observers"
           role="tabpanel"
         >
-          {observers.map((participant) => (
-            <div
-              className={`participant-row ${
-                participant.id === currentParticipantId ? "participant-row--active" : ""
-              }`}
-              key={participant.id}
-            >
-              <div className={`presence-dot presence-dot--${participant.presence}`} />
-              <div className="participant-row__identity">
-                <strong>{participant.name}</strong>
-                <span>OBSERVER</span>
+          {observers.map((participant) => {
+            const isCurrentParticipant = participant.id === currentParticipantId;
+
+            return (
+              <div
+                className={`participant-row ${isCurrentParticipant ? "participant-row--active" : ""}`}
+                key={participant.id}
+              >
+                <div className={`presence-dot presence-dot--${participant.presence}`} />
+                <div className="participant-row__identity">
+                  <strong>{participant.name}</strong>
+                  <span>OBSERVER</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -210,22 +247,13 @@ export const ParticipantRail = ({
 
 export const MobileParticipantStrip = ({
   currentParticipantId,
+  hostVotes,
   voters,
   roundStatus
 }: RoomParticipantStatusProps) => (
   <div className="-mx-[var(--shell-pad)] flex gap-2 overflow-x-auto px-[var(--shell-pad)] pb-1 lg:hidden">
     {voters.map((participant) => {
       const isCurrent = participant.id === currentParticipantId;
-      const voteState =
-        roundStatus === "revealed"
-          ? participant.revealedVote
-            ? participant.revealedVote === COFFEE_VOTE_VALUE
-              ? <CoffeeVote variant="mobile" />
-              : participant.revealedVote
-            : "·"
-          : participant.hasVoted
-            ? "●"
-            : "·";
 
       return (
         <div
@@ -239,13 +267,13 @@ export const MobileParticipantStrip = ({
           <div className={`presence-dot presence-dot--${participant.presence}`} />
           <strong className="truncate text-[0.8rem]">{participant.name}</strong>
           <div
-            className={`flex min-w-[2.25rem] items-center justify-end text-right font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] ${
-              roundStatus === "revealed" && participant.revealedVote
+            className={`flex w-[2.75rem] min-w-[2.75rem] items-center justify-end text-right font-['JetBrains_Mono'] text-[0.72rem] uppercase tracking-[0.12em] ${
+              roundStatus === "revealed"
                 ? "font-['Space_Grotesk'] text-[1rem] tracking-[-0.04em] text-[color:var(--text)]"
-                : "text-[color:var(--muted)]"
+                : ""
             }`}
           >
-            {voteState}
+            {renderVoteStatus(participant, roundStatus, hostVotes, true)}
           </div>
         </div>
       );

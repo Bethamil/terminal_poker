@@ -829,7 +829,7 @@ select {
 
 .participant-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) minmax(3.75rem, auto);
   align-items: center;
   gap: 0.65rem;
   padding: 0.3rem 0.85rem;
@@ -841,10 +841,6 @@ select {
 .participant-row--active {
   background: var(--participant-active-bg);
   border-color: var(--participant-active-border);
-}
-
-.participant-row--revealed {
-  grid-template-columns: auto minmax(0, 1fr) minmax(3.75rem, auto);
 }
 
 .presence-dot {
@@ -890,7 +886,8 @@ select {
   align-items: center;
   justify-content: flex-end;
   justify-self: end;
-  min-width: 2.5rem;
+  width: 3.75rem;
+  min-width: 3.75rem;
   min-height: 2.2rem;
   text-align: right;
 }
