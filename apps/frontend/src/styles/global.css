@@ -1038,9 +1038,14 @@ select {
 }
 
 .vote-tile--coffee {
+  --coffee-vote-color: color-mix(in srgb, var(--vote-tile-value) 92%, white 8%);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--panel-strong-bg) 72%, transparent), transparent),
     var(--vote-tile-bg);
+}
+
+.coffee-vote {
+  color: var(--coffee-vote-color, currentColor);
 }
 
 .vote-tile--coffee .vote-tile__value {
@@ -1058,6 +1063,10 @@ select {
 
 .vote-tile--selected .vote-tile__value {
   color: var(--vote-tile-selected-text);
+}
+
+.vote-tile--selected.vote-tile--coffee {
+  --coffee-vote-color: var(--vote-tile-selected-text);
 }
 
 .vote-tile--locked {

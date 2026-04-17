@@ -2,30 +2,31 @@ import { COFFEE_VOTE_VALUE } from "@terminal-poker/shared-types";
 
 type CoffeeVoteVariant = "compact" | "hero" | "tile" | "mobile";
 
-const COFFEE_ICON_STYLES: Record<CoffeeVoteVariant, { wrapper: string; steam: string; cup: string }> = {
+const COFFEE_ICON_STYLES: Record<
+  CoffeeVoteVariant,
+  { wrapper: string; svg: string; strokeWidth: number }
+> = {
   compact: {
-    wrapper: "inline-flex h-[1.15em] flex-col items-center justify-center leading-none text-current",
-    steam: "translate-x-[0.12rem] font-['JetBrains_Mono'] text-[0.58rem] font-bold leading-none tracking-[0.12em]",
-    cup: "font-['JetBrains_Mono'] text-[0.82rem] font-bold leading-none tracking-[0.08em]"
+    wrapper: "coffee-vote inline-flex h-[1.1em] w-[1.1em] items-center justify-center align-middle text-current",
+    svg: "h-full w-full",
+    strokeWidth: 1.8
   },
   hero: {
     wrapper:
-      "inline-flex h-[1.22em] w-[1.22em] flex-col items-center justify-center leading-none text-inherit",
-    steam:
-      "translate-x-[0.26rem] font-['JetBrains_Mono'] text-[clamp(0.9rem,0.8vw+0.4rem,1.25rem)] font-bold leading-none tracking-[0.16em]",
-    cup:
-      "font-['JetBrains_Mono'] text-[clamp(1.4rem,1vw+0.8rem,2rem)] font-bold leading-none tracking-[0.1em]"
+      "coffee-vote inline-flex h-[1.18em] w-[1.18em] items-center justify-center align-middle text-inherit",
+    svg: "h-full w-full",
+    strokeWidth: 1.7
   },
   tile: {
     wrapper:
-      "inline-flex h-[1.15em] w-[1.15em] -translate-y-[0.04rem] flex-col items-center justify-center leading-none text-[color:color-mix(in_srgb,var(--vote-tile-value)_92%,white_8%)]",
-    steam: "translate-x-[0.18rem] font-['JetBrains_Mono'] text-[0.98rem] font-bold leading-none tracking-[0.1em]",
-    cup: "font-['JetBrains_Mono'] text-[1.38rem] font-bold leading-none tracking-[0.06em]"
+      "coffee-vote coffee-vote--tile inline-flex h-[clamp(2.05rem,3.2vw,2.7rem)] w-[clamp(2.05rem,3.2vw,2.7rem)] items-center justify-center align-middle",
+    svg: "h-full w-full",
+    strokeWidth: 2
   },
   mobile: {
-    wrapper: "inline-flex h-[0.92em] w-[0.92em] flex-col items-center justify-center leading-none text-current",
-    steam: "translate-x-[0.1rem] font-['JetBrains_Mono'] text-[0.62rem] font-bold leading-none tracking-[0.08em]",
-    cup: "font-['JetBrains_Mono'] text-[0.86rem] font-bold leading-none tracking-[0.05em]"
+    wrapper: "coffee-vote inline-flex h-[0.96em] w-[0.96em] items-center justify-center align-middle text-current",
+    svg: "h-full w-full",
+    strokeWidth: 1.8
   }
 };
 
@@ -45,8 +46,54 @@ export const CoffeeVote = ({
   return (
     <span className="inline-flex items-center">
       <span aria-hidden="true" className={styles.wrapper}>
-        <span className={styles.steam}>//</span>
-        <span className={styles.cup}>[_]</span>
+        <svg
+          className={styles.svg}
+          fill="none"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M8.05 5.45L7.25 3.55"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={styles.strokeWidth}
+          />
+          <path
+            d="M11.25 5.3V2.9"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={styles.strokeWidth}
+          />
+          <path
+            d="M14.45 5.45L15.25 3.55"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={styles.strokeWidth}
+          />
+          <path
+            d="M5.5 8.5H17V13.75C17 15.8211 15.3211 17.5 13.25 17.5H9.25C7.17893 17.5 5.5 15.8211 5.5 13.75V8.5Z"
+            stroke="currentColor"
+            strokeLinejoin="round"
+            strokeWidth={styles.strokeWidth}
+          />
+          <path
+            d="M17 10H18.25C19.7688 10 21 11.2312 21 12.75C21 14.2688 19.7688 15.5 18.25 15.5H17"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={styles.strokeWidth}
+          />
+          <path
+            d="M7.65 19H14.85"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={styles.strokeWidth}
+          />
+        </svg>
       </span>
       <span className="sr-only">Coffee</span>
     </span>
