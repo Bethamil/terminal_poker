@@ -1,8 +1,17 @@
 {
   "name": "terminal-poker-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Terminal client for Terminal Poker – plan like a dev.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bethamil/terminal_poker.git",
+    "directory": "apps/cli"
+  },
+  "homepage": "https://github.com/Bethamil/terminal_poker/tree/main/apps/cli#readme",
+  "bugs": {
+    "url": "https://github.com/Bethamil/terminal_poker/issues"
+  },
   "bin": {
     "terminal-poker": "./dist/index.js"
   },
@@ -13,7 +22,8 @@
     "node": ">=18"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build:shared-types": "pnpm --filter @terminal-poker/shared-types build",

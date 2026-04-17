@@ -1,0 +1,46 @@
+# Publish terminal-poker-cli to npm.
+#
+# Docker images use tags v* (see release-image.yml). The CLI has its own
+# version in apps/cli/package.json, so this workflow is separate:
+#   - workflow_dispatch: bump apps/cli version, commit, then run manually, or
+#   - push tag cli-v* (e.g. cli-v0.2.0) after bumping that same version in package.json
+#
+# Required repo secret: NPM_TOKEN (automation token from npmjs.com).
+
+name: Release CLI
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "cli-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Publish CLI to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm --filter terminal-poker-cli publish --access public --no-git-checks
