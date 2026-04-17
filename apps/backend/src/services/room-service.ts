@@ -234,6 +234,10 @@ export class RoomService {
         throw new AppError(403, "OBSERVER_CANNOT_VOTE", "Observers cannot cast votes.");
       }
 
+      if (participant?.role === ParticipantRole.MODERATOR && !authorized.room.hostVotes) {
+        throw new AppError(403, "FACILITATOR_CANNOT_VOTE", "Facilitators cannot cast votes.");
+      }
+
       const round = authorized.room.rounds[0];
       const votingDeck = getVotingDeck(resolveVotingDeckId(authorized.room.votingDeckId));
 
@@ -281,7 +285,10 @@ export class RoomService {
   async updateRoomSettings(
     roomCode: string,
     participantToken: string,
-    input: Pick<UpdateRoomSettingsPayload, "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode">
+    input: Pick<
+      UpdateRoomSettingsPayload,
+      "jiraBaseUrl" | "votingDeckId" | "joinPasscode" | "joinPasscodeMode" | "hostVotes"
+    >
   ): Promise<void> {
     await this.prisma.$transaction(async (transaction) => {
       const authorized = await this.getAuthorizedRoom(roomCode, participantToken, transaction);
@@ -299,18 +306,27 @@ export class RoomService {
       );
       const nextVotingDeckId = input.votingDeckId;
       const votingDeckChanged = authorized.room.votingDeckId !== nextVotingDeckId;
+      const hostVotes = input.hostVotes;
+      const hostVotesDisabled = authorized.room.hostVotes && !hostVotes;
       const repo = this.repository(transaction);
       await repo.updateRoomSettings({
         roomId: authorized.room.id,
         jiraBaseUrl,
         votingDeckId: nextVotingDeckId,
-        joinPasscodeHash
+        joinPasscodeHash,
+        hostVotes
       });
 
       if (votingDeckChanged) {
         await repo.createRound({
           roomId: authorized.room.id
         });
+      } else if (hostVotesDisabled) {
+        const activeRound = authorized.room.rounds[0];
+
+        if (activeRound) {
+          await repo.deleteVotesForParticipantInRound(activeRound.id, authorized.participantId);
+        }
       }
 
       await repo.touchRoomActivity(authorized.room.id);

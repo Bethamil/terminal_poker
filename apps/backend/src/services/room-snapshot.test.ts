@@ -12,6 +12,7 @@ const baseRoom = (): RoomAggregate =>
     name: "Planning Alpha",
     jiraBaseUrl: "https://jira.example.com",
     votingDeckId: "modified-fibonacci",
+    hostVotes: true,
     joinPasscodeHash: null,
     lastActivityAt: new Date("2026-01-01T10:00:00.000Z"),
     createdAt: new Date("2026-01-01T10:00:00.000Z"),

@@ -46,6 +46,7 @@ export const COMMANDS: CommandDef[] = [
   { name: "jira", args: "URL|clear", description: "Set or clear Jira base URL", context: "moderator" },
   { name: "deck", args: "N", description: "Change voting deck (no arg to list options)", context: "moderator" },
   { name: "passcode", args: "VALUE|clear", description: "Set or clear join passcode", context: "moderator" },
+  { name: "facilitator", args: "on|off", description: "Toggle facilitator mode (host doesn't vote)", context: "moderator" },
   { name: "kick", args: "NAME", description: "Remove a participant", context: "moderator" },
   { name: "voter", args: "NAME", description: "Make someone a voter", context: "moderator" },
   { name: "observer", args: "NAME", description: "Make someone an observer", context: "moderator" },

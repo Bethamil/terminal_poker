@@ -91,13 +91,17 @@ export const buildRoomSnapshot = (
     throw new Error("Room snapshot requested without an active round or viewer.");
   }
 
-  const observerIds = new Set(
+  const nonVoterIds = new Set(
     room.participants
-      .filter((p) => p.role === ParticipantRole.OBSERVER)
+      .filter(
+        (p) =>
+          p.role === ParticipantRole.OBSERVER ||
+          (p.role === ParticipantRole.MODERATOR && !room.hostVotes)
+      )
       .map((p) => p.id)
   );
   const roundVotes = activeRound.votes
-    .filter((vote) => !observerIds.has(vote.participantId))
+    .filter((vote) => !nonVoterIds.has(vote.participantId))
     .map((vote) => vote.value as VoteValue);
   const isRevealed = activeRound.status === RoundStatus.REVEALED;
   const votingDeckId = resolveVotingDeckId(room.votingDeckId);
@@ -111,6 +115,7 @@ export const buildRoomSnapshot = (
       jiraBaseUrl: room.jiraBaseUrl,
       votingDeckId,
       hasJoinPasscode: Boolean(room.joinPasscodeHash),
+      hostVotes: room.hostVotes,
       createdAt: room.createdAt.toISOString()
     },
     round: {
@@ -122,21 +127,21 @@ export const buildRoomSnapshot = (
       summary: isRevealed ? buildSummary(roundVotes, votingDeck) : null
     },
     participants: room.participants.map((participant) => {
-      const isObserver = participant.role === ParticipantRole.OBSERVER;
+      const isNonVoter = nonVoterIds.has(participant.id);
       return {
         id: participant.id,
         name: participant.name,
         role: mapParticipantRole(participant.role),
         presence: activeParticipantIds.has(participant.id) ? "online" : "away",
-        hasVoted: isObserver ? false : votesByParticipantId.has(participant.id),
-        revealedVote: isObserver ? null : (isRevealed ? votesByParticipantId.get(participant.id) ?? null : null)
+        hasVoted: isNonVoter ? false : votesByParticipantId.has(participant.id),
+        revealedVote: isNonVoter ? null : (isRevealed ? votesByParticipantId.get(participant.id) ?? null : null)
       };
     }),
     viewer: {
       participantId: viewer.id,
       name: viewer.name,
       role: mapParticipantRole(viewer.role),
-      selectedVote: viewer.role === ParticipantRole.OBSERVER
+      selectedVote: nonVoterIds.has(viewer.id)
         ? null
         : (votesByParticipantId.get(viewer.id) ?? null) as VoteValue | null
     },

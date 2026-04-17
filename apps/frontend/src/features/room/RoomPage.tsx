@@ -41,6 +41,7 @@ export const RoomPage = () => {
   const [votingDeckIdDraft, setVotingDeckIdDraft] =
     useState<UpdateRoomSettingsPayload["votingDeckId"]>("modified-fibonacci");
   const [newPasscodeDraft, setNewPasscodeDraft] = useState("");
+  const [hostVotesDraft, setHostVotesDraft] = useState(true);
   const [pendingKickId, setPendingKickId] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const settingsSavedTimeoutRef = useRef<number | null>(null);
@@ -81,8 +82,15 @@ export const RoomPage = () => {
 
     setJiraBaseUrlDraft(snapshot.room.jiraBaseUrl ?? "");
     setVotingDeckIdDraft(snapshot.room.votingDeckId);
+    setHostVotesDraft(snapshot.room.hostVotes);
     setNewPasscodeDraft("");
-  }, [snapshot?.room.id, snapshot?.room.jiraBaseUrl, snapshot?.room.votingDeckId, snapshot?.room.hasJoinPasscode]);
+  }, [
+    snapshot?.room.id,
+    snapshot?.room.jiraBaseUrl,
+    snapshot?.room.votingDeckId,
+    snapshot?.room.hasJoinPasscode,
+    snapshot?.room.hostVotes
+  ]);
 
   useEffect(() => {
     if (!isSettingsOpen) {
@@ -201,7 +209,8 @@ export const RoomPage = () => {
         jiraBaseUrl: jiraBaseUrlDraft.trim() || null,
         joinPasscode: joinPasscodeMode === "set" ? trimmedPasscode : null,
         joinPasscodeMode,
-        votingDeckId: votingDeckIdDraft
+        votingDeckId: votingDeckIdDraft,
+        hostVotes: hostVotesDraft
       });
 
       if (settingsSavedTimeoutRef.current !== null) {
@@ -330,6 +339,7 @@ export const RoomPage = () => {
   const connectionStatusLabel = isRealtimeReady ? "LIVE" : "SYNC";
   const isModerator = snapshot.viewer.role === "moderator";
   const isObserver = snapshot.viewer.role === "observer";
+  const isFacilitator = isModerator && !snapshot.room.hostVotes;
   const leaveButtonLabel = isLeaving ? "LEAVING..." : isModerator ? "LEAVE & DELETE" : "LEAVE ROOM";
   const normalizedTicketDraft = ticketDraft.trim().toUpperCase();
   const hasTicketChanged = normalizedTicketDraft !== (snapshot.round.jiraTicketKey ?? "");
@@ -433,7 +443,7 @@ export const RoomPage = () => {
         centerClassName: "gap-2",
         left: isObserver ? null : (
           <>
-            <span>{voteShortcutHint}</span>
+            {isFacilitator ? null : <span>{voteShortcutHint}</span>}
             {isModerator ? (
               <>
                 <span>[R] REVEAL</span>
@@ -451,6 +461,7 @@ export const RoomPage = () => {
           castVote={castVote}
           error={error}
           hasTicketChanged={hasTicketChanged}
+          isFacilitator={isFacilitator}
           isModerator={isModerator}
           isObserver={isObserver}
           joinError={joinError}
@@ -476,10 +487,12 @@ export const RoomPage = () => {
             room={{
               hasJoinPasscode: snapshot.room.hasJoinPasscode,
               hasJiraBaseUrl: Boolean(snapshot.room.jiraBaseUrl),
+              hostVotesDraft,
               isSettingsSaved,
               jiraBaseUrlDraft,
               newPasscodeDraft,
               onClearPasscode: () => void saveRoomSettings("clear"),
+              onHostVotesChange: setHostVotesDraft,
               onJiraBaseUrlChange: setJiraBaseUrlDraft,
               onNewPasscodeChange: setNewPasscodeDraft,
               onSave: () => void saveRoomSettings(newPasscodeDraft.trim() ? "set" : "keep"),

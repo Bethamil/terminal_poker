@@ -32,6 +32,7 @@ interface RoomActions {
     votingDeckId?: VotingDeckId;
     joinPasscode?: string | null;
     joinPasscodeMode?: JoinPasscodeMode;
+    hostVotes?: boolean;
   }) => void;
   kickParticipant: (participantId: string) => void;
   changeParticipantRole: (
@@ -233,6 +234,41 @@ export function useCommands(deps: UseCommandsDeps) {
             return;
           }
 
+          case "facilitator":
+          case "facil": {
+            if (!requireLive() || !snapshot) return;
+            if (!requireModerator()) return;
+            const normalized = args.trim().toLowerCase();
+            let nextHostVotes: boolean;
+            if (normalized === "on") {
+              nextHostVotes = false;
+            } else if (normalized === "off") {
+              nextHostVotes = true;
+            } else if (!normalized) {
+              nextHostVotes = snapshot.room.hostVotes;
+            } else {
+              log("Usage: /facilitator on|off", "red");
+              return;
+            }
+            if (nextHostVotes === snapshot.room.hostVotes) {
+              log(
+                snapshot.room.hostVotes
+                  ? "Facilitator mode is already off (host votes)."
+                  : "Facilitator mode is already on (host doesn't vote).",
+                "yellow",
+              );
+              return;
+            }
+            room.updateSettings({ hostVotes: nextHostVotes });
+            log(
+              nextHostVotes
+                ? "Facilitator mode off — host will vote."
+                : "Facilitator mode on — host no longer votes.",
+              "cyan",
+            );
+            return;
+          }
+
           case "kick": {
             if (!requireLive() || !snapshot) return;
             if (!args) {
@@ -360,6 +396,13 @@ export function useCommands(deps: UseCommandsDeps) {
             log("Observers cannot vote. Type / to see observer commands.", "yellow");
             return;
           }
+          if (isFacilitatingHost()) {
+            log(
+              "Facilitator mode is on — the host doesn't vote. Use /facilitator off to rejoin the estimate.",
+              "yellow",
+            );
+            return;
+          }
           if (snapshot.round.status !== "active") {
             log("Votes already revealed", "yellow");
             return;
@@ -404,7 +447,22 @@ export function useCommands(deps: UseCommandsDeps) {
       log("Observers cannot vote. Ask the host to make you a voter.", "yellow");
       return false;
     }
+    if (isFacilitatingHost()) {
+      log(
+        "Facilitator mode is on — the host doesn't vote. Use /facilitator off to rejoin the estimate.",
+        "yellow",
+      );
+      return false;
+    }
     return true;
+  }
+
+  function isFacilitatingHost(): boolean {
+    return (
+      !!snapshot &&
+      snapshot.viewer.role === "moderator" &&
+      !snapshot.room.hostVotes
+    );
   }
 
   function findParticipantByName(

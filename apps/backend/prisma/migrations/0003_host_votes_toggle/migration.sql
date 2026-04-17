@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Room" ADD COLUMN "hostVotes" BOOLEAN NOT NULL DEFAULT true;

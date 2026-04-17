@@ -10,6 +10,7 @@ interface RoomVotingSectionProps {
   areRealtimeActionsDisabled: boolean;
   castVote: (value: VoteValue) => void;
   hasTicketChanged: boolean;
+  isFacilitator: boolean;
   isModerator: boolean;
   observers: ParticipantSnapshot[];
   onResetRound: () => void;
@@ -27,6 +28,7 @@ export const RoomVotingSection = ({
   areRealtimeActionsDisabled,
   castVote,
   hasTicketChanged,
+  isFacilitator,
   isModerator,
   observers,
   onResetRound,
@@ -61,6 +63,7 @@ export const RoomVotingSection = ({
       </div>
       <MobileParticipantStrip
         currentParticipantId={snapshot.viewer.participantId}
+        hostVotes={snapshot.room.hostVotes}
         voters={voters}
         observers={observers}
         roundStatus={snapshot.round.status}
@@ -124,32 +127,48 @@ export const RoomVotingSection = ({
           </div>
         </div>
       ) : null}
-      <div className={`deck-card__body ${isVotingClosed ? "deck-card__body--closed" : ""}`.trim()}>
-        <div className="vote-grid">
-          {voteCardMeta.map((card) => {
-            const isSelected = snapshot.viewer.selectedVote === card.value;
-            const isCoffeeCard = card.value === COFFEE_VOTE_VALUE;
-
-            return (
-              <button
-                aria-label={isCoffeeCard ? card.label : undefined}
-                disabled={areRealtimeActionsDisabled || isVotingClosed}
-                className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
-                  isCoffeeCard ? "vote-tile--coffee" : ""
-                } ${
-                  isVotingClosed ? "vote-tile--locked" : ""
-                }`.trim()}
-                key={card.value}
-                onClick={() => castVote(card.value)}
-                type="button"
-              >
-                {isCoffeeCard ? <CoffeeVote variant="tile" /> : null}
-                {!isCoffeeCard ? <strong className="vote-tile__value">{card.value}</strong> : null}
-              </button>
-            );
-          })}
+      {isFacilitator ? (
+        <div className="deck-card__body">
+          <div className="grid gap-2 rounded-[10px] border border-[color:var(--outline)] bg-[color:var(--panel-bg)] px-4 py-3">
+            <div className="section-header">
+              <StatusChip>FACILITATOR</StatusChip>
+              <h3 className="m-0 font-['JetBrains_Mono'] text-[0.92rem] uppercase tracking-[0.08em]">
+                Running the round
+              </h3>
+            </div>
+            <p className="mono-muted">
+              You are facilitating this room. Your vote is not cast or counted — switch HOST ROLE to VOTING HOST in settings to join the estimate.
+            </p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className={`deck-card__body ${isVotingClosed ? "deck-card__body--closed" : ""}`.trim()}>
+          <div className="vote-grid">
+            {voteCardMeta.map((card) => {
+              const isSelected = snapshot.viewer.selectedVote === card.value;
+              const isCoffeeCard = card.value === COFFEE_VOTE_VALUE;
+
+              return (
+                <button
+                  aria-label={isCoffeeCard ? card.label : undefined}
+                  disabled={areRealtimeActionsDisabled || isVotingClosed}
+                  className={`vote-tile ${isSelected ? "vote-tile--selected" : ""} ${
+                    isCoffeeCard ? "vote-tile--coffee" : ""
+                  } ${
+                    isVotingClosed ? "vote-tile--locked" : ""
+                  }`.trim()}
+                  key={card.value}
+                  onClick={() => castVote(card.value)}
+                  type="button"
+                >
+                  {isCoffeeCard ? <CoffeeVote variant="tile" /> : null}
+                  {!isCoffeeCard ? <strong className="vote-tile__value">{card.value}</strong> : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </section>
   );
 };

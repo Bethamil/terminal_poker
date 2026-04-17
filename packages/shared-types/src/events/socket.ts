@@ -27,6 +27,7 @@ export interface UpdateRoomSettingsPayload {
   votingDeckId: VotingDeckId;
   joinPasscode: string | null;
   joinPasscodeMode: JoinPasscodeMode;
+  hostVotes: boolean;
 }
 
 export interface KickParticipantPayload {

@@ -11,6 +11,7 @@ interface LiveRoomViewProps {
   castVote: (value: VoteValue) => void;
   error: string | null;
   hasTicketChanged: boolean;
+  isFacilitator: boolean;
   isModerator: boolean;
   isObserver: boolean;
   joinError: string | null;
@@ -31,6 +32,7 @@ export const LiveRoomView = ({
   castVote,
   error,
   hasTicketChanged,
+  isFacilitator,
   isModerator,
   isObserver,
   joinError,
@@ -45,8 +47,11 @@ export const LiveRoomView = ({
   ticketDraft,
   voters
 }: LiveRoomViewProps) => {
-  const votedCount = voters.filter((participant) => participant.hasVoted).length;
-  const voterCount = voters.length;
+  const countedVoters = snapshot.room.hostVotes
+    ? voters
+    : voters.filter((participant) => participant.role !== "moderator");
+  const votedCount = countedVoters.filter((participant) => participant.hasVoted).length;
+  const voterCount = countedVoters.length;
   const { width: railWidth, handleProps } = useResizablePanel({
     defaultWidth: 240,
     minWidth: 240,
@@ -59,6 +64,7 @@ export const LiveRoomView = ({
       <div className="relative hidden lg:grid" style={{ width: `${railWidth}px` }}>
         <ParticipantRail
           currentParticipantId={snapshot.viewer.participantId}
+          hostVotes={snapshot.room.hostVotes}
           observers={observers}
           onInvite={onInvite}
           roomCode={snapshot.room.code}
@@ -96,6 +102,7 @@ export const LiveRoomView = ({
             areRealtimeActionsDisabled={areRealtimeActionsDisabled}
             castVote={castVote}
             hasTicketChanged={hasTicketChanged}
+            isFacilitator={isFacilitator}
             isModerator={isModerator}
             observers={observers}
             onResetRound={onResetRound}
