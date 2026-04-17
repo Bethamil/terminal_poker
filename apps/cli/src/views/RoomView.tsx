@@ -22,17 +22,26 @@ const STATUS_DISPLAY: Record<ConnectionStatus, { label: string; color: string }>
 
 export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomViewProps) {
   const { room, round, participants, viewer } = snapshot;
-  const voters = participants.filter((participant) => participant.role !== "observer");
+  const isFacilitator = viewer.role === "moderator" && !room.hostVotes;
   const isObserver = viewer.role === "observer";
+  const countedVoters = participants.filter((participant) =>
+    participant.role === "observer"
+      ? false
+      : participant.role === "moderator"
+        ? room.hostVotes
+        : true,
+  );
   const viewerRoleLabel =
     viewer.role === "moderator"
-      ? "HOST"
+      ? room.hostVotes
+        ? "HOST"
+        : "FACILITATOR"
       : viewer.role === "observer"
         ? "OBSERVER"
         : "VOTER";
 
-  const votedCount = voters.filter((participant) => participant.hasVoted).length;
-  const voterCount = voters.length;
+  const votedCount = countedVoters.filter((participant) => participant.hasVoted).length;
+  const voterCount = countedVoters.length;
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -78,6 +87,15 @@ export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomVie
                   counted in vote progress.
                 </Text>
               </Box>
+            ) : isFacilitator ? (
+              <Box flexDirection="column" gap={1}>
+                <Text color="yellow" bold>FACILITATING</Text>
+                <Text color="gray">
+                  You are running this round. Your vote is not cast or counted.
+                  Use <Text color="yellow" bold>/facilitator off</Text> to rejoin
+                  the estimate.
+                </Text>
+              </Box>
             ) : (
               <VotingDeck
                 deckId={room.votingDeckId}
@@ -88,7 +106,7 @@ export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomVie
           </Box>
 
           {/* Your vote */}
-          {!isObserver && viewer.selectedVote && (
+          {!isObserver && !isFacilitator && viewer.selectedVote && (
             <Box marginTop={1}>
               <Text color="cyan" bold>Your vote: {viewer.selectedVote}</Text>
             </Box>
@@ -126,6 +144,7 @@ export function RoomView({ snapshot, connectionStatus, termWidth = 80 }: RoomVie
             participants={participants}
             roundStatus={round.status}
             viewerId={viewer.participantId}
+            hostVotes={room.hostVotes}
           />
         </Box>
       </Box>

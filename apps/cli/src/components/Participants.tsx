@@ -6,9 +6,10 @@ interface ParticipantsProps {
   participants: ParticipantSnapshot[];
   roundStatus: RoundStatus;
   viewerId: string;
+  hostVotes: boolean;
 }
 
-export function Participants({ participants, roundStatus, viewerId }: ParticipantsProps) {
+export function Participants({ participants, roundStatus, viewerId, hostVotes }: ParticipantsProps) {
   const sorted = [...participants].sort((a, b) => {
     if (a.role === "moderator" && b.role !== "moderator") return -1;
     if (b.role === "moderator" && a.role !== "moderator") return 1;
@@ -33,6 +34,7 @@ export function Participants({ participants, roundStatus, viewerId }: Participan
           participants={voters}
           roundStatus={roundStatus}
           viewerId={viewerId}
+          hostVotes={hostVotes}
         />
         {observers.length > 0 && (
           <ParticipantGroup
@@ -40,6 +42,7 @@ export function Participants({ participants, roundStatus, viewerId }: Participan
             participants={observers}
             roundStatus={roundStatus}
             viewerId={viewerId}
+            hostVotes={hostVotes}
           />
         )}
       </Box>
@@ -52,6 +55,7 @@ interface ParticipantGroupProps {
   participants: ParticipantSnapshot[];
   roundStatus: RoundStatus;
   viewerId: string;
+  hostVotes: boolean;
 }
 
 function ParticipantGroup({
@@ -59,6 +63,7 @@ function ParticipantGroup({
   participants,
   roundStatus,
   viewerId,
+  hostVotes,
 }: ParticipantGroupProps) {
   return (
     <Box flexDirection="column" gap={0}>
@@ -67,11 +72,15 @@ function ParticipantGroup({
         const isYou = participant.id === viewerId;
         const presenceDot = participant.presence === "online" ? "●" : "○";
         const presenceColor = participant.presence === "online" ? "green" : "gray";
+        const isFacilitatingHost = participant.role === "moderator" && !hostVotes;
         let voteDisplay: string;
         let voteColor = "gray";
         if (participant.role === "observer") {
           voteDisplay = "obs";
           voteColor = "magenta";
+        } else if (isFacilitatingHost) {
+          voteDisplay = "fac";
+          voteColor = "yellow";
         } else if (roundStatus === "revealed" && participant.revealedVote) {
           voteDisplay = participant.revealedVote;
           voteColor = "cyan";
@@ -89,7 +98,9 @@ function ParticipantGroup({
               {participant.name}
               {isYou ? " (you)" : ""}
             </Text>
-            {participant.role === "moderator" && <Text color="yellow">[HOST]</Text>}
+            {participant.role === "moderator" && (
+              <Text color="yellow">{isFacilitatingHost ? "[FACILITATOR]" : "[HOST]"}</Text>
+            )}
             <Box flexGrow={1} />
             <Text color={voteColor} bold={roundStatus === "revealed" && !!participant.revealedVote}>
               [{voteDisplay}]
